@@ -1850,10 +1850,10 @@ export default function AdminMedia() {
                       if (ref) {
                         // Remove ALL classes that might inherit dark styling
                         ref.className = '';
-                        // Responsive video styling
+                        // Responsive video styling with dynamic sizing
                         ref.style.cssText = `
-                          width: 100% !important;
-                          aspect-ratio: 16/9 !important;
+                          max-width: 100% !important;
+                          height: auto !important;
                           object-fit: contain !important;
                           display: block !important;
                           background-color: transparent !important;
@@ -1870,9 +1870,33 @@ export default function AdminMedia() {
                           position: relative !important;
                           transform: none !important;
                           box-shadow: none !important;
+                          margin: 0 auto !important;
                         `;
                         
-                        // Additional responsive styling for smaller screens
+                        // Dynamic video sizing function
+                        const applyDynamicSizing = () => {
+                          // Get video dimensions once loaded
+                          if (ref.videoWidth && ref.videoHeight) {
+                            const aspectRatio = ref.videoWidth / ref.videoHeight;
+                            const containerWidth = ref.parentElement?.clientWidth || 400;
+                            const maxHeight = window.innerWidth <= 768 ? 250 : 400;
+                            const minHeight = window.innerWidth <= 768 ? 150 : 200;
+                            
+                            // Calculate optimal width based on aspect ratio and height constraints
+                            const optimalWidth = Math.min(containerWidth, aspectRatio * maxHeight);
+                            const calculatedHeight = optimalWidth / aspectRatio;
+                            
+                            if (calculatedHeight >= minHeight && calculatedHeight <= maxHeight) {
+                              ref.style.width = `${optimalWidth}px !important`;
+                              ref.style.height = `${calculatedHeight}px !important`;
+                            }
+                          }
+                        };
+                        
+                        // Apply sizing when metadata loads
+                        ref.addEventListener('loadedmetadata', applyDynamicSizing);
+                        
+                        // Responsive sizing for screen changes
                         const mediaQuery = window.matchMedia('(max-width: 768px)');
                         const updateVideoSize = () => {
                           if (mediaQuery.matches) {
@@ -1882,9 +1906,22 @@ export default function AdminMedia() {
                             ref.style.minHeight = '200px !important';
                             ref.style.maxHeight = '400px !important';
                           }
+                          applyDynamicSizing();
                         };
                         updateVideoSize();
                         mediaQuery.addEventListener('change', updateVideoSize);
+                        
+                        // Handle window resize
+                        const handleResize = () => applyDynamicSizing();
+                        window.addEventListener('resize', handleResize);
+                        
+                        // Use ResizeObserver for container size changes
+                        if (window.ResizeObserver && ref.parentElement) {
+                          const resizeObserver = new ResizeObserver(() => {
+                            applyDynamicSizing();
+                          });
+                          resizeObserver.observe(ref.parentElement);
+                        }
                       }
                     }}
                     src={selectedMediaForFeedback.url}
@@ -1895,27 +1932,49 @@ export default function AdminMedia() {
                     playsInline
                     onCanPlay={(e) => {
                       const video = e.target as HTMLVideoElement;
-                      // Force responsive styling when video can play
-                      video.style.cssText = `
-                        width: 100% !important;
-                        aspect-ratio: 16/9 !important;
-                        object-fit: contain !important;
-                        display: block !important;
-                        background-color: transparent !important;
-                        min-height: 200px !important;
-                        max-height: 400px !important;
-                        border-radius: 8px !important;
-                        filter: none !important;
-                        -webkit-filter: none !important;
-                        mix-blend-mode: normal !important;
-                        opacity: 1 !important;
-                        isolation: isolate !important;
-                        border: 1px solid #e5e7eb !important;
-                        z-index: 99999 !important;
-                        position: relative !important;
-                        transform: none !important;
-                        box-shadow: none !important;
-                      `;
+                      // Force responsive styling when video can play with dynamic sizing
+                      const applyVideoSizing = () => {
+                        video.style.cssText = `
+                          max-width: 100% !important;
+                          height: auto !important;
+                          object-fit: contain !important;
+                          display: block !important;
+                          background-color: transparent !important;
+                          min-height: 200px !important;
+                          max-height: 400px !important;
+                          border-radius: 8px !important;
+                          filter: none !important;
+                          -webkit-filter: none !important;
+                          mix-blend-mode: normal !important;
+                          opacity: 1 !important;
+                          isolation: isolate !important;
+                          border: 1px solid #e5e7eb !important;
+                          z-index: 99999 !important;
+                          position: relative !important;
+                          transform: none !important;
+                          box-shadow: none !important;
+                          margin: 0 auto !important;
+                        `;
+                        
+                        // Get video dimensions and calculate optimal width
+                        if (video.videoWidth && video.videoHeight) {
+                          const aspectRatio = video.videoWidth / video.videoHeight;
+                          const containerWidth = video.parentElement?.clientWidth || 400;
+                          const maxHeight = window.innerWidth <= 768 ? 250 : 400;
+                          const minHeight = window.innerWidth <= 768 ? 150 : 200;
+                          
+                          // Calculate width based on aspect ratio and height constraints
+                          const optimalWidth = Math.min(containerWidth, aspectRatio * maxHeight);
+                          const calculatedHeight = optimalWidth / aspectRatio;
+                          
+                          if (calculatedHeight >= minHeight && calculatedHeight <= maxHeight) {
+                            video.style.width = `${optimalWidth}px !important`;
+                            video.style.height = `${calculatedHeight}px !important`;
+                          }
+                        }
+                      };
+                      
+                      applyVideoSizing();
                       
                       // Mobile responsive adjustments
                       const mediaQuery = window.matchMedia('(max-width: 768px)');
