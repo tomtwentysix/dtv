@@ -1,0 +1,65 @@
+# Production Dockerfile for dt.visuals
+FROM node:20-alpine AS base
+
+# Install system dependencies
+RUN apk add --no-cache \
+    curl \
+    bash \
+    && rm -rf /var/cache/apk/*
+
+# Set working directory
+WORKDIR /app
+
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S dtvisuals -u 1001 -G nodejs
+
+FROM base AS builder
+
+# Copy package files
+COPY package*.json ./
+COPY tsconfig.json ./
+
+# Install all dependencies (including devDependencies for build)
+RUN npm ci --include=dev && npm cache clean --force
+
+# Copy source code
+COPY . .
+
+# Build the application
+RUN npm run build
+
+FROM base AS production
+
+# Copy package files
+COPY package*.json ./
+
+# Install only production dependencies
+RUN npm ci --omit=dev && \
+    npm cache clean --force && \
+    rm -rf /tmp/*
+
+# Copy built application from builder stage
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/shared ./shared
+
+# Copy any other necessary files
+COPY --from=builder /app/migrations ./migrations
+
+# Create necessary directories with proper permissions
+RUN mkdir -p uploads && \
+    chown -R dtvisuals:nodejs /app && \
+    chmod -R 755 /app
+
+# Change to non-root user
+USER dtvisuals
+
+# Expose production port
+EXPOSE 5000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD node -e "require('http').get('http://localhost:5000/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
+
+# Production command
+CMD ["npm", "start"]

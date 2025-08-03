@@ -1,0 +1,45 @@
+# Development Dockerfile for dt.visuals
+FROM node:20-alpine AS base
+
+# Install system dependencies
+RUN apk add --no-cache \
+    curl \
+    bash \
+    git \
+    python3 \
+    make \
+    g++ \
+    && rm -rf /var/cache/apk/*
+
+# Set working directory
+WORKDIR /app
+
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S dtvisuals -u 1001 -G nodejs
+
+FROM base AS development
+
+# Copy package files
+COPY package*.json ./
+COPY tsconfig.json ./
+
+# Install all dependencies (including dev dependencies)
+RUN npm ci --include=dev && npm cache clean --force
+
+# Copy source code
+COPY . .
+
+# Create necessary directories with proper permissions
+RUN mkdir -p uploads node_modules/.vite && \
+    chown -R dtvisuals:nodejs /app && \
+    chmod -R 755 /app
+
+# Change to non-root user
+USER dtvisuals
+
+# Expose development port
+EXPOSE 5000
+
+# Development command with hot reload
+CMD ["npm", "run", "dev"]

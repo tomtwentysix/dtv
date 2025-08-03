@@ -1,0 +1,16 @@
+{
+  "ok": {
+    "ok": false,
+    "error": {
+      "message": "",
+      "statusCode": 404
+    }
+  },
+  "value": {
+    "ok": false,
+    "error": {
+      "message": "",
+      "statusCode": 404
+    }
+  }
+}

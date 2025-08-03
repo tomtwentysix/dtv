@@ -1,0 +1,14 @@
+node_modules
+dist
+.DS_Store
+server/public
+vite.config.ts.*
+*.tar.gz
+
+# Uploads directory - exclude large media files
+uploads/
+uploads/*
+
+# Exclude any large files by hash pattern
+**/[a-f0-9]{32}
+**/[a-f0-9]{40}

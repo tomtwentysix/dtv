@@ -1,0 +1,145 @@
+Build a full-stack, scalable showcase website for a cinematic media production company named dt.visuals (styled lowercase, with a dot).
+
+This website must include a custom local authentication system (no Replit Auth or Replit With), a secure client portal, a scalable admin dashboard, and a full Role-Based Access Control (RBAC) system.
+
+The company is a rebrand of a previous company, but there must be absolutely no reference to 2tvisuals anywhere in the site.
+
+Design should match the visual feel of 2tvisuals.com (without referencing it), using a primarily black and white colour palette with dark teal and muted orange highlights (inspired by cinematic sunsets), light/dark modes, and a liquid glass-style navigation bar with a blurred backdrop rather than high contrast.
+
+⸻
+
+🔐 Authentication System
+	•	Implement custom local authentication using:
+	•	Username/password login
+	•	Passwords securely hashed using bcrypt or Argon2
+	•	JWT or secure session cookies
+	•	Include login/logout flows
+	•	Do not use Replit Auth or Replit With
+
+⸻
+
+🛡️ Role-Based Access Control (RBAC) — Full System
+
+The site must support a complete, scalable, and customizable RBAC system.
+
+🔧 RBAC Features
+	•	Roles and permissions must be stored in the database
+	•	Admins can:
+	•	Create, edit, and delete roles
+	•	Create, edit, and delete permissions
+	•	Assign permissions to roles
+	•	Assign roles to users
+	•	Permissions must be flexible and granular (e.g., upload:media, delete:user, assign:client)
+
+🧱 Required Tables
+
+users(id, username, email, password_hash, created_at)
+roles(id, name)
+permissions(id, name, description)
+user_roles(user_id, role_id)
+role_permissions(role_id, permission_id)
+
+🧠 Example Permissions
+
+Permission	Description
+upload:media	Can upload new media
+assign:media	Can assign media to clients
+delete:media	Can delete media
+view:clients	Can view client profiles
+edit:users	Can create/edit staff users
+edit:roles	Can create/edit roles and permissions
+
+Middleware should check access based on user permissions.
+
+⸻
+
+👥 User Roles & Access Levels
+
+Role	Access Capabilities
+Admin	Full access to all admin features
+Staff	Limited access based on assigned roles/permissions
+Client	Login to view only their assigned media
+
+
+⸻
+
+📁 Media Management
+
+Staff and Admins can:
+	•	Upload images and videos
+	•	Tag media by type, category, or project
+	•	Mark media as “featured” (for homepage or portfolio)
+	•	Assign media to clients
+
+Media Table
+
+media(id, title, type [image/video], url, is_featured, uploaded_by, created_at)
+media_clients(id, media_id, client_id)
+
+
+⸻
+
+🔒 Client Portal
+
+Clients must be able to:
+	•	Log in securely (local auth)
+	•	View only media assigned to them
+	•	Access a clean, simple dashboard
+	•	Optional: Download media or leave feedback
+
+⸻
+
+🌐 Public-Facing Pages
+	•	Home: Hero video/image, featured work, intro to brand
+	•	Portfolio: Gallery of videos and images, filterable
+	•	About: Company mission, team bios
+	•	Services: Descriptions of production offerings
+	•	Contact: Contact form with email/social info
+
+⸻
+
+🔐 Protected Admin/Staff Pages
+	•	/admin/dashboard: Overview stats, media management
+	•	/admin/users: Manage users, assign roles
+	•	/admin/roles: Create/edit roles and permissions
+	•	/admin/media: Upload, edit, assign media
+	•	/client/dashboard: Client-only access to assigned content
+
+⸻
+
+🎨 Design System
+	•	Color Palette:
+	•	Dark teal: #0F4D4F (primary highlight)
+	•	Muted orange: #D07A50 (secondary accent)
+	•	Navigation Bar:
+	•	Liquid glass style (e.g., backdrop-filter: blur(12px))
+	•	Subtle glow/shadow, minimal borders
+	•	Theming:
+	•	Support light and dark mode
+	•	Respect system theme + toggle button
+	•	Typography: Large modern sans-serif titles, minimal body copy
+
+⸻
+
+🧰 Recommended Tech Stack
+
+Layer	Options
+Frontend	React (with Vite or Next.js), or Vue
+Styling	Tailwind CSS or SCSS
+Backend	Node.js (Express) or Python (Flask / FastAPI)
+Auth	Local auth with bcrypt + JWT/session cookies
+Database	PostgreSQL (preferred) or SQLite for dev
+Media Storage	Local for dev; Cloudinary/S3 for production
+Dev Hosting	Replit
+Production	Render, Railway, Fly.io, or Vercel (frontend)
+
+
+⸻
+
+🧩 Optional Advanced Features (for future)
+	•	Project-based grouping of media
+	•	Internal team notes per client/media
+	•	Email notifications for new uploads
+	•	Content status (e.g., “in review”, “approved”)
+	•	Analytics (views/downloads per media)
+
