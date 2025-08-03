@@ -384,6 +384,19 @@ video:not(.modal-video) {
 /* Modal videos should show full content */
 video.modal-video {
   object-fit: contain !important;
+  /* Force normal video rendering without any filters */
+  mix-blend-mode: normal !important;
+  filter: none !important;
+  opacity: 1 !important;
+  /* Prevent any parent filters from affecting the video */
+  isolation: isolate !important;
+  /* Force hardware acceleration and proper rendering */
+  transform: translateZ(0) !important;
+  will-change: auto !important;
+  /* Ensure proper color space */
+  color-scheme: normal !important;
+  /* Override any inherited brightness/contrast */
+  -webkit-filter: none !important;
 }
 
 /* Hide controls only for background/hero videos */

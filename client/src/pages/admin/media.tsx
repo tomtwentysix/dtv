@@ -1694,13 +1694,48 @@ export default function AdminMedia() {
 
           {/* Media Management Modal with Tabs */}
           <Dialog open={showFeedbackModal} onOpenChange={setShowFeedbackModal}>
-            <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden">
+            <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden" style={{ background: 'white' }}>
               <DialogHeader>
                 <DialogTitle>{selectedMediaForFeedback?.title}</DialogTitle>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   Media Management & Client Feedback
                 </p>
               </DialogHeader>
+              
+              {/* Video Preview Section - Outside tabs to avoid inheritance issues */}
+              {selectedMediaForFeedback?.type === "video" && (
+                <div className="mb-4" style={{ 
+                  isolation: 'isolate',
+                  background: 'white',
+                  padding: '16px',
+                  borderRadius: '8px'
+                }}>
+                  <video
+                    ref={(ref) => setFeedbackVideoRef(ref)}
+                    src={selectedMediaForFeedback.url}
+                    className="modal-video"
+                    controls
+                    controlsList="nodownload"
+                    poster={selectedMediaForFeedback.posterUrl}
+                    preload="metadata"
+                    playsInline
+                    style={{ 
+                      width: '100%',
+                      aspectRatio: '16/9',
+                      objectFit: 'contain',
+                      display: 'block',
+                      backgroundColor: 'white',
+                      minHeight: '300px',
+                      borderRadius: '8px',
+                      filter: 'none',
+                      mixBlendMode: 'normal',
+                      opacity: 1,
+                      isolation: 'isolate',
+                      border: '1px solid #e5e7eb'
+                    }}
+                  />
+                </div>
+              )}
               
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full h-full">
                 <TabsList className="grid w-full grid-cols-4 mb-4">
@@ -1713,28 +1748,6 @@ export default function AdminMedia() {
                 {/* Feedback Tab */}
                 <TabsContent value="feedback" className="max-h-[70vh] overflow-hidden">
                   <div className="flex flex-col h-full">
-                    {/* Video Preview Section - Only show for videos */}
-                    {selectedMediaForFeedback?.type === "video" && (
-                      <div className="flex-shrink-0 mb-4 bg-transparent">
-                        <video
-                          ref={(ref) => setFeedbackVideoRef(ref)}
-                          src={selectedMediaForFeedback.url}
-                          className="w-full rounded-lg modal-video"
-                          controls
-                          controlsList="nodownload"
-                          poster={selectedMediaForFeedback.posterUrl}
-                          preload="metadata"
-                          playsInline
-                          style={{ 
-                            aspectRatio: '16/9',
-                            objectFit: 'contain',
-                            display: 'block',
-                            backgroundColor: 'transparent',
-                            minHeight: '300px'
-                          }}
-                        />
-                      </div>
-                    )}
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1 overflow-hidden">
                       {/* Feedback Section */}
