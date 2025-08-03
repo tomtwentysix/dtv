@@ -512,12 +512,28 @@ export default function AdminMedia() {
 
   const handleAssignMedia = (mediaId: string) => {
     setSelectedMediaId(mediaId);
+    setSelectedClientForAssignment(""); // Reset selection when dialog opens
     setIsAssignDialogOpen(true);
   };
 
+  const [selectedClientForAssignment, setSelectedClientForAssignment] = useState<string>("");
+
   const onAssignToClient = (clientId: string) => {
-    if (selectedMediaId) {
-      assignMediaMutation.mutate({ mediaId: selectedMediaId, clientId });
+    setSelectedClientForAssignment(clientId);
+  };
+
+  const handleUpdateAssignment = () => {
+    if (selectedMediaId && selectedClientForAssignment) {
+      assignMediaMutation.mutate({ 
+        mediaId: selectedMediaId, 
+        clientId: selectedClientForAssignment === "none" ? null : selectedClientForAssignment 
+      });
+    } else {
+      toast({
+        title: "Please select a client",
+        description: "Choose a client from the dropdown above to assign this media.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -951,6 +967,12 @@ export default function AdminMedia() {
                         <SelectValue placeholder="Choose a client..." />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="none">
+                          <div className="flex items-center space-x-2">
+                            <Users className="h-4 w-4" />
+                            <span>Unassign from client</span>
+                          </div>
+                        </SelectItem>
                         {(clients || [])?.map((client: any) => (
                           <SelectItem key={client.id} value={client.id}>
                             <div className="flex items-center space-x-2">
@@ -975,6 +997,13 @@ export default function AdminMedia() {
                       onClick={() => setIsAssignDialogOpen(false)}
                     >
                       Cancel
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={handleUpdateAssignment}
+                      disabled={assignMediaMutation.isPending || !selectedClientForAssignment}
+                    >
+                      {assignMediaMutation.isPending ? "Updating..." : "Update Assignment"}
                     </Button>
                   </div>
                 </div>
