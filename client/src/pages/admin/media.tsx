@@ -1820,17 +1820,19 @@ export default function AdminMedia() {
           {/* Media Management Modal with Tabs */}
           <Dialog open={showFeedbackModal} onOpenChange={setShowFeedbackModal}>
             <DialogContent 
-              className="max-w-6xl max-h-[90vh] min-h-[60vh] overflow-hidden smooth-dialog"
+              className="max-w-6xl max-h-[90vh] min-h-[60vh] flex flex-col smooth-dialog"
               style={{
                 transition: 'width 400ms cubic-bezier(0.4, 0, 0.2, 1), height 400ms cubic-bezier(0.4, 0, 0.2, 1), transform 400ms cubic-bezier(0.4, 0, 0.2, 1), max-width 400ms cubic-bezier(0.4, 0, 0.2, 1), max-height 400ms cubic-bezier(0.4, 0, 0.2, 1)'
               }}
             >
-              <DialogHeader>
+              <DialogHeader className="flex-shrink-0">
                 <DialogTitle>{selectedMediaForFeedback?.title}</DialogTitle>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   Media Management & Client Feedback
                 </p>
               </DialogHeader>
+              
+              <div className="flex-1 overflow-y-auto overflow-x-hidden">
               
               {/* Video Preview Section - Responsive and scrollable */}
               {selectedMediaForFeedback?.type === "video" && (
@@ -1926,8 +1928,7 @@ export default function AdminMedia() {
                 </div>
               )}
               
-              <div className="flex flex-col h-full max-h-[60vh] overflow-hidden">
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full h-full flex flex-col">
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex flex-col">
                   <TabsList className="grid w-full grid-cols-4 mb-4 flex-shrink-0">
                     <TabsTrigger value="feedback" className="transition-all duration-200">Feedback</TabsTrigger>
                     <TabsTrigger value="edit" className="transition-all duration-200">Edit</TabsTrigger>
@@ -1936,7 +1937,7 @@ export default function AdminMedia() {
                   </TabsList>
                 
                 {/* Feedback Tab */}
-                <TabsContent value="feedback" className="flex-1 overflow-y-auto transition-all duration-500 ease-in-out animate-in fade-in-0 slide-in-from-bottom-2">
+                <TabsContent value="feedback" className="transition-all duration-500 ease-in-out animate-in fade-in-0 slide-in-from-bottom-2">
                   <div className="flex flex-col h-full">
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1 min-h-0">
@@ -2030,7 +2031,7 @@ export default function AdminMedia() {
                 </TabsContent>
                 
                 {/* Edit Tab */}
-                <TabsContent value="edit" className="flex-1 overflow-y-auto max-h-[50vh] transition-all duration-500 ease-in-out animate-in fade-in-0 slide-in-from-bottom-2">
+                <TabsContent value="edit" className="transition-all duration-500 ease-in-out animate-in fade-in-0 slide-in-from-bottom-2">
                   <div className="space-y-4">
                     <h3 className="font-semibold flex items-center gap-2">
                       <Edit className="h-4 w-4" />
@@ -2090,7 +2091,7 @@ export default function AdminMedia() {
                 </TabsContent>
                 
                 {/* Assign Tab */}
-                <TabsContent value="assign" className="flex-1 overflow-y-auto max-h-[50vh] transition-all duration-500 ease-in-out animate-in fade-in-0 slide-in-from-bottom-2">
+                <TabsContent value="assign" className="transition-all duration-500 ease-in-out animate-in fade-in-0 slide-in-from-bottom-2">
                   <div className="space-y-4">
                     <h3 className="font-semibold flex items-center gap-2">
                       <UserPlus className="h-4 w-4" />
@@ -2127,7 +2128,7 @@ export default function AdminMedia() {
                 </TabsContent>
                 
                 {/* Settings Tab */}
-                <TabsContent value="settings" className="max-h-[70vh] overflow-y-auto transition-all duration-500 ease-in-out animate-in fade-in-0 slide-in-from-bottom-2">
+                <TabsContent value="settings" className="transition-all duration-500 ease-in-out animate-in fade-in-0 slide-in-from-bottom-2">
                   <div className="space-y-6">
                     <h3 className="font-semibold flex items-center gap-2">
                       <Settings className="h-4 w-4" />
@@ -2188,7 +2189,7 @@ export default function AdminMedia() {
                     </div>
                   </div>
                 </TabsContent>
-              </Tabs>
+                </Tabs>
               </div>
             </DialogContent>
           </Dialog>
