@@ -527,7 +527,7 @@ export default function AdminMedia() {
     if (selectedMediaId && selectedClientForAssignment) {
       assignMediaMutation.mutate({ 
         mediaId: selectedMediaId, 
-        clientId: selectedClientForAssignment === "none" ? null : selectedClientForAssignment 
+        clientId: selectedClientForAssignment === "none" ? null : (selectedClientForAssignment || null) 
       });
     } else {
       toast({
@@ -588,6 +588,7 @@ export default function AdminMedia() {
   };
 
   const selectAllFiltered = () => {
+    if (!Array.isArray(filteredMedia)) return;
     const filteredIds = filteredMedia.map((item: any) => item.id);
     setSelectedItems(new Set(filteredIds));
   };
@@ -597,8 +598,9 @@ export default function AdminMedia() {
   };
 
   const isAllFilteredSelected = () => {
+    if (!Array.isArray(filteredMedia)) return false;
     const filteredIds = filteredMedia.map((item: any) => item.id);
-    return filteredIds.length > 0 && filteredIds.every(id => selectedItems.has(id));
+    return filteredIds.length > 0 && filteredIds.every((id: string) => selectedItems.has(id));
   };
 
   // Get unique values for filter options
@@ -617,7 +619,7 @@ export default function AdminMedia() {
     return stages.sort();
   };
 
-  const filteredMedia = (media || [])?.filter((item: any) => {
+  const filteredMedia = Array.isArray(media) ? media.filter((item: any) => {
     // Search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
@@ -662,7 +664,7 @@ export default function AdminMedia() {
     }
 
     return true;
-  });
+  }) : [];
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-black">
@@ -786,7 +788,7 @@ export default function AdminMedia() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="none">No client assignment</SelectItem>
-                        {(clients || [])?.map((client: any) => (
+                        {Array.isArray(clients) && clients.map((client: any) => (
                           <SelectItem key={client.id} value={client.id}>
                             {client.username} ({client.email})
                           </SelectItem>
@@ -909,7 +911,7 @@ export default function AdminMedia() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="none">No client assignment</SelectItem>
-                        {(clients || [])?.map((client: any) => (
+                        {Array.isArray(clients) && clients.map((client: any) => (
                           <SelectItem key={client.id} value={client.id}>
                             {client.username} ({client.email})
                           </SelectItem>
@@ -1012,7 +1014,7 @@ export default function AdminMedia() {
                             <span>Unassign from client</span>
                           </div>
                         </SelectItem>
-                        {(clients || [])?.map((client: any) => (
+                        {Array.isArray(clients) && clients.map((client: any) => (
                           <SelectItem key={client.id} value={client.id}>
                             <div className="flex items-center space-x-2">
                               <Users className="h-4 w-4" />
@@ -1020,7 +1022,7 @@ export default function AdminMedia() {
                             </div>
                           </SelectItem>
                         ))}
-                        {!(clients || [])?.length && (
+                        {!Array.isArray(clients) || clients.length === 0 && (
                           <SelectItem value="no-clients" disabled>
                             No clients available
                           </SelectItem>
@@ -1367,8 +1369,8 @@ export default function AdminMedia() {
                     {/* Feedback and Timeline Notes Indicators */}
                     <div className="absolute bottom-2 right-2 flex gap-1">
                       {(() => {
-                        const feedbackCount = allFeedback?.filter((f: any) => f.mediaId === item.id).length || 0;
-                        const notesCount = allTimelineNotes?.filter((n: any) => n.mediaId === item.id).length || 0;
+                        const feedbackCount = Array.isArray(allFeedback) ? allFeedback.filter((f: any) => f.mediaId === item.id).length : 0;
+                        const notesCount = Array.isArray(allTimelineNotes) ? allTimelineNotes.filter((n: any) => n.mediaId === item.id).length : 0;
                         
                         return (
                           <>
@@ -1391,7 +1393,7 @@ export default function AdminMedia() {
                     
                     {/* New Client Feedback Alert - Large overlay indicator */}
                     {(() => {
-                      const feedbackCount = allFeedback?.filter((f: any) => f.mediaId === item.id).length || 0;
+                      const feedbackCount = Array.isArray(allFeedback) ? allFeedback.filter((f: any) => f.mediaId === item.id).length : 0;
                       if (feedbackCount > 0) {
                         return (
                           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-blue-600/90 text-white px-3 py-2 rounded-lg shadow-xl border-2 border-blue-300 animate-pulse">
@@ -1597,7 +1599,7 @@ export default function AdminMedia() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">Remove assignment</SelectItem>
-                      {(clients || [])?.map((client: any) => (
+                      {Array.isArray(clients) && clients.map((client: any) => (
                         <SelectItem key={client.id} value={client.id}>
                           <div className="flex items-center space-x-2">
                             <Users className="h-4 w-4" />
@@ -1798,7 +1800,7 @@ export default function AdminMedia() {
                           Client Feedback
                         </h3>
                         <div className="flex-1 overflow-y-auto space-y-3 pr-2">
-                          {allFeedback?.filter((f: any) => f.mediaId === selectedMediaForFeedback?.id)
+                          {Array.isArray(allFeedback) && allFeedback.filter((f: any) => f.mediaId === selectedMediaForFeedback?.id)
                             .map((feedback: any) => (
                               <div key={feedback.id} className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
                                 <div className="flex items-center justify-between mb-2">
@@ -1823,7 +1825,7 @@ export default function AdminMedia() {
                                 <p className="text-sm">{feedback.feedbackText}</p>
                               </div>
                             ))}
-                          {(!allFeedback || allFeedback.filter((f: any) => f.mediaId === selectedMediaForFeedback?.id).length === 0) && (
+                          {(!Array.isArray(allFeedback) || allFeedback.filter((f: any) => f.mediaId === selectedMediaForFeedback?.id).length === 0) && (
                             <p className="text-sm text-gray-500 text-center py-8">
                               No client feedback yet.
                             </p>
@@ -1950,7 +1952,7 @@ export default function AdminMedia() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="unassign">Unassign</SelectItem>
-                          {clients?.map((client: any) => (
+                          {Array.isArray(clients) && clients.map((client: any) => (
                             <SelectItem key={client.id} value={client.id}>
                               {client.username} ({client.email})
                             </SelectItem>
