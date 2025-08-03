@@ -1131,7 +1131,7 @@ export default function ClientDashboard() {
             </div>
 
             {/* Tabs Section - Below Video */}
-            <div className="flex-1 border-t bg-white dark:bg-gray-950 flex flex-col">
+            <div className="flex-1 border-t bg-black/[0.039] dark:bg-black/[0.039] flex flex-col">
               <Tabs defaultValue="details" className="flex-1 flex flex-col">
                 <TabsList className="grid w-full grid-cols-3 rounded-none border-b">
                   <TabsTrigger value="details" className="text-sm">Details</TabsTrigger>
