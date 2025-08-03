@@ -1311,7 +1311,7 @@ export default function ClientDashboard() {
                                   </span>
                                 </div>
                                 <p className="text-sm text-gray-700 dark:text-gray-300">
-                                  {feedback.feedback}
+                                  {feedback.feedbackText}
                                 </p>
                               </div>
                             ))}
