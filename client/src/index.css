@@ -73,6 +73,20 @@
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
   }
+  
+  /* Smooth dialog resize animations */
+  .smooth-dialog {
+    transition: width 400ms cubic-bezier(0.4, 0, 0.2, 1), 
+                height 400ms cubic-bezier(0.4, 0, 0.2, 1), 
+                transform 400ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+  
+  /* Enhanced dialog content animation */
+  [data-state="open"][role="dialog"] {
+    transition: width 400ms cubic-bezier(0.4, 0, 0.2, 1), 
+                height 400ms cubic-bezier(0.4, 0, 0.2, 1), 
+                transform 400ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
 
   .hero-video-overlay {
     background: 
