@@ -576,6 +576,113 @@ export default function AdminMedia() {
     }
   };
 
+  // Add mutation for updating media details in feedback modal
+  const updateMediaDetailsMutation = useMutation({
+    mutationFn: async ({ mediaId, updates }: { mediaId: string; updates: any }) => {
+      return apiRequest("PUT", `/api/media/${mediaId}`, updates);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/media"] });
+      toast({
+        title: "Success",
+        description: "Media details updated successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error", 
+        description: "Failed to update media details",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Add mutation for updating media settings
+  const updateMediaSettingsMutation = useMutation({
+    mutationFn: async ({ mediaId, updates }: { mediaId: string; updates: any }) => {
+      return apiRequest("PUT", `/api/media/${mediaId}`, updates);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/media"] });
+      toast({
+        title: "Success",
+        description: "Media settings updated successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: "Failed to update media settings", 
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Handler for saving changes in Edit tab
+  const handleSaveChanges = () => {
+    if (!selectedMediaForFeedback) return;
+
+    const titleInput = document.querySelector('#feedback-edit-title') as HTMLInputElement;
+    const tagsInput = document.querySelector('#feedback-edit-tags') as HTMLInputElement;
+    const notesTextarea = document.querySelector('#feedback-edit-notes') as HTMLTextAreaElement;
+
+    const updates: any = {};
+    
+    if (titleInput?.value && titleInput.value !== selectedMediaForFeedback.title) {
+      updates.title = titleInput.value;
+    }
+    if (tagsInput?.value) {
+      const tags = tagsInput.value.split(',').map(t => t.trim()).filter(Boolean);
+      if (JSON.stringify(tags) !== JSON.stringify(selectedMediaForFeedback.tags || [])) {
+        updates.tags = tags;
+      }
+    }
+    if (notesTextarea?.value !== selectedMediaForFeedback.notes) {
+      updates.notes = notesTextarea.value || '';
+    }
+
+    if (Object.keys(updates).length > 0) {
+      updateMediaDetailsMutation.mutate({
+        mediaId: selectedMediaForFeedback.id,
+        updates,
+      });
+    } else {
+      toast({
+        title: "No changes to save",
+        description: "No modifications were detected",
+      });
+    }
+  };
+
+  // Handler for saving settings in Settings tab
+  const handleSaveSettings = () => {
+    if (!selectedMediaForFeedback) return;
+
+    const featuredCheckbox = document.querySelector('#feedback-featured') as HTMLInputElement;
+    const portfolioCheckbox = document.querySelector('#feedback-portfolio') as HTMLInputElement;
+
+    const updates: any = {};
+    
+    if (featuredCheckbox && featuredCheckbox.checked !== selectedMediaForFeedback.isFeatured) {
+      updates.isFeatured = featuredCheckbox.checked;
+    }
+    if (portfolioCheckbox && portfolioCheckbox.checked !== selectedMediaForFeedback.showInPortfolio) {
+      updates.showInPortfolio = portfolioCheckbox.checked;
+    }
+
+    if (Object.keys(updates).length > 0) {
+      updateMediaSettingsMutation.mutate({
+        mediaId: selectedMediaForFeedback.id,
+        updates,
+      });
+    } else {
+      toast({
+        title: "No changes to save",
+        description: "No settings modifications were detected",
+      });
+    }
+  };
+
   // Helper functions
   const toggleItemSelection = (itemId: string) => {
     const newSelection = new Set(selectedItems);
@@ -1893,6 +2000,7 @@ export default function AdminMedia() {
                       <div>
                         <label className="block text-sm font-medium mb-2">Title</label>
                         <Input 
+                          id="feedback-edit-title"
                           defaultValue={selectedMediaForFeedback?.title}
                           placeholder="Media title..."
                         />
@@ -1915,6 +2023,7 @@ export default function AdminMedia() {
                       <div className="col-span-2">
                         <label className="block text-sm font-medium mb-2">Tags</label>
                         <Input 
+                          id="feedback-edit-tags"
                           defaultValue={selectedMediaForFeedback?.tags?.join(", ")}
                           placeholder="Enter tags separated by commas..."
                         />
@@ -1922,6 +2031,7 @@ export default function AdminMedia() {
                       <div className="col-span-2">
                         <label className="block text-sm font-medium mb-2">Notes</label>
                         <Textarea 
+                          id="feedback-edit-notes"
                           defaultValue={selectedMediaForFeedback?.notes}
                           placeholder="Additional notes..."
                           rows={3}
@@ -1929,7 +2039,12 @@ export default function AdminMedia() {
                       </div>
                     </div>
                     <div className="flex justify-end">
-                      <Button>Save Changes</Button>
+                      <Button 
+                        onClick={handleSaveChanges}
+                        disabled={updateMediaDetailsMutation.isPending}
+                      >
+                        {updateMediaDetailsMutation.isPending ? "Saving..." : "Save Changes"}
+                      </Button>
                     </div>
                   </div>
                 </TabsContent>
@@ -1987,7 +2102,7 @@ export default function AdminMedia() {
                             Display this media prominently on the homepage
                           </p>
                         </div>
-                        <Switch defaultChecked={selectedMediaForFeedback?.isFeatured} />
+                        <Switch id="feedback-featured" defaultChecked={selectedMediaForFeedback?.isFeatured} />
                       </div>
                       
                       <div className="flex items-center justify-between">
@@ -1997,7 +2112,7 @@ export default function AdminMedia() {
                             Include this media in the public portfolio
                           </p>
                         </div>
-                        <Switch defaultChecked={selectedMediaForFeedback?.showInPortfolio} />
+                        <Switch id="feedback-portfolio" defaultChecked={selectedMediaForFeedback?.showInPortfolio} />
                       </div>
                     </div>
                     
@@ -2018,7 +2133,12 @@ export default function AdminMedia() {
                     </div>
                     
                     <div className="flex justify-end">
-                      <Button>Save Settings</Button>
+                      <Button 
+                        onClick={handleSaveSettings}
+                        disabled={updateMediaSettingsMutation.isPending}
+                      >
+                        {updateMediaSettingsMutation.isPending ? "Saving..." : "Save Settings"}
+                      </Button>
                     </div>
                   </div>
                 </TabsContent>
