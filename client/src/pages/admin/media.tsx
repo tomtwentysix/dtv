@@ -1694,7 +1694,7 @@ export default function AdminMedia() {
 
           {/* Media Management Modal with Tabs */}
           <Dialog open={showFeedbackModal} onOpenChange={setShowFeedbackModal}>
-            <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden" style={{ background: 'white' }}>
+            <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden">
               <DialogHeader>
                 <DialogTitle>{selectedMediaForFeedback?.title}</DialogTitle>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -1711,7 +1711,7 @@ export default function AdminMedia() {
                     background: '#ffffff',
                     padding: '16px',
                     borderRadius: '8px',
-                    border: '2px solid #e5e7eb'
+                    border: '1px solid #e5e7eb'
                   }}
                 >
                   <video
@@ -1727,7 +1727,7 @@ export default function AdminMedia() {
                           aspect-ratio: 16/9 !important;
                           object-fit: contain !important;
                           display: block !important;
-                          background-color: #ffffff !important;
+                          background-color: transparent !important;
                           min-height: 300px !important;
                           border-radius: 8px !important;
                           filter: none !important;
@@ -1757,7 +1757,7 @@ export default function AdminMedia() {
                         aspect-ratio: 16/9 !important;
                         object-fit: contain !important;
                         display: block !important;
-                        background-color: #ffffff !important;
+                        background-color: transparent !important;
                         min-height: 300px !important;
                         border-radius: 8px !important;
                         filter: none !important;
