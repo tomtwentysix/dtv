@@ -517,6 +517,7 @@ export default function AdminMedia() {
   };
 
   const [selectedClientForAssignment, setSelectedClientForAssignment] = useState<string>("");
+  const [selectedClientForFeedbackModal, setSelectedClientForFeedbackModal] = useState<string>("");
 
   const onAssignToClient = (clientId: string) => {
     setSelectedClientForAssignment(clientId);
@@ -532,6 +533,44 @@ export default function AdminMedia() {
       toast({
         title: "Please select a client",
         description: "Choose a client from the dropdown above to assign this media.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const updateFeedbackModalAssignmentMutation = useMutation({
+    mutationFn: async ({ mediaId, clientId }: { mediaId: string; clientId: string | null }) => {
+      const res = await apiRequest("PUT", `/api/media/${mediaId}`, {
+        clientId: clientId === "unassign" ? null : clientId,
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/media"] });
+      toast({
+        title: "Assignment updated",
+        description: "Media assignment has been updated successfully.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Assignment failed",
+        description: error.message || "Failed to update media assignment.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleUpdateFeedbackModalAssignment = () => {
+    if (selectedMediaForFeedback && selectedClientForFeedbackModal !== undefined) {
+      updateFeedbackModalAssignmentMutation.mutate({
+        mediaId: selectedMediaForFeedback.id,
+        clientId: selectedClientForFeedbackModal === "unassign" ? null : selectedClientForFeedbackModal,
+      });
+    } else {
+      toast({
+        title: "Please select a client",
+        description: "Choose a client from the dropdown to update the assignment.",
         variant: "destructive"
       });
     }
@@ -1175,6 +1214,7 @@ export default function AdminMedia() {
                   className="overflow-hidden group cursor-pointer hover:shadow-lg transition-shadow"
                   onClick={() => {
                     setSelectedMediaForFeedback(item);
+                    setSelectedClientForFeedbackModal(item.clientId || "unassign");
                     setActiveTab("feedback");
                     setShowFeedbackModal(true);
                   }}
@@ -1222,6 +1262,7 @@ export default function AdminMedia() {
                               e.stopPropagation();
                               e.preventDefault();
                               setSelectedMediaForFeedback(item);
+                              setSelectedClientForFeedbackModal(item.clientId || "unassign");
                               setActiveTab("feedback");
                               setShowFeedbackModal(true);
                             }}
@@ -1236,6 +1277,7 @@ export default function AdminMedia() {
                                 e.stopPropagation();
                                 e.preventDefault();
                                 setSelectedMediaForFeedback(item);
+                                setSelectedClientForFeedbackModal(item.clientId || "unassign");
                                 setActiveTab("edit");
                                 setShowFeedbackModal(true);
                               }}
@@ -1251,6 +1293,7 @@ export default function AdminMedia() {
                                 e.stopPropagation();
                                 e.preventDefault();
                                 setSelectedMediaForFeedback(item);
+                                setSelectedClientForFeedbackModal(item.clientId || "unassign");
                                 setActiveTab("assign");
                                 setShowFeedbackModal(true);
                               }}
@@ -1265,6 +1308,7 @@ export default function AdminMedia() {
                               e.stopPropagation();
                               e.preventDefault();
                               setSelectedMediaForFeedback(item);
+                              setSelectedClientForFeedbackModal(item.clientId || "unassign");
                               setActiveTab("settings");
                               setShowFeedbackModal(true);
                             }}
@@ -1843,7 +1887,10 @@ export default function AdminMedia() {
                     </h3>
                     <div>
                       <label className="block text-sm font-medium mb-2">Assign to Client</label>
-                      <Select defaultValue={selectedMediaForFeedback?.clientId || ""}>
+                      <Select 
+                        defaultValue={selectedMediaForFeedback?.clientId || "unassign"}
+                        onValueChange={(value) => setSelectedClientForFeedbackModal(value)}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Select a client..." />
                         </SelectTrigger>
@@ -1858,7 +1905,12 @@ export default function AdminMedia() {
                       </Select>
                     </div>
                     <div className="flex justify-end">
-                      <Button>Update Assignment</Button>
+                      <Button 
+                        onClick={handleUpdateFeedbackModalAssignment}
+                        disabled={updateFeedbackModalAssignmentMutation.isPending}
+                      >
+                        {updateFeedbackModalAssignmentMutation.isPending ? "Updating..." : "Update Assignment"}
+                      </Button>
                     </div>
                   </div>
                 </TabsContent>
