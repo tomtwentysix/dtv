@@ -1832,7 +1832,7 @@ export default function AdminMedia() {
                 </p>
               </DialogHeader>
               
-              {/* Video Preview Section - Completely isolated */}
+              {/* Video Preview Section - Responsive and scrollable */}
               {selectedMediaForFeedback?.type === "video" && (
                 <div 
                   className="mb-4 p-4 rounded-lg border border-gray-200 dark:border-gray-800 bg-white"
@@ -1848,14 +1848,15 @@ export default function AdminMedia() {
                       if (ref) {
                         // Remove ALL classes that might inherit dark styling
                         ref.className = '';
-                        // Force immediate clean styling
+                        // Responsive video styling
                         ref.style.cssText = `
                           width: 100% !important;
                           aspect-ratio: 16/9 !important;
                           object-fit: contain !important;
                           display: block !important;
                           background-color: transparent !important;
-                          min-height: 300px !important;
+                          min-height: 200px !important;
+                          max-height: 400px !important;
                           border-radius: 8px !important;
                           filter: none !important;
                           -webkit-filter: none !important;
@@ -1868,6 +1869,20 @@ export default function AdminMedia() {
                           transform: none !important;
                           box-shadow: none !important;
                         `;
+                        
+                        // Additional responsive styling for smaller screens
+                        const mediaQuery = window.matchMedia('(max-width: 768px)');
+                        const updateVideoSize = () => {
+                          if (mediaQuery.matches) {
+                            ref.style.minHeight = '150px !important';
+                            ref.style.maxHeight = '250px !important';
+                          } else {
+                            ref.style.minHeight = '200px !important';
+                            ref.style.maxHeight = '400px !important';
+                          }
+                        };
+                        updateVideoSize();
+                        mediaQuery.addEventListener('change', updateVideoSize);
                       }
                     }}
                     src={selectedMediaForFeedback.url}
@@ -1878,14 +1893,15 @@ export default function AdminMedia() {
                     playsInline
                     onCanPlay={(e) => {
                       const video = e.target as HTMLVideoElement;
-                      // Force styling when video can play
+                      // Force responsive styling when video can play
                       video.style.cssText = `
                         width: 100% !important;
                         aspect-ratio: 16/9 !important;
                         object-fit: contain !important;
                         display: block !important;
                         background-color: transparent !important;
-                        min-height: 300px !important;
+                        min-height: 200px !important;
+                        max-height: 400px !important;
                         border-radius: 8px !important;
                         filter: none !important;
                         -webkit-filter: none !important;
@@ -1898,24 +1914,32 @@ export default function AdminMedia() {
                         transform: none !important;
                         box-shadow: none !important;
                       `;
+                      
+                      // Mobile responsive adjustments
+                      const mediaQuery = window.matchMedia('(max-width: 768px)');
+                      if (mediaQuery.matches) {
+                        video.style.minHeight = '150px !important';
+                        video.style.maxHeight = '250px !important';
+                      }
                     }}
                   />
                 </div>
               )}
               
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full h-full flex flex-col">
-                <TabsList className="grid w-full grid-cols-4 mb-4">
-                  <TabsTrigger value="feedback" className="transition-all duration-200">Feedback</TabsTrigger>
-                  <TabsTrigger value="edit" className="transition-all duration-200">Edit</TabsTrigger>
-                  <TabsTrigger value="assign" className="transition-all duration-200">Assign</TabsTrigger>
-                  <TabsTrigger value="settings" className="transition-all duration-200">Settings</TabsTrigger>
-                </TabsList>
+              <div className="flex flex-col h-full max-h-[60vh] overflow-hidden">
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full h-full flex flex-col">
+                  <TabsList className="grid w-full grid-cols-4 mb-4 flex-shrink-0">
+                    <TabsTrigger value="feedback" className="transition-all duration-200">Feedback</TabsTrigger>
+                    <TabsTrigger value="edit" className="transition-all duration-200">Edit</TabsTrigger>
+                    <TabsTrigger value="assign" className="transition-all duration-200">Assign</TabsTrigger>
+                    <TabsTrigger value="settings" className="transition-all duration-200">Settings</TabsTrigger>
+                  </TabsList>
                 
                 {/* Feedback Tab */}
-                <TabsContent value="feedback" className="flex-1 overflow-hidden transition-all duration-500 ease-in-out animate-in fade-in-0 slide-in-from-bottom-2">
+                <TabsContent value="feedback" className="flex-1 overflow-y-auto transition-all duration-500 ease-in-out animate-in fade-in-0 slide-in-from-bottom-2">
                   <div className="flex flex-col h-full">
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1 overflow-hidden">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1 min-h-0">
                       {/* Feedback Section */}
                       <div className="flex flex-col">
                         <h3 className="font-semibold mb-3 flex items-center gap-2">
@@ -2006,7 +2030,7 @@ export default function AdminMedia() {
                 </TabsContent>
                 
                 {/* Edit Tab */}
-                <TabsContent value="edit" className="flex-1 overflow-y-auto transition-all duration-500 ease-in-out animate-in fade-in-0 slide-in-from-bottom-2">
+                <TabsContent value="edit" className="flex-1 overflow-y-auto max-h-[50vh] transition-all duration-500 ease-in-out animate-in fade-in-0 slide-in-from-bottom-2">
                   <div className="space-y-4">
                     <h3 className="font-semibold flex items-center gap-2">
                       <Edit className="h-4 w-4" />
@@ -2066,7 +2090,7 @@ export default function AdminMedia() {
                 </TabsContent>
                 
                 {/* Assign Tab */}
-                <TabsContent value="assign" className="flex-1 overflow-y-auto transition-all duration-500 ease-in-out animate-in fade-in-0 slide-in-from-bottom-2">
+                <TabsContent value="assign" className="flex-1 overflow-y-auto max-h-[50vh] transition-all duration-500 ease-in-out animate-in fade-in-0 slide-in-from-bottom-2">
                   <div className="space-y-4">
                     <h3 className="font-semibold flex items-center gap-2">
                       <UserPlus className="h-4 w-4" />
@@ -2165,6 +2189,7 @@ export default function AdminMedia() {
                   </div>
                 </TabsContent>
               </Tabs>
+              </div>
             </DialogContent>
           </Dialog>
         </div>
