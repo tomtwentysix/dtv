@@ -1739,23 +1739,39 @@ export default function AdminMedia() {
                       console.log('Video loaded');
                       const video = e.target as HTMLVideoElement;
                       
-                      // Force CSS properties via JavaScript to override any inheritance
-                      video.style.filter = 'none';
-                      video.style.mixBlendMode = 'normal';
-                      video.style.opacity = '1';
-                      video.style.isolation = 'isolate';
-                      video.style.webkitFilter = 'none';
+                      // Function to force clean video styling
+                      const forceCleanVideo = () => {
+                        video.style.filter = 'none';
+                        video.style.mixBlendMode = 'normal';
+                        video.style.opacity = '1';
+                        video.style.isolation = 'isolate';
+                        video.style.webkitFilter = 'none';
+                        video.style.transform = 'none';
+                        video.style.backgroundColor = 'white';
+                      };
                       
-                      // Remove any overlays after video loads
-                      setTimeout(() => {
-                        const overlays = video.parentElement?.querySelectorAll('[style*="position: absolute"], [style*="position: fixed"]');
-                        overlays?.forEach(overlay => {
-                          if (overlay !== video) {
-                            console.log('Removing post-load overlay:', overlay);
-                            overlay.remove();
-                          }
-                        });
-                      }, 50);
+                      // Apply immediately
+                      forceCleanVideo();
+                      
+                      // Apply multiple times with different delays to catch any late-loading effects
+                      setTimeout(forceCleanVideo, 10);
+                      setTimeout(forceCleanVideo, 50);
+                      setTimeout(forceCleanVideo, 100);
+                      setTimeout(forceCleanVideo, 200);
+                      setTimeout(forceCleanVideo, 500);
+                      
+                      // Set up an observer to catch any changes
+                      const observer = new MutationObserver(() => {
+                        forceCleanVideo();
+                      });
+                      
+                      observer.observe(video, {
+                        attributes: true,
+                        attributeFilter: ['style', 'class']
+                      });
+                      
+                      // Clean up observer after 2 seconds
+                      setTimeout(() => observer.disconnect(), 2000);
                     }}
                     style={{ 
                       width: '100%',
