@@ -654,20 +654,29 @@ export default function AdminMedia() {
     }
   };
 
+  // State for tracking switch values in Settings tab
+  const [feedbackModalFeatured, setFeedbackModalFeatured] = useState<boolean>(false);
+  const [feedbackModalPortfolio, setFeedbackModalPortfolio] = useState<boolean>(false);
+
+  // Update switch states when modal opens
+  useEffect(() => {
+    if (selectedMediaForFeedback) {
+      setFeedbackModalFeatured(selectedMediaForFeedback.isFeatured || false);
+      setFeedbackModalPortfolio(selectedMediaForFeedback.showInPortfolio || false);
+    }
+  }, [selectedMediaForFeedback]);
+
   // Handler for saving settings in Settings tab
   const handleSaveSettings = () => {
     if (!selectedMediaForFeedback) return;
 
-    const featuredCheckbox = document.querySelector('#feedback-featured') as HTMLInputElement;
-    const portfolioCheckbox = document.querySelector('#feedback-portfolio') as HTMLInputElement;
-
     const updates: any = {};
     
-    if (featuredCheckbox && featuredCheckbox.checked !== selectedMediaForFeedback.isFeatured) {
-      updates.isFeatured = featuredCheckbox.checked;
+    if (feedbackModalFeatured !== selectedMediaForFeedback.isFeatured) {
+      updates.isFeatured = feedbackModalFeatured;
     }
-    if (portfolioCheckbox && portfolioCheckbox.checked !== selectedMediaForFeedback.showInPortfolio) {
-      updates.showInPortfolio = portfolioCheckbox.checked;
+    if (feedbackModalPortfolio !== selectedMediaForFeedback.showInPortfolio) {
+      updates.showInPortfolio = feedbackModalPortfolio;
     }
 
     if (Object.keys(updates).length > 0) {
@@ -2102,7 +2111,10 @@ export default function AdminMedia() {
                             Display this media prominently on the homepage
                           </p>
                         </div>
-                        <Switch id="feedback-featured" defaultChecked={selectedMediaForFeedback?.isFeatured} />
+                        <Switch 
+                          checked={feedbackModalFeatured} 
+                          onCheckedChange={setFeedbackModalFeatured} 
+                        />
                       </div>
                       
                       <div className="flex items-center justify-between">
@@ -2112,7 +2124,10 @@ export default function AdminMedia() {
                             Include this media in the public portfolio
                           </p>
                         </div>
-                        <Switch id="feedback-portfolio" defaultChecked={selectedMediaForFeedback?.showInPortfolio} />
+                        <Switch 
+                          checked={feedbackModalPortfolio} 
+                          onCheckedChange={setFeedbackModalPortfolio} 
+                        />
                       </div>
                     </div>
                     
