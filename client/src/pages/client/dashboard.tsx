@@ -959,13 +959,14 @@ export default function ClientDashboard() {
 
           <div className="flex-1 flex flex-col overflow-hidden">
             {/* Video Player Section */}
-            <div className="flex-shrink-0 p-6 flex flex-col justify-center items-center bg-gray-50 dark:bg-gray-900/50">
+            <div className="flex-shrink-0 p-6 flex flex-col justify-center items-center bg-black/[0.039]">
               {showDetails && (
                 <div className="w-full max-w-4xl">
                   {showDetails.type === "video" ? (
                     <video
                       ref={(ref) => {
                         if (ref) {
+                          modalVideoRef.current = ref;
                           // Remove ALL classes that might inherit dark styling
                           ref.className = '';
                           // Dynamic video sizing with responsive approach
@@ -1046,6 +1047,24 @@ export default function ClientDashboard() {
                       controls
                       preload="metadata"
                       playsInline
+                      onLoadedMetadata={(e) => {
+                        const video = e.target as HTMLVideoElement;
+                        setDuration(video.duration);
+                        video.volume = volume;
+                        video.muted = isMuted;
+                      }}
+                      onTimeUpdate={(e) => {
+                        const video = e.target as HTMLVideoElement;
+                        setCurrentTime(video.currentTime);
+                      }}
+                      onPlay={() => setIsPlaying(true)}
+                      onPause={(e) => {
+                        const video = e.target as HTMLVideoElement;
+                        setIsPlaying(false);
+                        // Auto-update timestamp when pausing for timeline notes
+                        setNoteTimestamp(Math.round(video.currentTime * 100) / 100);
+                      }}
+                      onEnded={() => setIsPlaying(false)}
                       onCanPlay={(e) => {
                         const video = e.target as HTMLVideoElement;
                         // Force responsive styling when video can play with dynamic sizing
