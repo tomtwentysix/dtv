@@ -14,6 +14,7 @@ import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -963,283 +964,459 @@ export default function ClientDashboard() {
         </div>
       )}
 
-      {/* Media Details Modal */}
+      {/* Unified Client Media Management Modal */}
       <Dialog open={!!showDetails} onOpenChange={() => setShowDetails(null)}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Media Details</DialogTitle>
-            <DialogDescription>
-              Detailed information about {showDetails?.title}
+        <DialogContent className="max-w-7xl max-h-[90vh] flex flex-col p-0 gap-0 smooth-dialog">
+          <DialogHeader className="px-6 py-4 border-b flex-shrink-0">
+            <DialogTitle className="text-xl font-semibold">
+              {showDetails?.title}
+            </DialogTitle>
+            <DialogDescription className="text-sm text-gray-600 dark:text-gray-400">
+              Review, provide feedback, and manage your media content
             </DialogDescription>
           </DialogHeader>
 
-          {showDetails && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <h4 className="font-semibold mb-2">Basic Information</h4>
-                  <div className="space-y-2 text-sm">
-                    <div>
-                      <strong>Title:</strong> {showDetails.title}
-                    </div>
-                    <div>
-                      <strong>Type:</strong> {showDetails.type}
-                    </div>
-                    <div>
-                      <strong>File Size:</strong>{" "}
-                      {showDetails.fileSize
-                        ? `${(showDetails.fileSize / 1024 / 1024).toFixed(2)} MB`
-                        : "Unknown"}
-                    </div>
-                    <div>
-                      <strong>Created:</strong>{" "}
-                      {new Date(showDetails.createdAt).toLocaleString()}
-                    </div>
-                  </div>
-                </div>
-                <div>
-                  <h4 className="font-semibold mb-2">Project Details</h4>
-                  <div className="space-y-2 text-sm">
-                    <div>
-                      <strong>Stage:</strong>{" "}
-                      {showDetails.projectStage || "Not specified"}
-                    </div>
-                    <div>
-                      <strong>Portfolio:</strong>{" "}
-                      {showDetails.showInPortfolio ? "Visible" : "Hidden"}
-                    </div>
-                    <div>
-                      <strong>Featured:</strong>{" "}
-                      {showDetails.isFeatured ? "Yes" : "No"}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {showDetails.tags && showDetails.tags.length > 0 && (
-                <div>
-                  <h4 className="font-semibold mb-2">Tags</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {showDetails.tags.map((tag: string) => (
-                      <Badge key={tag} variant="secondary">
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {showDetails.notes && (
-                <div>
-                  <h4 className="font-semibold mb-2">Notes</h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 p-3 rounded">
-                    {showDetails.notes}
-                  </p>
-                </div>
-              )}
-
-              <div className="flex justify-end gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() =>
-                    handleDownload(showDetails.url, showDetails.filename)
-                  }
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Download
-                </Button>
-                <Button
-                  onClick={() => {
-                    setShowDetails(null);
-                    openMediaModal(showDetails);
-                  }}
-                >
-                  <Eye className="h-4 w-4 mr-2" />
-                  Preview
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Feedback Modal */}
-      <Dialog open={!!showFeedback} onOpenChange={() => setShowFeedback(null)}>
-        <DialogContent className="max-w-xl">
-          <DialogHeader>
-            <DialogTitle>Submit Feedback</DialogTitle>
-            <DialogDescription>
-              Share your thoughts about {showFeedback?.title}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-6">
-            <div>
-              <label className="text-sm font-medium mb-2 block">Rating</label>
-              <div className="flex gap-1">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    onClick={() => setRating(star)}
-                    className="p-1 hover:scale-110 transition-transform"
-                  >
-                    <Star
-                      className={`h-6 w-6 ${
-                        star <= rating
-                          ? "fill-yellow-400 text-yellow-400"
-                          : "text-gray-300 dark:text-gray-600"
-                      }`}
+          <div className="flex-1 flex overflow-hidden">
+            {/* Video Player Section */}
+            <div className="flex-1 p-6 flex flex-col justify-center items-center bg-gray-50 dark:bg-gray-900/50">
+              {showDetails && (
+                <div className="w-full max-w-4xl">
+                  {showDetails.type === "video" ? (
+                    <video
+                      ref={(ref) => {
+                        if (ref) {
+                          // Remove ALL classes that might inherit dark styling
+                          ref.className = '';
+                          // Dynamic video sizing with responsive approach
+                          ref.style.cssText = `
+                            max-width: 100% !important;
+                            height: auto !important;
+                            object-fit: contain !important;
+                            display: block !important;
+                            background-color: transparent !important;
+                            min-height: 200px !important;
+                            max-height: 500px !important;
+                            border-radius: 8px !important;
+                            filter: none !important;
+                            -webkit-filter: none !important;
+                            mix-blend-mode: normal !important;
+                            opacity: 1 !important;
+                            isolation: isolate !important;
+                            border: 1px solid #e5e7eb !important;
+                            z-index: 99999 !important;
+                            position: relative !important;
+                            transform: none !important;
+                            box-shadow: none !important;
+                            margin: 0 auto !important;
+                          `;
+                          
+                          // Dynamic video sizing function
+                          const applyDynamicSizing = () => {
+                            // Get video dimensions once loaded
+                            if (ref.videoWidth && ref.videoHeight) {
+                              const aspectRatio = ref.videoWidth / ref.videoHeight;
+                              const containerWidth = ref.parentElement?.clientWidth || 600;
+                              const maxHeight = window.innerWidth <= 768 ? 300 : 500;
+                              const minHeight = window.innerWidth <= 768 ? 200 : 250;
+                              
+                              // Calculate optimal width based on aspect ratio and height constraints
+                              const optimalWidth = Math.min(containerWidth, aspectRatio * maxHeight);
+                              const calculatedHeight = optimalWidth / aspectRatio;
+                              
+                              if (calculatedHeight >= minHeight && calculatedHeight <= maxHeight) {
+                                ref.style.width = `${optimalWidth}px !important`;
+                                ref.style.height = `${calculatedHeight}px !important`;
+                              }
+                            }
+                          };
+                          
+                          // Apply sizing when metadata loads
+                          ref.addEventListener('loadedmetadata', applyDynamicSizing);
+                          
+                          // Responsive sizing for screen changes
+                          const mediaQuery = window.matchMedia('(max-width: 768px)');
+                          const updateVideoSize = () => {
+                            if (mediaQuery.matches) {
+                              ref.style.minHeight = '200px !important';
+                              ref.style.maxHeight = '300px !important';
+                            } else {
+                              ref.style.minHeight = '250px !important';
+                              ref.style.maxHeight = '500px !important';
+                            }
+                            applyDynamicSizing();
+                          };
+                          updateVideoSize();
+                          mediaQuery.addEventListener('change', updateVideoSize);
+                          
+                          // Handle window resize
+                          const handleResize = () => applyDynamicSizing();
+                          window.addEventListener('resize', handleResize);
+                          
+                          // Use ResizeObserver for container size changes
+                          if (window.ResizeObserver && ref.parentElement) {
+                            const resizeObserver = new ResizeObserver(() => {
+                              applyDynamicSizing();
+                            });
+                            resizeObserver.observe(ref.parentElement);
+                          }
+                        }
+                      }}
+                      src={showDetails.url}
+                      controls
+                      preload="metadata"
+                      playsInline
+                      onCanPlay={(e) => {
+                        const video = e.target as HTMLVideoElement;
+                        // Force responsive styling when video can play with dynamic sizing
+                        const applyVideoSizing = () => {
+                          video.style.cssText = `
+                            max-width: 100% !important;
+                            height: auto !important;
+                            object-fit: contain !important;
+                            display: block !important;
+                            background-color: transparent !important;
+                            min-height: 200px !important;
+                            max-height: 500px !important;
+                            border-radius: 8px !important;
+                            filter: none !important;
+                            -webkit-filter: none !important;
+                            mix-blend-mode: normal !important;
+                            opacity: 1 !important;
+                            isolation: isolate !important;
+                            border: 1px solid #e5e7eb !important;
+                            z-index: 99999 !important;
+                            position: relative !important;
+                            transform: none !important;
+                            box-shadow: none !important;
+                            margin: 0 auto !important;
+                          `;
+                          
+                          // Get video dimensions and calculate optimal width
+                          if (video.videoWidth && video.videoHeight) {
+                            const aspectRatio = video.videoWidth / video.videoHeight;
+                            const containerWidth = video.parentElement?.clientWidth || 600;
+                            const maxHeight = window.innerWidth <= 768 ? 300 : 500;
+                            const minHeight = window.innerWidth <= 768 ? 200 : 250;
+                            
+                            // Calculate width based on aspect ratio and height constraints
+                            const optimalWidth = Math.min(containerWidth, aspectRatio * maxHeight);
+                            const calculatedHeight = optimalWidth / aspectRatio;
+                            
+                            if (calculatedHeight >= minHeight && calculatedHeight <= maxHeight) {
+                              video.style.width = `${optimalWidth}px !important`;
+                              video.style.height = `${calculatedHeight}px !important`;
+                            }
+                          }
+                        };
+                        
+                        applyVideoSizing();
+                        
+                        // Mobile responsive adjustments
+                        const mediaQuery = window.matchMedia('(max-width: 768px)');
+                        if (mediaQuery.matches) {
+                          video.style.minHeight = '200px !important';
+                          video.style.maxHeight = '300px !important';
+                        }
+                      }}
                     />
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium mb-2 block">Feedback</label>
-              <Textarea
-                placeholder="Share your thoughts, suggestions, or concerns..."
-                value={feedbackText}
-                onChange={(e) => setFeedbackText(e.target.value)}
-                rows={4}
-              />
-            </div>
-
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setShowFeedback(null)}>
-                Cancel
-              </Button>
-              <Button
-                onClick={submitFeedback}
-                disabled={
-                  feedbackMutation.isPending ||
-                  !feedbackText.trim() ||
-                  rating === 0
-                }
-              >
-                {feedbackMutation.isPending ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Submitting...
-                  </>
-                ) : (
-                  "Submit Feedback"
-                )}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Timeline Notes Modal */}
-      <Dialog
-        open={!!showTimelineNotes}
-        onOpenChange={() => setShowTimelineNotes(null)}
-      >
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-          <DialogHeader className="pb-4">
-            <DialogTitle>Video Timeline Notes</DialogTitle>
-            <DialogDescription>
-              Add notes at specific timestamps for {showTimelineNotes?.title}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-6 py-2">
-            {/* Add New Note */}
-            <div className="border rounded-lg p-4">
-              <h4 className="font-semibold mb-3">Add New Note</h4>
-              <div className="grid grid-cols-2 gap-4 mb-3">
-                <div>
-                  <label className="text-sm font-medium mb-1 block">
-                    Timestamp (seconds)
-                  </label>
-                  <Input
-                    type="number"
-                    min="0"
-                    step="0.1"
-                    value={noteTimestamp}
-                    onChange={(e) =>
-                      setNoteTimestamp(parseFloat(e.target.value) || 0)
-                    }
-                    placeholder="0"
-                  />
+                  ) : (
+                    <img
+                      src={showDetails.url}
+                      alt={showDetails.title}
+                      className="max-w-full max-h-[500px] object-contain mx-auto rounded-lg border"
+                    />
+                  )}
                 </div>
-                <div>
-                  <label className="text-sm font-medium mb-1 block">
-                    Formatted Time
-                  </label>
-                  <div className="px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded text-sm">
-                    {formatTimestamp(noteTimestamp)}
-                  </div>
-                </div>
-              </div>
-              <Textarea
-                placeholder="Enter your note for this timestamp..."
-                value={newNoteText}
-                onChange={(e) => setNewNoteText(e.target.value)}
-                rows={3}
-                className="mb-3"
-              />
-              <Button
-                onClick={addTimelineNote}
-                disabled={timelineNoteMutation.isPending || !newNoteText.trim()}
-                size="sm"
-              >
-                {timelineNoteMutation.isPending ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Adding...
-                  </>
-                ) : (
-                  <>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Note
-                  </>
-                )}
-              </Button>
+              )}
             </div>
 
-            {/* Existing Notes */}
-            <div>
-              <h4 className="font-semibold mb-3">Existing Notes</h4>
-              <div className="space-y-3 max-h-64 overflow-y-auto">
-                {typedTimelineNotes
-                  .filter(
-                    (note: any) => note.mediaId === showTimelineNotes?.id,
-                  )
-                  .sort(
-                    (a: any, b: any) => a.timestampSeconds - b.timestampSeconds,
-                  )
-                  .map((note: any) => (
-                    <div
-                      key={note.id}
-                      className="flex gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded"
-                    >
-                      <div className="flex-shrink-0">
-                        <Badge variant="outline" className="text-xs">
-                          {formatTimestamp(note.timestampSeconds)}
-                        </Badge>
+            {/* Right Panel */}
+            <div className="w-96 border-l bg-white dark:bg-gray-950 flex flex-col">
+              <Tabs defaultValue="details" className="flex-1 flex flex-col">
+                <TabsList className="grid w-full grid-cols-3 rounded-none border-b">
+                  <TabsTrigger value="details" className="text-xs">Details</TabsTrigger>
+                  <TabsTrigger value="feedback" className="text-xs">Feedback</TabsTrigger>
+                  <TabsTrigger value="notes" className="text-xs">Timeline</TabsTrigger>
+                </TabsList>
+
+                {/* Details Tab */}
+                <TabsContent value="details" className="flex-1 p-4 overflow-y-auto">
+                  {showDetails && (
+                    <div className="space-y-6">
+                      <div>
+                        <h4 className="font-semibold mb-3">Basic Information</h4>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 dark:text-gray-400">Type:</span>
+                            <span className="capitalize">{showDetails.type}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 dark:text-gray-400">Size:</span>
+                            <span>
+                              {showDetails.fileSize
+                                ? `${(showDetails.fileSize / 1024 / 1024).toFixed(2)} MB`
+                                : "Unknown"}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 dark:text-gray-400">Created:</span>
+                            <span className="text-right text-xs">
+                              {new Date(showDetails.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex-1">
-                        <p className="text-sm">{note.noteText}</p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {new Date(note.createdAt).toLocaleString()}
-                        </p>
+
+                      <div>
+                        <h4 className="font-semibold mb-3">Project Details</h4>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 dark:text-gray-400">Stage:</span>
+                            <Badge variant="outline" className="text-xs">
+                              {showDetails.projectStage || "Not specified"}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+
+                      {showDetails.tags && showDetails.tags.length > 0 && (
+                        <div>
+                          <h4 className="font-semibold mb-3">Tags</h4>
+                          <div className="flex flex-wrap gap-1">
+                            {showDetails.tags.map((tag: string) => (
+                              <Badge key={tag} variant="secondary" className="text-xs">
+                                {tag}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {showDetails.notes && (
+                        <div>
+                          <h4 className="font-semibold mb-3">Notes</h4>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 p-3 rounded text-wrap break-words">
+                            {showDetails.notes}
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="pt-4 border-t">
+                        <Button
+                          className="w-full"
+                          variant="outline"
+                          onClick={() =>
+                            handleDownload(showDetails.url, showDetails.filename)
+                          }
+                        >
+                          <Download className="h-4 w-4 mr-2" />
+                          Download File
+                        </Button>
                       </div>
                     </div>
-                  ))}
-                {typedTimelineNotes.filter(
-                    (note: any) => note.mediaId === showTimelineNotes?.id,
-                  ).length === 0 && (
-                  <p className="text-sm text-gray-500 text-center py-4">
-                    No timeline notes yet. Add your first note above.
-                  </p>
-                )}
-              </div>
+                  )}
+                </TabsContent>
+
+                {/* Feedback Tab */}
+                <TabsContent value="feedback" className="flex-1 p-4 overflow-y-auto">
+                  <div className="space-y-6">
+                    <div>
+                      <h4 className="font-semibold mb-3">Submit Feedback</h4>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="text-sm font-medium mb-2 block">Rating</label>
+                          <div className="flex gap-1">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <button
+                                key={star}
+                                onClick={() => setRating(star)}
+                                className="p-1 hover:scale-110 transition-transform"
+                              >
+                                <Star
+                                  className={`h-5 w-5 ${
+                                    star <= rating
+                                      ? "fill-yellow-400 text-yellow-400"
+                                      : "text-gray-300 dark:text-gray-600"
+                                  }`}
+                                />
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="text-sm font-medium mb-2 block">Comments</label>
+                          <Textarea
+                            placeholder="Share your thoughts, suggestions, or concerns..."
+                            value={feedbackText}
+                            onChange={(e) => setFeedbackText(e.target.value)}
+                            rows={4}
+                            className="resize-none"
+                          />
+                        </div>
+
+                        <Button
+                          onClick={() => {
+                            if (showDetails) {
+                              setShowFeedback(showDetails);
+                              submitFeedback();
+                            }
+                          }}
+                          disabled={
+                            feedbackMutation.isPending ||
+                            !feedbackText.trim() ||
+                            rating === 0
+                          }
+                          className="w-full"
+                        >
+                          {feedbackMutation.isPending ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Submitting...
+                            </>
+                          ) : (
+                            "Submit Feedback"
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Previous Feedback */}
+                    <div className="border-t pt-4">
+                      <h4 className="font-semibold mb-3">Previous Feedback</h4>
+                      <div className="space-y-3 max-h-48 overflow-y-auto">
+                        {typedMediaFeedback
+                          .filter((feedback: any) => feedback.mediaId === showDetails?.id)
+                          .map((feedback: any) => (
+                            <div key={feedback.id} className="bg-gray-50 dark:bg-gray-800 p-3 rounded">
+                              <div className="flex items-center gap-2 mb-2">
+                                <div className="flex">
+                                  {[1, 2, 3, 4, 5].map((star) => (
+                                    <Star
+                                      key={star}
+                                      className={`h-3 w-3 ${
+                                        star <= feedback.rating
+                                          ? "fill-yellow-400 text-yellow-400"
+                                          : "text-gray-300"
+                                      }`}
+                                    />
+                                  ))}
+                                </div>
+                                <span className="text-xs text-gray-500">
+                                  {new Date(feedback.createdAt).toLocaleDateString()}
+                                </span>
+                              </div>
+                              <p className="text-sm text-gray-700 dark:text-gray-300">
+                                {feedback.comments}
+                              </p>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                {/* Timeline Notes Tab */}
+                <TabsContent value="notes" className="flex-1 p-4 overflow-y-auto">
+                  <div className="space-y-6">
+                    <div>
+                      <h4 className="font-semibold mb-3">Add Timeline Note</h4>
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-xs font-medium mb-1 block">
+                              Timestamp (seconds)
+                            </label>
+                            <Input
+                              type="number"
+                              min="0"
+                              step="0.1"
+                              value={noteTimestamp}
+                              onChange={(e) =>
+                                setNoteTimestamp(parseFloat(e.target.value) || 0)
+                              }
+                              placeholder="0"
+                              className="text-sm"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs font-medium mb-1 block">
+                              Formatted Time
+                            </label>
+                            <div className="px-2 py-1.5 bg-gray-100 dark:bg-gray-800 rounded text-xs border">
+                              {formatTimestamp(noteTimestamp)}
+                            </div>
+                          </div>
+                        </div>
+                        <Textarea
+                          placeholder="Enter your note for this timestamp..."
+                          value={newNoteText}
+                          onChange={(e) => setNewNoteText(e.target.value)}
+                          rows={3}
+                          className="resize-none text-sm"
+                        />
+                        <Button
+                          onClick={() => {
+                            if (showDetails) {
+                              setShowTimelineNotes(showDetails);
+                              addTimelineNote();
+                            }
+                          }}
+                          disabled={timelineNoteMutation.isPending || !newNoteText.trim()}
+                          size="sm"
+                          className="w-full"
+                        >
+                          {timelineNoteMutation.isPending ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Adding...
+                            </>
+                          ) : (
+                            <>
+                              <Plus className="h-4 w-4 mr-2" />
+                              Add Note
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Existing Notes */}
+                    <div className="border-t pt-4">
+                      <h4 className="font-semibold mb-3">Timeline Notes</h4>
+                      <div className="space-y-2 max-h-64 overflow-y-auto">
+                        {typedTimelineNotes
+                          .filter((note: any) => note.mediaId === showDetails?.id)
+                          .sort((a: any, b: any) => a.timestampSeconds - b.timestampSeconds)
+                          .map((note: any) => (
+                            <div
+                              key={note.id}
+                              className="bg-gray-50 dark:bg-gray-800 p-3 rounded text-sm"
+                            >
+                              <div className="flex items-center justify-between mb-1">
+                                <code className="text-xs bg-gray-200 dark:bg-gray-700 px-1.5 py-0.5 rounded">
+                                  {formatTimestamp(note.timestampSeconds)}
+                                </code>
+                                <span className="text-xs text-gray-500">
+                                  {new Date(note.createdAt).toLocaleDateString()}
+                                </span>
+                              </div>
+                              <p className="text-gray-700 dark:text-gray-300 text-sm">
+                                {note.note}
+                              </p>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
             </div>
           </div>
         </DialogContent>
       </Dialog>
+
+
 
       {/* Comprehensive Media Modal */}
       <Dialog
