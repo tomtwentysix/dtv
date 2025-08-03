@@ -957,9 +957,9 @@ export default function ClientDashboard() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex-1 flex overflow-hidden">
+          <div className="flex-1 flex flex-col overflow-hidden">
             {/* Video Player Section */}
-            <div className="flex-1 p-6 flex flex-col justify-center items-center bg-gray-50 dark:bg-gray-900/50">
+            <div className="flex-shrink-0 p-6 flex flex-col justify-center items-center bg-gray-50 dark:bg-gray-900/50">
               {showDetails && (
                 <div className="w-full max-w-4xl">
                   {showDetails.type === "video" ? (
@@ -1111,61 +1111,77 @@ export default function ClientDashboard() {
               )}
             </div>
 
-            {/* Right Panel */}
-            <div className="w-96 border-l bg-white dark:bg-gray-950 flex flex-col">
+            {/* Tabs Section - Below Video */}
+            <div className="flex-1 border-t bg-white dark:bg-gray-950 flex flex-col">
               <Tabs defaultValue="details" className="flex-1 flex flex-col">
                 <TabsList className="grid w-full grid-cols-3 rounded-none border-b">
-                  <TabsTrigger value="details" className="text-xs">Details</TabsTrigger>
-                  <TabsTrigger value="feedback" className="text-xs">Feedback</TabsTrigger>
-                  <TabsTrigger value="notes" className="text-xs">Timeline</TabsTrigger>
+                  <TabsTrigger value="details" className="text-sm">Details</TabsTrigger>
+                  <TabsTrigger value="feedback" className="text-sm">Feedback</TabsTrigger>
+                  <TabsTrigger value="notes" className="text-sm">Timeline</TabsTrigger>
                 </TabsList>
 
                 {/* Details Tab */}
-                <TabsContent value="details" className="flex-1 p-4 overflow-y-auto">
+                <TabsContent value="details" className="flex-1 p-6 overflow-y-auto">
                   {showDetails && (
-                    <div className="space-y-6">
-                      <div>
-                        <h4 className="font-semibold mb-3">Basic Information</h4>
-                        <div className="space-y-2 text-sm">
-                          <div className="flex justify-between">
-                            <span className="text-gray-600 dark:text-gray-400">Type:</span>
-                            <span className="capitalize">{showDetails.type}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600 dark:text-gray-400">Size:</span>
-                            <span>
-                              {showDetails.fileSize
-                                ? `${(showDetails.fileSize / 1024 / 1024).toFixed(2)} MB`
-                                : "Unknown"}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600 dark:text-gray-400">Created:</span>
-                            <span className="text-right text-xs">
-                              {new Date(showDetails.createdAt).toLocaleDateString()}
-                            </span>
+                    <div className="max-w-4xl mx-auto">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                        <div>
+                          <h4 className="font-semibold mb-3">Basic Information</h4>
+                          <div className="space-y-2 text-sm">
+                            <div className="flex justify-between">
+                              <span className="text-gray-600 dark:text-gray-400">Type:</span>
+                              <span className="capitalize">{showDetails.type}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600 dark:text-gray-400">Size:</span>
+                              <span>
+                                {showDetails.fileSize
+                                  ? `${(showDetails.fileSize / 1024 / 1024).toFixed(2)} MB`
+                                  : "Unknown"}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600 dark:text-gray-400">Created:</span>
+                              <span className="text-right text-xs">
+                                {new Date(showDetails.createdAt).toLocaleDateString()}
+                              </span>
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      <div>
-                        <h4 className="font-semibold mb-3">Project Details</h4>
-                        <div className="space-y-2 text-sm">
-                          <div className="flex justify-between">
-                            <span className="text-gray-600 dark:text-gray-400">Stage:</span>
-                            <Badge variant="outline" className="text-xs">
-                              {showDetails.projectStage || "Not specified"}
-                            </Badge>
+                        <div>
+                          <h4 className="font-semibold mb-3">Project Details</h4>
+                          <div className="space-y-2 text-sm">
+                            <div className="flex justify-between">
+                              <span className="text-gray-600 dark:text-gray-400">Stage:</span>
+                              <Badge variant="outline" className="text-xs">
+                                {showDetails.projectStage || "Not specified"}
+                              </Badge>
+                            </div>
                           </div>
+                        </div>
+
+                        <div>
+                          <h4 className="font-semibold mb-3">Actions</h4>
+                          <Button
+                            className="w-full"
+                            variant="outline"
+                            onClick={() =>
+                              handleDownload(showDetails.url, showDetails.filename)
+                            }
+                          >
+                            <Download className="h-4 w-4 mr-2" />
+                            Download File
+                          </Button>
                         </div>
                       </div>
 
                       {showDetails.tags && showDetails.tags.length > 0 && (
-                        <div>
+                        <div className="mb-6">
                           <h4 className="font-semibold mb-3">Tags</h4>
-                          <div className="flex flex-wrap gap-1">
+                          <div className="flex flex-wrap gap-2">
                             {showDetails.tags.map((tag: string) => (
-                              <Badge key={tag} variant="secondary" className="text-xs">
+                              <Badge key={tag} variant="secondary" className="text-sm">
                                 {tag}
                               </Badge>
                             ))}
@@ -1176,158 +1192,155 @@ export default function ClientDashboard() {
                       {showDetails.notes && (
                         <div>
                           <h4 className="font-semibold mb-3">Notes</h4>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 p-3 rounded text-wrap break-words">
+                          <p className="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
                             {showDetails.notes}
                           </p>
                         </div>
                       )}
-
-                      <div className="pt-4 border-t">
-                        <Button
-                          className="w-full"
-                          variant="outline"
-                          onClick={() =>
-                            handleDownload(showDetails.url, showDetails.filename)
-                          }
-                        >
-                          <Download className="h-4 w-4 mr-2" />
-                          Download File
-                        </Button>
-                      </div>
                     </div>
                   )}
                 </TabsContent>
 
                 {/* Feedback Tab */}
-                <TabsContent value="feedback" className="flex-1 p-4 overflow-y-auto">
-                  <div className="space-y-6">
-                    <div>
-                      <h4 className="font-semibold mb-3">Submit Feedback</h4>
-                      <div className="space-y-4">
-                        <div>
-                          <label className="text-sm font-medium mb-2 block">Rating</label>
-                          <div className="flex gap-1">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                              <button
-                                key={star}
-                                onClick={() => setRating(star)}
-                                className="p-1 hover:scale-110 transition-transform"
-                              >
-                                <Star
-                                  className={`h-5 w-5 ${
-                                    star <= rating
-                                      ? "fill-yellow-400 text-yellow-400"
-                                      : "text-gray-300 dark:text-gray-600"
-                                  }`}
-                                />
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div>
-                          <label className="text-sm font-medium mb-2 block">Comments</label>
-                          <Textarea
-                            placeholder="Share your thoughts, suggestions, or concerns..."
-                            value={feedbackText}
-                            onChange={(e) => setFeedbackText(e.target.value)}
-                            rows={4}
-                            className="resize-none"
-                          />
-                        </div>
-
-                        <Button
-                          onClick={() => {
-                            if (showDetails) {
-                              setShowFeedback(showDetails);
-                              submitFeedback();
-                            }
-                          }}
-                          disabled={
-                            feedbackMutation.isPending ||
-                            !feedbackText.trim() ||
-                            rating === 0
-                          }
-                          className="w-full"
-                        >
-                          {feedbackMutation.isPending ? (
-                            <>
-                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                              Submitting...
-                            </>
-                          ) : (
-                            "Submit Feedback"
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Previous Feedback */}
-                    <div className="border-t pt-4">
-                      <h4 className="font-semibold mb-3">Previous Feedback</h4>
-                      <div className="space-y-3 max-h-48 overflow-y-auto">
-                        {typedMediaFeedback
-                          .filter((feedback: any) => feedback.mediaId === showDetails?.id)
-                          .map((feedback: any) => (
-                            <div key={feedback.id} className="bg-gray-50 dark:bg-gray-800 p-3 rounded">
-                              <div className="flex items-center gap-2 mb-2">
-                                <div className="flex">
-                                  {[1, 2, 3, 4, 5].map((star) => (
-                                    <Star
-                                      key={star}
-                                      className={`h-3 w-3 ${
-                                        star <= feedback.rating
-                                          ? "fill-yellow-400 text-yellow-400"
-                                          : "text-gray-300"
-                                      }`}
-                                    />
-                                  ))}
-                                </div>
-                                <span className="text-xs text-gray-500">
-                                  {new Date(feedback.createdAt).toLocaleDateString()}
-                                </span>
-                              </div>
-                              <p className="text-sm text-gray-700 dark:text-gray-300">
-                                {feedback.comments}
-                              </p>
+                <TabsContent value="feedback" className="flex-1 p-6 overflow-y-auto">
+                  <div className="max-w-4xl mx-auto">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                      <div>
+                        <h4 className="font-semibold mb-4 text-lg">Submit Feedback</h4>
+                        <div className="space-y-6">
+                          <div>
+                            <label className="text-sm font-medium mb-3 block">Rating</label>
+                            <div className="flex gap-2">
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <button
+                                  key={star}
+                                  onClick={() => setRating(star)}
+                                  className="p-2 hover:scale-110 transition-transform"
+                                >
+                                  <Star
+                                    className={`h-6 w-6 ${
+                                      star <= rating
+                                        ? "fill-yellow-400 text-yellow-400"
+                                        : "text-gray-300 dark:text-gray-600"
+                                    }`}
+                                  />
+                                </button>
+                              ))}
                             </div>
-                          ))}
+                          </div>
+
+                          <div>
+                            <label className="text-sm font-medium mb-3 block">Comments</label>
+                            <Textarea
+                              placeholder="Share your thoughts, suggestions, or concerns..."
+                              value={feedbackText}
+                              onChange={(e) => setFeedbackText(e.target.value)}
+                              rows={5}
+                              className="resize-none"
+                            />
+                          </div>
+
+                          <Button
+                            onClick={() => {
+                              if (showDetails) {
+                                setShowFeedback(showDetails);
+                                submitFeedback();
+                              }
+                            }}
+                            disabled={
+                              feedbackMutation.isPending ||
+                              !feedbackText.trim() ||
+                              rating === 0
+                            }
+                            className="w-full"
+                            size="lg"
+                          >
+                            {feedbackMutation.isPending ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                Submitting...
+                              </>
+                            ) : (
+                              "Submit Feedback"
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <h4 className="font-semibold mb-4 text-lg">Previous Feedback</h4>
+                        <div className="space-y-4 max-h-96 overflow-y-auto">
+                          {typedMediaFeedback
+                            .filter((feedback: any) => feedback.mediaId === showDetails?.id)
+                            .map((feedback: any) => (
+                              <div key={feedback.id} className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                                <div className="flex items-center justify-between mb-2">
+                                  <div className="flex gap-1">
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                      <Star
+                                        key={star}
+                                        className={`h-4 w-4 ${
+                                          star <= feedback.rating
+                                            ? "fill-yellow-400 text-yellow-400"
+                                            : "text-gray-300 dark:text-gray-600"
+                                        }`}
+                                      />
+                                    ))}
+                                  </div>
+                                  <span className="text-xs text-gray-500">
+                                    {new Date(feedback.createdAt).toLocaleDateString()}
+                                  </span>
+                                </div>
+                                <p className="text-sm text-gray-700 dark:text-gray-300">
+                                  {feedback.feedback}
+                                </p>
+                              </div>
+                            ))}
+                          {typedMediaFeedback.filter((feedback: any) => feedback.mediaId === showDetails?.id).length === 0 && (
+                            <p className="text-gray-500 text-center py-8">
+                              No feedback submitted yet
+                            </p>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
                 </TabsContent>
 
+
+
                 {/* Timeline Notes Tab */}
-                <TabsContent value="notes" className="flex-1 p-4 overflow-y-auto">
-                  <div className="space-y-6">
-                    <div>
-                      <h4 className="font-semibold mb-3">Add Timeline Note</h4>
-                      <div className="space-y-3">
-                        <div className="grid grid-cols-2 gap-2">
-                          <div>
-                            <label className="text-xs font-medium mb-1 block">
-                              Timestamp (seconds)
-                            </label>
-                            <Input
-                              type="number"
-                              min="0"
-                              step="0.1"
-                              value={noteTimestamp}
-                              onChange={(e) =>
-                                setNoteTimestamp(parseFloat(e.target.value) || 0)
-                              }
-                              placeholder="0"
-                              className="text-sm"
-                            />
-                          </div>
-                          <div>
-                            <label className="text-xs font-medium mb-1 block">
-                              Formatted Time
-                            </label>
-                            <div className="px-2 py-1.5 bg-gray-100 dark:bg-gray-800 rounded text-xs border">
-                              {formatTimestamp(noteTimestamp)}
+                <TabsContent value="notes" className="flex-1 p-6 overflow-y-auto">
+                  <div className="max-w-4xl mx-auto">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                      <div>
+                        <h4 className="font-semibold mb-4 text-lg">Add Timeline Note</h4>
+                        <div className="space-y-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="text-sm font-medium mb-2 block">
+                                Timestamp (seconds)
+                              </label>
+                              <Input
+                                type="number"
+                                min="0"
+                                step="0.1"
+                                value={noteTimestamp}
+                                onChange={(e) =>
+                                  setNoteTimestamp(parseFloat(e.target.value) || 0)
+                                }
+                                placeholder="0"
+                                className="text-sm"
+                              />
                             </div>
-                          </div>
+                            <div>
+                              <label className="text-sm font-medium mb-2 block">
+                                Formatted Time
+                              </label>
+                              <div className="px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded text-sm border">
+                                {formatTimestamp(noteTimestamp)}
+                              </div>
+                            </div>
                         </div>
                         <Textarea
                           placeholder="Enter your note for this timestamp..."
@@ -1359,34 +1372,39 @@ export default function ClientDashboard() {
                             </>
                           )}
                         </Button>
+                        </div>
                       </div>
-                    </div>
 
-                    {/* Existing Notes */}
-                    <div className="border-t pt-4">
-                      <h4 className="font-semibold mb-3">Timeline Notes</h4>
-                      <div className="space-y-2 max-h-64 overflow-y-auto">
-                        {typedTimelineNotes
-                          .filter((note: any) => note.mediaId === showDetails?.id)
-                          .sort((a: any, b: any) => a.timestampSeconds - b.timestampSeconds)
-                          .map((note: any) => (
-                            <div
-                              key={note.id}
-                              className="bg-gray-50 dark:bg-gray-800 p-3 rounded text-sm"
-                            >
-                              <div className="flex items-center justify-between mb-1">
-                                <code className="text-xs bg-gray-200 dark:bg-gray-700 px-1.5 py-0.5 rounded">
-                                  {formatTimestamp(note.timestampSeconds)}
-                                </code>
-                                <span className="text-xs text-gray-500">
-                                  {new Date(note.createdAt).toLocaleDateString()}
-                                </span>
+                      <div>
+                        <h4 className="font-semibold mb-4 text-lg">Timeline Notes</h4>
+                        <div className="space-y-3 max-h-96 overflow-y-auto">
+                          {typedTimelineNotes
+                            .filter((note: any) => note.mediaId === showDetails?.id)
+                            .sort((a: any, b: any) => a.timestampSeconds - b.timestampSeconds)
+                            .map((note: any) => (
+                              <div
+                                key={note.id}
+                                className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg"
+                              >
+                                <div className="flex items-center justify-between mb-2">
+                                  <code className="text-sm bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">
+                                    {formatTimestamp(note.timestampSeconds)}
+                                  </code>
+                                  <span className="text-xs text-gray-500">
+                                    {new Date(note.createdAt).toLocaleDateString()}
+                                  </span>
+                                </div>
+                                <p className="text-sm text-gray-700 dark:text-gray-300">
+                                  {note.note}
+                                </p>
                               </div>
-                              <p className="text-gray-700 dark:text-gray-300 text-sm">
-                                {note.note}
-                              </p>
-                            </div>
-                          ))}
+                            ))}
+                          {typedTimelineNotes.filter((note: any) => note.mediaId === showDetails?.id).length === 0 && (
+                            <p className="text-gray-500 text-center py-8">
+                              No timeline notes yet
+                            </p>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
