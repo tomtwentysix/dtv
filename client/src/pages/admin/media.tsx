@@ -1705,9 +1705,10 @@ export default function AdminMedia() {
               {/* Video Preview Section - Completely isolated */}
               {selectedMediaForFeedback?.type === "video" && (
                 <div 
-                  className="mb-4 p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+                  className="mb-4 p-4 rounded-lg border border-gray-200 dark:border-gray-800 bg-white"
                   style={{ 
-                    isolation: 'isolate'
+                    isolation: 'isolate',
+                    backgroundColor: 'var(--background, hsl(0, 0%, 3.9%))'
                   }}
                 >
                   <video
