@@ -376,9 +376,14 @@
   }
 }
 
-/* Video thumbnail improvements */
-video {
+/* Video thumbnail improvements - only for grid/card videos */
+video:not(.modal-video) {
   object-fit: cover;
+}
+
+/* Modal videos should show full content */
+video.modal-video {
+  object-fit: contain !important;
 }
 
 /* Hide controls only for background/hero videos */
