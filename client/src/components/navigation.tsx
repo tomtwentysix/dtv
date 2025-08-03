@@ -160,7 +160,7 @@ export function Navigation() {
                     {navItems.map((item) => (
                       <Link key={item.name} href={item.href}>
                         <span
-                          className="block text-lg cursor-pointer text-dynamic hover:text-[hsl(184,65%,18%)] transition-colors"
+                          className="block text-lg cursor-pointer text-black dark:text-white hover:text-[hsl(184,65%,18%)] transition-colors"
                           onClick={() => setMobileOpen(false)}
                         >
                           {item.name}
@@ -172,7 +172,7 @@ export function Navigation() {
                         <hr className="my-4" />
                         <Link href={getUserDashboardPath()}>
                           <span
-                            className="block text-lg cursor-pointer text-dynamic hover:text-[hsl(184,65%,18%)] transition-colors"
+                            className="block text-lg cursor-pointer text-black dark:text-white hover:text-[hsl(184,65%,18%)] transition-colors"
                             onClick={() => setMobileOpen(false)}
                           >
                             Dashboard
@@ -183,7 +183,7 @@ export function Navigation() {
                             handleLogout();
                             setMobileOpen(false);
                           }}
-                          className="text-lg text-left text-dynamic hover:text-[hsl(184,65%,18%)] transition-colors"
+                          className="text-lg text-left text-black dark:text-white hover:text-[hsl(184,65%,18%)] transition-colors"
                         >
                           Logout
                         </button>
