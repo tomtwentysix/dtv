@@ -602,8 +602,15 @@ export default function AdminMedia() {
     mutationFn: async ({ mediaId, updates }: { mediaId: string; updates: any }) => {
       return apiRequest("PUT", `/api/media/${mediaId}`, updates);
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/media"] });
+      
+      // Update the selectedMediaForFeedback with new values to reflect changes
+      if (selectedMediaForFeedback) {
+        const updatedMedia = { ...selectedMediaForFeedback, ...variables.updates };
+        setSelectedMediaForFeedback(updatedMedia);
+      }
+      
       toast({
         title: "Success",
         description: "Media settings updated successfully",
