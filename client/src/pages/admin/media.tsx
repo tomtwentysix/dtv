@@ -1731,7 +1731,9 @@ export default function AdminMedia() {
                       mixBlendMode: 'normal',
                       opacity: 1,
                       isolation: 'isolate',
-                      border: '1px solid #e5e7eb'
+                      border: '1px solid #e5e7eb',
+                      zIndex: 9999,
+                      position: 'relative'
                     }}
                   />
                 </div>

@@ -397,6 +397,24 @@ video.modal-video {
   color-scheme: normal !important;
   /* Override any inherited brightness/contrast */
   -webkit-filter: none !important;
+  /* Force video above any overlays */
+  z-index: 9999 !important;
+  position: relative !important;
+}
+
+/* Ensure no dialog overlays cover the modal video */
+[data-radix-dialog-overlay] {
+  z-index: 50 !important;
+}
+
+[data-radix-dialog-content] {
+  z-index: 51 !important;
+}
+
+/* Video should be above everything in the dialog */
+[data-radix-dialog-content] .modal-video {
+  z-index: 9999 !important;
+  position: relative !important;
 }
 
 /* Hide controls only for background/hero videos */
