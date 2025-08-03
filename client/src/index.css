@@ -74,18 +74,21 @@
     -webkit-backdrop-filter: blur(20px) saturate(180%);
   }
   
-  /* Smooth dialog resize animations */
-  .smooth-dialog {
-    transition: width 400ms cubic-bezier(0.4, 0, 0.2, 1), 
-                height 400ms cubic-bezier(0.4, 0, 0.2, 1), 
-                transform 400ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+  /* Smooth dialog resize animations - Higher specificity to override Radix */
+  [data-radix-popper-content-wrapper] [role="dialog"],
+  [data-state="open"][role="dialog"].smooth-dialog,
+  .smooth-dialog[data-state="open"],
+  [role="dialog"][data-state="open"] {
+    transition: width 400ms cubic-bezier(0.4, 0, 0.2, 1) !important, 
+                height 400ms cubic-bezier(0.4, 0, 0.2, 1) !important, 
+                transform 400ms cubic-bezier(0.4, 0, 0.2, 1) !important,
+                max-width 400ms cubic-bezier(0.4, 0, 0.2, 1) !important,
+                max-height 400ms cubic-bezier(0.4, 0, 0.2, 1) !important;
   }
   
-  /* Enhanced dialog content animation */
-  [data-state="open"][role="dialog"] {
-    transition: width 400ms cubic-bezier(0.4, 0, 0.2, 1), 
-                height 400ms cubic-bezier(0.4, 0, 0.2, 1), 
-                transform 400ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+  /* Also target specific dialog content classes */
+  .smooth-dialog {
+    transition: all 400ms cubic-bezier(0.4, 0, 0.2, 1) !important;
   }
 
   .hero-video-overlay {

@@ -1694,7 +1694,12 @@ export default function AdminMedia() {
 
           {/* Media Management Modal with Tabs */}
           <Dialog open={showFeedbackModal} onOpenChange={setShowFeedbackModal}>
-            <DialogContent className="max-w-6xl max-h-[90vh] min-h-[60vh] overflow-hidden smooth-dialog">
+            <DialogContent 
+              className="max-w-6xl max-h-[90vh] min-h-[60vh] overflow-hidden smooth-dialog"
+              style={{
+                transition: 'width 400ms cubic-bezier(0.4, 0, 0.2, 1), height 400ms cubic-bezier(0.4, 0, 0.2, 1), transform 400ms cubic-bezier(0.4, 0, 0.2, 1), max-width 400ms cubic-bezier(0.4, 0, 0.2, 1), max-height 400ms cubic-bezier(0.4, 0, 0.2, 1)'
+              }}
+            >
               <DialogHeader>
                 <DialogTitle>{selectedMediaForFeedback?.title}</DialogTitle>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
