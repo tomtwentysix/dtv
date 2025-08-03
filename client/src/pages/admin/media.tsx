@@ -1702,94 +1702,76 @@ export default function AdminMedia() {
                 </p>
               </DialogHeader>
               
-              {/* Video Preview Section - Outside tabs to avoid inheritance issues */}
+              {/* Video Preview Section - Completely isolated */}
               {selectedMediaForFeedback?.type === "video" && (
-                <div className="mb-4" style={{ 
-                  isolation: 'isolate',
-                  background: 'white',
-                  padding: '16px',
-                  borderRadius: '8px'
-                }}>
+                <div 
+                  className="mb-4" 
+                  style={{ 
+                    isolation: 'isolate',
+                    background: '#ffffff',
+                    padding: '16px',
+                    borderRadius: '8px',
+                    border: '2px solid #e5e7eb'
+                  }}
+                >
                   <video
+                    key={selectedMediaForFeedback.id} // Force recreation when media changes
                     ref={(ref) => {
                       setFeedbackVideoRef(ref);
-                      // Debug: log when ref is set
                       if (ref) {
-                        console.log('Video ref set:', ref);
-                        // Force remove any overlays that might get added
-                        setTimeout(() => {
-                          const overlays = ref.parentElement?.querySelectorAll('[style*="position: absolute"], [style*="position: fixed"]');
-                          overlays?.forEach(overlay => {
-                            if (overlay !== ref) {
-                              console.log('Removing overlay:', overlay);
-                              overlay.remove();
-                            }
-                          });
-                        }, 100);
+                        // Remove ALL classes that might inherit dark styling
+                        ref.className = '';
+                        // Force immediate clean styling
+                        ref.style.cssText = `
+                          width: 100% !important;
+                          aspect-ratio: 16/9 !important;
+                          object-fit: contain !important;
+                          display: block !important;
+                          background-color: #ffffff !important;
+                          min-height: 300px !important;
+                          border-radius: 8px !important;
+                          filter: none !important;
+                          -webkit-filter: none !important;
+                          mix-blend-mode: normal !important;
+                          opacity: 1 !important;
+                          isolation: isolate !important;
+                          border: 1px solid #e5e7eb !important;
+                          z-index: 99999 !important;
+                          position: relative !important;
+                          transform: none !important;
+                          box-shadow: none !important;
+                        `;
                       }
                     }}
                     src={selectedMediaForFeedback.url}
-                    className="modal-video"
                     controls
                     controlsList="nodownload"
                     poster={selectedMediaForFeedback.posterUrl}
                     preload="metadata"
                     playsInline
-                    onLoadedData={(e) => {
-                      console.log('Video loaded');
+                    onCanPlay={(e) => {
                       const video = e.target as HTMLVideoElement;
-                      
-                      // Function to force clean video styling
-                      const forceCleanVideo = () => {
-                        video.style.filter = 'none';
-                        video.style.mixBlendMode = 'normal';
-                        video.style.opacity = '1';
-                        video.style.isolation = 'isolate';
-                        video.style.webkitFilter = 'none';
-                        video.style.transform = 'none';
-                        video.style.backgroundColor = 'white';
-                      };
-                      
-                      // Apply immediately
-                      forceCleanVideo();
-                      
-                      // Apply multiple times with different delays to catch any late-loading effects
-                      setTimeout(forceCleanVideo, 10);
-                      setTimeout(forceCleanVideo, 50);
-                      setTimeout(forceCleanVideo, 100);
-                      setTimeout(forceCleanVideo, 200);
-                      setTimeout(forceCleanVideo, 500);
-                      
-                      // Set up an observer to catch any changes
-                      const observer = new MutationObserver(() => {
-                        forceCleanVideo();
-                      });
-                      
-                      observer.observe(video, {
-                        attributes: true,
-                        attributeFilter: ['style', 'class']
-                      });
-                      
-                      // Clean up observer after 2 seconds
-                      setTimeout(() => observer.disconnect(), 2000);
+                      // Force styling when video can play
+                      video.style.cssText = `
+                        width: 100% !important;
+                        aspect-ratio: 16/9 !important;
+                        object-fit: contain !important;
+                        display: block !important;
+                        background-color: #ffffff !important;
+                        min-height: 300px !important;
+                        border-radius: 8px !important;
+                        filter: none !important;
+                        -webkit-filter: none !important;
+                        mix-blend-mode: normal !important;
+                        opacity: 1 !important;
+                        isolation: isolate !important;
+                        border: 1px solid #e5e7eb !important;
+                        z-index: 99999 !important;
+                        position: relative !important;
+                        transform: none !important;
+                        box-shadow: none !important;
+                      `;
                     }}
-                    style={{ 
-                      width: '100%',
-                      aspectRatio: '16/9',
-                      objectFit: 'contain',
-                      display: 'block',
-                      backgroundColor: 'white',
-                      minHeight: '300px',
-                      borderRadius: '8px',
-                      filter: 'none',
-                      mixBlendMode: 'normal',
-                      opacity: 1,
-                      isolation: 'isolate',
-                      border: '1px solid #e5e7eb',
-                      zIndex: 99999,
-                      position: 'relative',
-                      WebkitFilter: 'none'
-                    } as React.CSSProperties}
                   />
                 </div>
               )}
