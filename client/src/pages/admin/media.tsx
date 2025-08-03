@@ -1715,25 +1715,24 @@ export default function AdminMedia() {
                   <div className="flex flex-col h-full">
                     {/* Video Preview Section - Only show for videos */}
                     {selectedMediaForFeedback?.type === "video" && (
-                      <div className="flex-shrink-0 mb-4">
-                        <div className="w-full rounded-lg overflow-hidden" style={{ aspectRatio: '16/9' }}>
-                          <video
-                            ref={(ref) => setFeedbackVideoRef(ref)}
-                            src={selectedMediaForFeedback.url}
-                            className="w-full h-full rounded-lg modal-video"
-                            controls
-                            controlsList="nodownload"
-                            poster={selectedMediaForFeedback.posterUrl}
-                            preload="metadata"
-                            playsInline
-                            style={{ 
-                              objectFit: 'contain',
-                              display: 'block',
-                              minHeight: '300px',
-                              backgroundColor: 'transparent'
-                            }}
-                          />
-                        </div>
+                      <div className="flex-shrink-0 mb-4 bg-transparent">
+                        <video
+                          ref={(ref) => setFeedbackVideoRef(ref)}
+                          src={selectedMediaForFeedback.url}
+                          className="w-full rounded-lg modal-video"
+                          controls
+                          controlsList="nodownload"
+                          poster={selectedMediaForFeedback.posterUrl}
+                          preload="metadata"
+                          playsInline
+                          style={{ 
+                            aspectRatio: '16/9',
+                            objectFit: 'contain',
+                            display: 'block',
+                            backgroundColor: 'transparent',
+                            minHeight: '300px'
+                          }}
+                        />
                       </div>
                     )}
                     

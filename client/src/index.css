@@ -401,6 +401,27 @@ video.hero-video::-webkit-media-controls-enclosure {
   filter: none !important;
   /* Ensure clean video rendering */
   background: transparent !important;
+  /* Override any inherited dark styling */
+  box-shadow: none !important;
+}
+
+/* Ensure no pseudo-elements create overlays on modal videos */
+.modal-video::before,
+.modal-video::after {
+  display: none !important;
+  content: none !important;
+}
+
+/* Ensure the modal video container doesn't inherit dark backgrounds */
+[data-radix-dialog-content] .modal-video {
+  background-color: transparent !important;
+}
+
+/* Remove any potential overlays from tab content containing videos */
+[data-state="active"] .modal-video {
+  filter: none !important;
+  opacity: 1 !important;
+  mix-blend-mode: normal !important;
 }
 
 .modal-video::-webkit-media-controls-panel {
