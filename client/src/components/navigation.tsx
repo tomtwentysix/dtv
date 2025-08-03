@@ -123,7 +123,7 @@ export function Navigation() {
                   <div className="px-2 py-1.5 text-sm font-medium">
                     {user.username}
                   </div>
-                  <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                  <div className="px-2 py-1.5 text-xs nav-text-dynamic opacity-70">
                     {user.email}
                   </div>
                   <DropdownMenuSeparator className="bg-white/20" />
