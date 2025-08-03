@@ -1711,7 +1711,23 @@ export default function AdminMedia() {
                   borderRadius: '8px'
                 }}>
                   <video
-                    ref={(ref) => setFeedbackVideoRef(ref)}
+                    ref={(ref) => {
+                      setFeedbackVideoRef(ref);
+                      // Debug: log when ref is set
+                      if (ref) {
+                        console.log('Video ref set:', ref);
+                        // Force remove any overlays that might get added
+                        setTimeout(() => {
+                          const overlays = ref.parentElement?.querySelectorAll('[style*="position: absolute"], [style*="position: fixed"]');
+                          overlays?.forEach(overlay => {
+                            if (overlay !== ref) {
+                              console.log('Removing overlay:', overlay);
+                              overlay.remove();
+                            }
+                          });
+                        }, 100);
+                      }
+                    }}
                     src={selectedMediaForFeedback.url}
                     className="modal-video"
                     controls
@@ -1719,6 +1735,22 @@ export default function AdminMedia() {
                     poster={selectedMediaForFeedback.posterUrl}
                     preload="metadata"
                     playsInline
+                    onLoadedData={() => {
+                      console.log('Video loaded');
+                      // Remove any overlays after video loads
+                      setTimeout(() => {
+                        const video = document.querySelector('.modal-video') as HTMLVideoElement;
+                        if (video) {
+                          const overlays = video.parentElement?.querySelectorAll('[style*="position: absolute"], [style*="position: fixed"]');
+                          overlays?.forEach(overlay => {
+                            if (overlay !== video) {
+                              console.log('Removing post-load overlay:', overlay);
+                              overlay.remove();
+                            }
+                          });
+                        }
+                      }, 50);
+                    }}
                     style={{ 
                       width: '100%',
                       aspectRatio: '16/9',
@@ -1727,12 +1759,12 @@ export default function AdminMedia() {
                       backgroundColor: 'white',
                       minHeight: '300px',
                       borderRadius: '8px',
-                      filter: 'none',
-                      mixBlendMode: 'normal',
-                      opacity: 1,
+                      filter: 'none !important',
+                      mixBlendMode: 'normal !important',
+                      opacity: '1 !important',
                       isolation: 'isolate',
                       border: '1px solid #e5e7eb',
-                      zIndex: 9999,
+                      zIndex: 99999,
                       position: 'relative'
                     }}
                   />
