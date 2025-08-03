@@ -1716,7 +1716,7 @@ export default function AdminMedia() {
                     {/* Video Preview Section - Only show for videos */}
                     {selectedMediaForFeedback?.type === "video" && (
                       <div className="flex-shrink-0 mb-4">
-                        <div className="w-full bg-black rounded-lg" style={{ aspectRatio: '16/9' }}>
+                        <div className="w-full rounded-lg overflow-hidden" style={{ aspectRatio: '16/9' }}>
                           <video
                             ref={(ref) => setFeedbackVideoRef(ref)}
                             src={selectedMediaForFeedback.url}
@@ -1727,9 +1727,10 @@ export default function AdminMedia() {
                             preload="metadata"
                             playsInline
                             style={{ 
-                              backgroundColor: 'black',
+                              objectFit: 'contain',
                               display: 'block',
-                              minHeight: '300px'
+                              minHeight: '300px',
+                              backgroundColor: 'transparent'
                             }}
                           />
                         </div>

@@ -397,6 +397,10 @@ video.hero-video::-webkit-media-controls-enclosure {
   position: relative !important;
   z-index: 1 !important;
   pointer-events: auto !important;
+  /* Remove any potential overlays or filters */
+  filter: none !important;
+  /* Ensure clean video rendering */
+  background: transparent !important;
 }
 
 .modal-video::-webkit-media-controls-panel {
