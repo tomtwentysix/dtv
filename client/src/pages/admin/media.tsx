@@ -1735,20 +1735,26 @@ export default function AdminMedia() {
                     poster={selectedMediaForFeedback.posterUrl}
                     preload="metadata"
                     playsInline
-                    onLoadedData={() => {
+                    onLoadedData={(e) => {
                       console.log('Video loaded');
+                      const video = e.target as HTMLVideoElement;
+                      
+                      // Force CSS properties via JavaScript to override any inheritance
+                      video.style.filter = 'none';
+                      video.style.mixBlendMode = 'normal';
+                      video.style.opacity = '1';
+                      video.style.isolation = 'isolate';
+                      video.style.webkitFilter = 'none';
+                      
                       // Remove any overlays after video loads
                       setTimeout(() => {
-                        const video = document.querySelector('.modal-video') as HTMLVideoElement;
-                        if (video) {
-                          const overlays = video.parentElement?.querySelectorAll('[style*="position: absolute"], [style*="position: fixed"]');
-                          overlays?.forEach(overlay => {
-                            if (overlay !== video) {
-                              console.log('Removing post-load overlay:', overlay);
-                              overlay.remove();
-                            }
-                          });
-                        }
+                        const overlays = video.parentElement?.querySelectorAll('[style*="position: absolute"], [style*="position: fixed"]');
+                        overlays?.forEach(overlay => {
+                          if (overlay !== video) {
+                            console.log('Removing post-load overlay:', overlay);
+                            overlay.remove();
+                          }
+                        });
                       }, 50);
                     }}
                     style={{ 
@@ -1759,14 +1765,15 @@ export default function AdminMedia() {
                       backgroundColor: 'white',
                       minHeight: '300px',
                       borderRadius: '8px',
-                      filter: 'none !important',
-                      mixBlendMode: 'normal !important',
-                      opacity: '1 !important',
+                      filter: 'none',
+                      mixBlendMode: 'normal',
+                      opacity: 1,
                       isolation: 'isolate',
                       border: '1px solid #e5e7eb',
                       zIndex: 99999,
-                      position: 'relative'
-                    }}
+                      position: 'relative',
+                      WebkitFilter: 'none'
+                    } as React.CSSProperties}
                   />
                 </div>
               )}
