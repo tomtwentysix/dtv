@@ -437,8 +437,19 @@ export default function AdminMedia() {
     mutationFn: async ({ mediaId, clientId }: { mediaId: string; clientId: string }) => {
       await apiRequest("POST", `/api/media/${mediaId}/clients/${clientId}`, {});
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/media"] });
+    onSuccess: async (_, { mediaId, clientId }) => {
+      // Invalidate and refetch media data
+      await queryClient.invalidateQueries({ queryKey: ["/api/media"] });
+      
+      // Update the selectedMediaForFeedback object with fresh data
+      if (selectedMediaForFeedback && selectedMediaForFeedback.id === mediaId) {
+        const updatedMedia = queryClient.getQueryData(["/api/media"]) as any[];
+        const updatedItem = updatedMedia?.find((item: any) => item.id === mediaId);
+        if (updatedItem) {
+          setSelectedMediaForFeedback(updatedItem);
+        }
+      }
+      
       toast({
         title: "Client Added",
         description: "Client successfully assigned to media",
@@ -457,8 +468,19 @@ export default function AdminMedia() {
     mutationFn: async ({ mediaId, clientId }: { mediaId: string; clientId: string }) => {
       await apiRequest("DELETE", `/api/media/${mediaId}/clients/${clientId}`, {});
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/media"] });
+    onSuccess: async (_, { mediaId, clientId }) => {
+      // Invalidate and refetch media data
+      await queryClient.invalidateQueries({ queryKey: ["/api/media"] });
+      
+      // Update the selectedMediaForFeedback object with fresh data
+      if (selectedMediaForFeedback && selectedMediaForFeedback.id === mediaId) {
+        const updatedMedia = queryClient.getQueryData(["/api/media"]) as any[];
+        const updatedItem = updatedMedia?.find((item: any) => item.id === mediaId);
+        if (updatedItem) {
+          setSelectedMediaForFeedback(updatedItem);
+        }
+      }
+      
       toast({
         title: "Client Removed", 
         description: "Client successfully removed from media",
@@ -634,6 +656,16 @@ export default function AdminMedia() {
       setFeedbackModalPortfolio(selectedMediaForFeedback.showInPortfolio || false);
     }
   }, [selectedMediaForFeedback]);
+
+  // Keep selectedMediaForFeedback synchronized with the latest media data
+  useEffect(() => {
+    if (selectedMediaForFeedback && Array.isArray(media)) {
+      const updatedItem = media.find((item: any) => item.id === selectedMediaForFeedback.id);
+      if (updatedItem && JSON.stringify(updatedItem) !== JSON.stringify(selectedMediaForFeedback)) {
+        setSelectedMediaForFeedback(updatedItem);
+      }
+    }
+  }, [media, selectedMediaForFeedback]);
 
   // Handler for saving settings in Settings tab
   const handleSaveSettings = () => {
