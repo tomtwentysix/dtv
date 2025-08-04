@@ -166,17 +166,22 @@ Write-Host "📱 Production Application Access:" -ForegroundColor Cyan
 Write-Host "   URL: http://localhost:5000" -ForegroundColor White
 Write-Host "   Database: postgresql://postgres:***@localhost:5432/dt_visuals_prod" -ForegroundColor White
 Write-Host ""
-Write-Host "👥 Test Accounts:" -ForegroundColor Cyan
-Write-Host "   Admin: admin@dtvisuals.com / admin123" -ForegroundColor White
-Write-Host "   Staff: staff@dtvisuals.com / staff123" -ForegroundColor White
-Write-Host "   Client: client@example.com / client123" -ForegroundColor White
+Write-Host "👥 Default Accounts:" -ForegroundColor Cyan
+Write-Host "   Admin/Staff Portal: admin@dtvisuals.com / admin123" -ForegroundColor White
+Write-Host "   (⚠️  Change password immediately after first login!)" -ForegroundColor Yellow
+Write-Host ""
+Write-Host "🔐 Authentication Systems:" -ForegroundColor Cyan
+Write-Host "   - Admin/Staff: Role-based authentication with permissions" -ForegroundColor White
+Write-Host "   - Client Portal: Separate client authentication system" -ForegroundColor White
+Write-Host "   - Create client accounts through admin interface" -ForegroundColor White
 Write-Host ""
 Write-Host "🎬 Production Features:" -ForegroundColor Cyan
 Write-Host "   - Optimized build" -ForegroundColor White
 Write-Host "   - Health monitoring" -ForegroundColor White
-Write-Host "   - Timeline functionality" -ForegroundColor White
-Write-Host "   - Media management" -ForegroundColor White
-Write-Host "   - RBAC system" -ForegroundColor White
+Write-Host "   - Multi-client media assignment system" -ForegroundColor White
+Write-Host "   - Timeline and feedback functionality" -ForegroundColor White
+Write-Host "   - Dual authentication (Admin + Client portals)" -ForegroundColor White
+Write-Host "   - Role-based access control (RBAC)" -ForegroundColor White
 Write-Host ""
 Write-Host "🛠️  Production Commands:" -ForegroundColor Cyan
 Write-Host "   View logs: docker-compose -f docker-compose.prod.yml logs -f" -ForegroundColor White
