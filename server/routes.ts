@@ -175,7 +175,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/users", requireAuth, requirePermission("edit:users"), async (req, res) => {
     try {
-      const { username, email, password } = req.body;
+      const { username, email, password, forename, surname, displayName } = req.body;
       const { scrypt, randomBytes } = await import("crypto");
       const { promisify } = await import("util");
       const scryptAsync = promisify(scrypt);
@@ -184,7 +184,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const buf = (await scryptAsync(password, salt, 64)) as Buffer;
       const hashedPassword = `${buf.toString("hex")}.${salt}`;
       
-      const user = await storage.createUser({ username, email, password: hashedPassword });
+      const user = await storage.createUser({ 
+        username, 
+        email, 
+        password: hashedPassword,
+        forename,
+        surname,
+        displayName
+      });
       res.status(201).json(user);
     } catch (error) {
       res.status(500).json({ message: "Failed to create user" });
@@ -193,8 +200,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/users/:id", requireAuth, requirePermission("edit:users"), async (req, res) => {
     try {
-      const { username, email } = req.body;
-      const user = await storage.updateUser(req.params.id, { username, email });
+      const { username, email, forename, surname, displayName, isActive } = req.body;
+      const user = await storage.updateUser(req.params.id, { 
+        username, 
+        email, 
+        forename, 
+        surname, 
+        displayName, 
+        isActive 
+      });
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
@@ -648,7 +662,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
-      req.session.clientUserId = clientUser.id;
+      (req.session as any).clientUserId = clientUser.id;
       res.json({ 
         success: true, 
         clientUser: { 
@@ -664,7 +678,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/client/logout", (req, res) => {
-    req.session.clientUserId = undefined;
+    (req.session as any).clientUserId = undefined;
     res.json({ success: true });
   });
 

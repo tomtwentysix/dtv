@@ -7,6 +7,18 @@ dt.visuals is a full-stack showcase website for a cinematic media production com
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (January 2025)
+### Enhanced User Management with Name Fields
+**Date**: January 4, 2025  
+**Description**: Added comprehensive name fields to user management system with automatic display name population.
+
+**Key Changes**:
+- **Database Schema**: Added `forename`, `surname`, and `displayName` fields to users table
+- **User Creation**: Enhanced create user form with first name, last name, and auto-populated display name
+- **User Editing**: Updated edit user dialog to include all name fields with role assignment and status management
+- **Admin Navigation**: Display names now shown in admin navigation instead of usernames for better UX
+- **Form Validation**: Automatic display name generation from first and last names during form input
+- **UI Consistency**: User table and profile displays use display names when available, falling back to usernames
+
 ### Major Architecture Refactoring: Client-User Separation
 **Date**: January 4, 2025  
 **Description**: Completed major refactoring to completely separate client management from user management system.

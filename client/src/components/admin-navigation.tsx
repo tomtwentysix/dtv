@@ -103,6 +103,13 @@ export function AdminNavigation() {
               <span className="sr-only">Toggle theme</span>
             </Button>
 
+            {/* User Display Name */}
+            {user && (
+              <span className="hidden md:block text-sm font-medium nav-text-dynamic">
+                {user.displayName || user.username}
+              </span>
+            )}
+
             {/* User Menu */}
             {user ? (
               <DropdownMenu>
@@ -113,7 +120,7 @@ export function AdminNavigation() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56 glass-nav bg-white/10 dark:bg-black/30 border border-white/20 backdrop-blur-md">
                   <div className="px-2 py-1.5 text-sm font-medium">
-                    {user.username}
+                    {user.displayName || user.username}
                   </div>
                   <div className="px-2 py-1.5 text-xs text-muted-foreground">
                     {user.email}

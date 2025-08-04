@@ -39,7 +39,7 @@ function verifyPassword(password: string, hash: string): Promise<boolean> {
 
 // Client authentication middleware
 export async function requireClientAuth(req: Request, res: Response, next: NextFunction) {
-  const clientUserId = req.session.clientUserId;
+  const clientUserId = (req.session as any).clientUserId;
   
   if (!clientUserId) {
     return res.status(401).json({ message: "Authentication required" });
@@ -49,7 +49,7 @@ export async function requireClientAuth(req: Request, res: Response, next: NextF
     const clientUser = await storage.getClientUser(clientUserId);
     if (!clientUser || !clientUser.isActive) {
       // Clear invalid session
-      req.session.clientUserId = undefined;
+      (req.session as any).clientUserId = undefined;
       return res.status(401).json({ message: "Invalid authentication" });
     }
 

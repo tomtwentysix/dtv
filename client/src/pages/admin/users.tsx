@@ -69,6 +69,9 @@ export default function AdminUsers() {
       email: "",
       password: "",
       confirmPassword: "",
+      forename: "",
+      surname: "",
+      displayName: "",
     },
   });
 
@@ -76,6 +79,9 @@ export default function AdminUsers() {
     defaultValues: {
       username: "",
       email: "",
+      forename: "",
+      surname: "",
+      displayName: "",
       isActive: true,
       selectedRoles: [] as string[],
     },
@@ -106,15 +112,22 @@ export default function AdminUsers() {
 
   const onCreateUser = (data: CreateUserFormData) => {
     const { confirmPassword, ...userData } = data;
+    // Auto-generate display name if not provided
+    if (!userData.displayName && userData.forename && userData.surname) {
+      userData.displayName = `${userData.forename} ${userData.surname}`;
+    }
     createUserMutation.mutate(userData);
   };
 
   const editUserMutation = useMutation({
-    mutationFn: async (data: { id: string; username: string; email: string; isActive: boolean; selectedRoles: string[] }) => {
+    mutationFn: async (data: { id: string; username: string; email: string; forename: string; surname: string; displayName: string; isActive: boolean; selectedRoles: string[] }) => {
       // Update basic user info
       const userRes = await apiRequest("PUT", `/api/users/${data.id}`, {
         username: data.username,
         email: data.email,
+        forename: data.forename,
+        surname: data.surname,
+        displayName: data.displayName,
         isActive: data.isActive,
       });
       
@@ -171,6 +184,9 @@ export default function AdminUsers() {
     editUserForm.reset({
       username: user.username,
       email: user.email,
+      forename: user.forename || "",
+      surname: user.surname || "",
+      displayName: user.displayName || "",
       isActive: user.isActive ?? true,
       selectedRoles: user.roles?.map((role: any) => role.id) || [],
     });
@@ -182,12 +198,15 @@ export default function AdminUsers() {
     setIsDeleteDialogOpen(true);
   };
 
-  const onEditUser = (data: { username: string; email: string; isActive: boolean; selectedRoles: string[] }) => {
+  const onEditUser = (data: { username: string; email: string; forename: string; surname: string; displayName: string; isActive: boolean; selectedRoles: string[] }) => {
     if (editingUser) {
       editUserMutation.mutate({
         id: editingUser.id,
         username: data.username,
         email: data.email,
+        forename: data.forename,
+        surname: data.surname,
+        displayName: data.displayName,
         isActive: data.isActive,
         selectedRoles: data.selectedRoles,
       });
@@ -221,6 +240,69 @@ export default function AdminUsers() {
                   <DialogTitle>Create New User</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={createUserForm.handleSubmit(onCreateUser)} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="forename">First Name</Label>
+                      <Input
+                        id="forename"
+                        {...createUserForm.register("forename", { 
+                          onChange: (e) => {
+                            const forename = e.target.value;
+                            const surname = createUserForm.getValues("surname");
+                            if (forename && surname) {
+                              createUserForm.setValue("displayName", `${forename} ${surname}`);
+                            }
+                          }
+                        })}
+                        placeholder="Enter first name"
+                        className={createUserForm.formState.errors.forename ? "border-destructive" : ""}
+                      />
+                      {createUserForm.formState.errors.forename && (
+                        <p className="text-sm text-destructive">
+                          {createUserForm.formState.errors.forename.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="surname">Last Name</Label>
+                      <Input
+                        id="surname"
+                        {...createUserForm.register("surname", { 
+                          onChange: (e) => {
+                            const surname = e.target.value;
+                            const forename = createUserForm.getValues("forename");
+                            if (forename && surname) {
+                              createUserForm.setValue("displayName", `${forename} ${surname}`);
+                            }
+                          }
+                        })}
+                        placeholder="Enter last name"
+                        className={createUserForm.formState.errors.surname ? "border-destructive" : ""}
+                      />
+                      {createUserForm.formState.errors.surname && (
+                        <p className="text-sm text-destructive">
+                          {createUserForm.formState.errors.surname.message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="displayName">Display Name</Label>
+                    <Input
+                      id="displayName"
+                      {...createUserForm.register("displayName")}
+                      placeholder="Auto-populated from first and last name"
+                      className={createUserForm.formState.errors.displayName ? "border-destructive" : ""}
+                    />
+                    {createUserForm.formState.errors.displayName && (
+                      <p className="text-sm text-destructive">
+                        {createUserForm.formState.errors.displayName.message}
+                      </p>
+                    )}
+                  </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="username">Username</Label>
                     <Input
@@ -357,7 +439,7 @@ export default function AdminUsers() {
                               </span>
                             </div>
                             <div>
-                              <div className="font-medium">{user.username}</div>
+                              <div className="font-medium">{user.displayName || user.username}</div>
                               <div className="text-sm text-gray-500">{user.email}</div>
                             </div>
                           </div>
@@ -421,6 +503,51 @@ export default function AdminUsers() {
                 <DialogTitle>Edit User</DialogTitle>
               </DialogHeader>
               <form onSubmit={editUserForm.handleSubmit(onEditUser)} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-forename">First Name</Label>
+                    <Input
+                      id="edit-forename"
+                      {...editUserForm.register("forename", { 
+                        onChange: (e) => {
+                          const forename = e.target.value;
+                          const surname = editUserForm.getValues("surname");
+                          if (forename && surname) {
+                            editUserForm.setValue("displayName", `${forename} ${surname}`);
+                          }
+                        }
+                      })}
+                      placeholder="Enter first name"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-surname">Last Name</Label>
+                    <Input
+                      id="edit-surname"
+                      {...editUserForm.register("surname", { 
+                        onChange: (e) => {
+                          const surname = e.target.value;
+                          const forename = editUserForm.getValues("forename");
+                          if (forename && surname) {
+                            editUserForm.setValue("displayName", `${forename} ${surname}`);
+                          }
+                        }
+                      })}
+                      placeholder="Enter last name"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-displayName">Display Name</Label>
+                  <Input
+                    id="edit-displayName"
+                    {...editUserForm.register("displayName")}
+                    placeholder="Display name shown in navigation"
+                  />
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="edit-username">Username</Label>
                   <Input
