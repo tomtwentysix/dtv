@@ -140,12 +140,28 @@ export default function ClientDashboard() {
     },
   });
   
-  // Redirect to login if not authenticated
+  // All useEffect hooks must be here before any early returns
   useEffect(() => {
     if (!isAuthLoading && !isAuthenticated) {
       setLocation("/client/login");
     }
   }, [isAuthenticated, isAuthLoading, setLocation]);
+
+  // Auto-play effect when modal opens
+  useEffect(() => {
+    if (selectedVideo && modalVideoRef.current && isPlaying) {
+      const timer = setTimeout(() => {
+        if (modalVideoRef.current) {
+          modalVideoRef.current.play().catch((error) => {
+            console.log("Autoplay prevented:", error);
+            setIsPlaying(false);
+          });
+        }
+      }, 100); // Small delay to ensure video is ready
+
+      return () => clearTimeout(timer);
+    }
+  }, [selectedVideo, isPlaying]);
 
   // Show loading while checking authentication
   if (isAuthLoading) {
@@ -324,26 +340,11 @@ export default function ClientDashboard() {
     videoElement.currentTime = 2;
   };
 
-  // Auto-play effect when modal opens
-  useEffect(() => {
-    if (selectedVideo && modalVideoRef.current && isPlaying) {
-      const timer = setTimeout(() => {
-        if (modalVideoRef.current) {
-          modalVideoRef.current.play().catch((error) => {
-            console.log("Autoplay prevented:", error);
-            setIsPlaying(false);
-          });
-        }
-      }, 100); // Small delay to ensure video is ready
-
-      return () => clearTimeout(timer);
-    }
-  }, [selectedVideo, isPlaying]);
-
   // Helper functions
   const submitFeedback = () => {
-    if (!hasPermission("add:feedback")) {
-      toast({ title: "You don't have permission to add feedback" });
+    // Client users don't have permission checks - simplified for client portal
+    if (!showFeedback || !feedbackText.trim() || rating === 0) {
+      toast({ title: "Please provide both feedback text and rating" });
       return;
     }
 
@@ -360,8 +361,9 @@ export default function ClientDashboard() {
   };
 
   const addTimelineNote = () => {
-    if (!hasPermission("add:timeline-note")) {
-      toast({ title: "You don't have permission to add timeline notes" });
+    // Client users don't have permission checks - simplified for client portal
+    if (!showTimelineNotes || !newNoteText.trim()) {
+      toast({ title: "Please enter a note" });
       return;
     }
 
@@ -427,7 +429,7 @@ export default function ClientDashboard() {
                 onClick={logout}
                 className="text-gray-600 dark:text-gray-400 hover:text-red-500"
               >
-                <LogOut className="h-4 w-4 mr-2" />
+                <X className="h-4 w-4 mr-2" />
                 Logout
               </Button>
             </div>
