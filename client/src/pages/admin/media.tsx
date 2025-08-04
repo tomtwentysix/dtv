@@ -39,7 +39,9 @@ import {
   Tag,
   MessageSquare,
   Clock,
-  Settings
+  Settings,
+  Check,
+  ChevronsUpDown,
 } from "lucide-react";
 import {
   Select,
@@ -64,6 +66,9 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { usePermissions } from "@/hooks/use-permissions";
@@ -529,6 +534,7 @@ export default function AdminMedia() {
   // Old assignment dialog function removed - now using Assign tab in media management dialog
 
   const [selectedClientForAssignment, setSelectedClientForAssignment] = useState<string>("");
+  const [clientDropdownOpen, setClientDropdownOpen] = useState(false);
   // Removed old unused state variables
 
   // Old assignment function removed
@@ -2102,32 +2108,59 @@ export default function AdminMedia() {
                     <div className="space-y-2">
                       <Label>Add Client</Label>
                       <div className="flex gap-2">
-                        <Select onValueChange={setSelectedClientForAssignment} value={selectedClientForAssignment}>
-                          <SelectTrigger className="flex-1">
-                            <SelectValue placeholder="Choose a client to add..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Array.isArray(clients) && clients
-                              .filter((client: any) => {
-                                // Don't show already assigned clients
-                                const assignedClientIds = (selectedMediaForFeedback?.assignedClients || []).map((c: any) => c.id);
-                                return !assignedClientIds.includes(client.id);
-                              })
-                              .map((client: any) => (
-                                <SelectItem key={client.id} value={client.id}>
-                                  <div className="flex items-center space-x-2">
-                                    <Users className="h-4 w-4" />
-                                    <span>{client.name} ({client.email})</span>
-                                  </div>
-                                </SelectItem>
-                              ))}
-                            {!Array.isArray(clients) || clients.length === 0 && (
-                              <SelectItem value="no-clients" disabled>
-                                No clients available
-                              </SelectItem>
-                            )}
-                          </SelectContent>
-                        </Select>
+                        <Popover open={clientDropdownOpen} onOpenChange={setClientDropdownOpen}>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              aria-expanded={clientDropdownOpen}
+                              className="flex-1 justify-between"
+                            >
+                              {selectedClientForAssignment
+                                ? clients?.find((client: any) => client.id === selectedClientForAssignment)?.name
+                                : "Choose a client to add..."}
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[400px] p-0">
+                            <Command>
+                              <CommandInput placeholder="Search clients..." />
+                              <CommandEmpty>No clients found.</CommandEmpty>
+                              <CommandGroup className="max-h-64 overflow-auto">
+                                {Array.isArray(clients) && clients
+                                  .filter((client: any) => {
+                                    // Don't show already assigned clients
+                                    const assignedClientIds = (selectedMediaForFeedback?.assignedClients || []).map((c: any) => c.id);
+                                    return !assignedClientIds.includes(client.id);
+                                  })
+                                  .map((client: any) => (
+                                    <CommandItem
+                                      key={client.id}
+                                      value={`${client.name} ${client.email}`}
+                                      onSelect={() => {
+                                        setSelectedClientForAssignment(client.id);
+                                        setClientDropdownOpen(false);
+                                      }}
+                                    >
+                                      <Check
+                                        className={cn(
+                                          "mr-2 h-4 w-4",
+                                          selectedClientForAssignment === client.id ? "opacity-100" : "opacity-0"
+                                        )}
+                                      />
+                                      <div className="flex items-center space-x-2">
+                                        <Users className="h-4 w-4" />
+                                        <div className="flex flex-col">
+                                          <span className="font-medium">{client.name}</span>
+                                          <span className="text-sm text-gray-500">{client.email}</span>
+                                        </div>
+                                      </div>
+                                    </CommandItem>
+                                  ))}
+                              </CommandGroup>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
                         <Button
                           onClick={() => {
                             if (selectedMediaForFeedback && selectedClientForAssignment) {
