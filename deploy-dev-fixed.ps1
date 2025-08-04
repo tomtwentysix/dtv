@@ -177,6 +177,26 @@ catch {
     }
 }
 
+# CRITICAL: Final verification that admin user exists
+Write-Host ""
+Write-Host "CRITICAL VERIFICATION: Ensuring admin user exists..." -ForegroundColor Red
+try {
+    $adminCheck = docker-compose -f docker-compose.dev.yml exec -T postgres-dev psql -U postgres -d dt_visuals_dev -c "SELECT ensure_admin_user_exists();"
+    Write-Host $adminCheck -ForegroundColor White
+    
+    # Final verification
+    $finalStatus = docker-compose -f docker-compose.dev.yml exec -T postgres-dev psql -U postgres -d dt_visuals_dev -c "SELECT verify_dev_data();"
+    Write-Host $finalStatus -ForegroundColor White
+    
+    Write-Host "✅ DEPLOYMENT VERIFIED: Admin user confirmed to exist" -ForegroundColor Green
+}
+catch {
+    Write-Host "❌ CRITICAL FAILURE: Could not verify admin user existence!" -ForegroundColor Red
+    Write-Host "The application will be unusable without an admin user!" -ForegroundColor Red
+    Write-Host "Please check the database manually or re-run deployment." -ForegroundColor Red
+    exit 1
+}
+
 # Restart the application to ensure it picks up the latest schema
 Write-Host "Restarting application to apply schema changes..." -ForegroundColor Yellow
 try {

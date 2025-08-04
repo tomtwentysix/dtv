@@ -179,6 +179,22 @@ try {
     Write-Host "⚠️ Essential data setup encountered issues (this might be normal if data already exists)" -ForegroundColor Yellow
 }
 
+# CRITICAL: Final verification that admin user exists
+Write-Host ""
+Write-Host "🔴 CRITICAL VERIFICATION: Ensuring admin user exists..." -ForegroundColor Red
+try {
+    $adminCheck = docker-compose -f docker-compose.prod.yml exec -T postgres-prod psql -U postgres -d dt_visuals_prod -c "SELECT ensure_admin_user_exists();"
+    Write-Host $adminCheck -ForegroundColor White
+    
+    Write-Host "✅ PRODUCTION DEPLOYMENT VERIFIED: Admin user confirmed to exist" -ForegroundColor Green
+}
+catch {
+    Write-Host "❌ CRITICAL FAILURE: Could not verify admin user existence!" -ForegroundColor Red
+    Write-Host "The application will be unusable without an admin user!" -ForegroundColor Red
+    Write-Host "Please check the database manually or re-run deployment." -ForegroundColor Red
+    exit 1
+}
+
 Write-Host ""
 Write-Host "🎉 Production deployment completed successfully!" -ForegroundColor Green
 Write-Host ""

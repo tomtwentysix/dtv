@@ -134,7 +134,62 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Also create a simple verification function
+-- Critical verification function that ensures admin user exists
+CREATE OR REPLACE FUNCTION ensure_admin_user_exists() RETURNS text AS $$
+DECLARE
+    admin_count integer;
+    admin_role_count integer;
+    result_text text := '';
+BEGIN
+    -- Check if admin user exists
+    SELECT COUNT(*) INTO admin_count FROM users WHERE username = 'admin' OR email = 'admin@dtvisuals.com';
+    
+    -- Check if admin role exists
+    SELECT COUNT(*) INTO admin_role_count FROM roles WHERE name = 'Admin';
+    
+    IF admin_count = 0 THEN
+        result_text := 'CRITICAL: No admin user found. Creating emergency admin user...';
+        RAISE NOTICE '%', result_text;
+        
+        -- Ensure admin role exists
+        IF admin_role_count = 0 THEN
+            INSERT INTO roles (id, name, description) VALUES 
+            ('emergency-admin-role', 'Admin', 'Emergency admin role with full access');
+            
+            -- Add essential permissions if they don't exist
+            INSERT INTO permissions (id, name, description) VALUES 
+            ('emergency-perm-1', 'manage:system', 'Full system management access'),
+            ('emergency-perm-2', 'edit:users', 'Can create/edit staff users'),
+            ('emergency-perm-3', 'edit:roles', 'Can create/edit roles and permissions')
+            ON CONFLICT (name) DO NOTHING;
+            
+            -- Assign permissions to emergency admin role
+            INSERT INTO role_permissions (role_id, permission_id) VALUES 
+            ('emergency-admin-role', 'emergency-perm-1'),
+            ('emergency-admin-role', 'emergency-perm-2'),
+            ('emergency-admin-role', 'emergency-perm-3');
+        END IF;
+        
+        -- Create emergency admin user (password: admin123)
+        INSERT INTO users (id, username, email, password, forename, surname, display_name, is_active, created_at) VALUES 
+        ('emergency-admin-id', 'admin', 'admin@dtvisuals.com', 'df10c71f317ded80d49fc8ebd89b928fdb6706e3bb45ea330da8a7caa009d98ebc3c57461844955f37b7dbb5651a00c42a0a924e7030550d4eb8bb2b1196878a.4e8dad95ff12fe8b727f303f8ac1a12f', 'Admin', 'User', 'Admin User', true, NOW());
+        
+        -- Assign admin role
+        INSERT INTO user_roles (user_id, role_id) VALUES 
+        ('emergency-admin-id', COALESCE((SELECT id FROM roles WHERE name = 'Admin' LIMIT 1), 'emergency-admin-role'));
+        
+        result_text := 'SUCCESS: Emergency admin user created. Login: admin@dtvisuals.com / admin123';
+        
+    ELSE
+        result_text := 'VERIFIED: Admin user exists (' || admin_count || ' admin users found)';
+    END IF;
+    
+    RAISE NOTICE '%', result_text;
+    RETURN result_text;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Enhanced verification function
 CREATE OR REPLACE FUNCTION verify_dev_data() RETURNS text AS $$
 DECLARE
     verification_result text := '';
@@ -143,19 +198,31 @@ DECLARE
     permission_count integer;
     client_count integer;
     client_user_count integer;
+    admin_count integer;
 BEGIN
     SELECT COUNT(*) INTO user_count FROM users;
     SELECT COUNT(*) INTO role_count FROM roles;
     SELECT COUNT(*) INTO permission_count FROM permissions;
     SELECT COUNT(*) INTO client_count FROM clients;
     SELECT COUNT(*) INTO client_user_count FROM client_users;
+    SELECT COUNT(*) INTO admin_count FROM users u 
+    JOIN user_roles ur ON u.id = ur.user_id 
+    JOIN roles r ON ur.role_id = r.id 
+    WHERE r.name = 'Admin';
     
     verification_result := 'Database verification:';
     verification_result := verification_result || E'\n  Users: ' || user_count;
+    verification_result := verification_result || E'\n  Admin Users: ' || admin_count;
     verification_result := verification_result || E'\n  Roles: ' || role_count;
     verification_result := verification_result || E'\n  Permissions: ' || permission_count;
     verification_result := verification_result || E'\n  Clients: ' || client_count;
     verification_result := verification_result || E'\n  Client Users: ' || client_user_count;
+    
+    IF admin_count = 0 THEN
+        verification_result := verification_result || E'\n  STATUS: ❌ CRITICAL - NO ADMIN USER FOUND!';
+    ELSE
+        verification_result := verification_result || E'\n  STATUS: ✅ READY - Admin user exists';
+    END IF;
     
     RAISE NOTICE '%', verification_result;
     RETURN verification_result;

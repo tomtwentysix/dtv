@@ -80,25 +80,87 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Create a function to display production account info
-CREATE OR REPLACE FUNCTION show_prod_accounts() RETURNS void AS $$
+-- Critical verification function for production
+CREATE OR REPLACE FUNCTION ensure_admin_user_exists() RETURNS text AS $$
+DECLARE
+    admin_count integer;
+    admin_role_count integer;
+    result_text text := '';
 BEGIN
-    RAISE NOTICE '';
-    RAISE NOTICE '=== PRODUCTION ACCOUNT INFORMATION ===';
-    RAISE NOTICE '';
-    RAISE NOTICE 'Default Admin Account:';
-    RAISE NOTICE '  Username: admin';
-    RAISE NOTICE '  Email: admin@dtvisuals.com';
-    RAISE NOTICE '  Password: admin123';
-    RAISE NOTICE '';
-    RAISE NOTICE 'IMPORTANT: Change the default admin password immediately after first login!';
-    RAISE NOTICE 'IMPORTANT: Create additional staff users and disable default admin if not needed!';
-    RAISE NOTICE '';
-    RAISE NOTICE 'System Features:';
-    RAISE NOTICE '  - Dual authentication system (Admin/Staff + Client)';
-    RAISE NOTICE '  - Role-based access control (RBAC)';
-    RAISE NOTICE '  - Media management with client assignment';
-    RAISE NOTICE '  - Website customization system';
-    RAISE NOTICE '';
+    -- Check if admin user exists
+    SELECT COUNT(*) INTO admin_count FROM users WHERE username = 'admin' OR email = 'admin@dtvisuals.com';
+    
+    -- Check if admin role exists
+    SELECT COUNT(*) INTO admin_role_count FROM roles WHERE name = 'Admin';
+    
+    IF admin_count = 0 THEN
+        result_text := 'CRITICAL: No admin user found. Creating emergency admin user...';
+        RAISE NOTICE '%', result_text;
+        
+        -- Ensure admin role exists
+        IF admin_role_count = 0 THEN
+            INSERT INTO roles (id, name, description) VALUES 
+            ('emergency-admin-role', 'Admin', 'Emergency admin role with full access');
+            
+            -- Add essential permissions if they don't exist
+            INSERT INTO permissions (id, name, description) VALUES 
+            ('emergency-perm-1', 'manage:system', 'Full system management access'),
+            ('emergency-perm-2', 'edit:users', 'Can create/edit staff users'),
+            ('emergency-perm-3', 'edit:roles', 'Can create/edit roles and permissions')
+            ON CONFLICT (name) DO NOTHING;
+            
+            -- Assign permissions to emergency admin role
+            INSERT INTO role_permissions (role_id, permission_id) VALUES 
+            ('emergency-admin-role', 'emergency-perm-1'),
+            ('emergency-admin-role', 'emergency-perm-2'),
+            ('emergency-admin-role', 'emergency-perm-3');
+        END IF;
+        
+        -- Create emergency admin user (password: admin123)
+        INSERT INTO users (id, username, email, password, forename, surname, display_name, is_active, created_at) VALUES 
+        ('emergency-admin-id', 'admin', 'admin@dtvisuals.com', 'df10c71f317ded80d49fc8ebd89b928fdb6706e3bb45ea330da8a7caa009d98ebc3c57461844955f37b7dbb5651a00c42a0a924e7030550d4eb8bb2b1196878a.4e8dad95ff12fe8b727f303f8ac1a12f', 'Admin', 'User', 'Admin User', true, NOW());
+        
+        -- Assign admin role
+        INSERT INTO user_roles (user_id, role_id) VALUES 
+        ('emergency-admin-id', COALESCE((SELECT id FROM roles WHERE name = 'Admin' LIMIT 1), 'emergency-admin-role'));
+        
+        result_text := 'SUCCESS: Emergency admin user created. Login: admin@dtvisuals.com / admin123';
+        
+    ELSE
+        result_text := 'VERIFIED: Admin user exists (' || admin_count || ' admin users found)';
+    END IF;
+    
+    RAISE NOTICE '%', result_text;
+    RETURN result_text;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create a function to display production account info
+CREATE OR REPLACE FUNCTION show_prod_accounts() RETURNS text AS $$
+DECLARE
+    account_info text := '';
+    admin_count integer;
+BEGIN
+    SELECT COUNT(*) INTO admin_count FROM users u 
+    JOIN user_roles ur ON u.id = ur.user_id 
+    JOIN roles r ON ur.role_id = r.id 
+    WHERE r.name = 'Admin';
+
+    account_info := E'\n=== PRODUCTION ACCOUNT INFORMATION ===\n';
+    account_info := account_info || E'Admin Users Found: ' || admin_count || E'\n\n';
+    account_info := account_info || E'Default Admin Account:\n';
+    account_info := account_info || E'  Username: admin\n';
+    account_info := account_info || E'  Email: admin@dtvisuals.com\n';
+    account_info := account_info || E'  Password: admin123\n\n';
+    account_info := account_info || E'IMPORTANT: Change the default admin password immediately after first login!\n';
+    account_info := account_info || E'IMPORTANT: Create additional staff users and disable default admin if not needed!\n\n';
+    account_info := account_info || E'System Features:\n';
+    account_info := account_info || E'  - Dual authentication system (Admin/Staff + Client)\n';
+    account_info := account_info || E'  - Role-based access control (RBAC)\n';
+    account_info := account_info || E'  - Media management with client assignment\n';
+    account_info := account_info || E'  - Website customization system\n';
+    
+    RAISE NOTICE '%', account_info;
+    RETURN account_info;
 END;
 $$ LANGUAGE plpgsql;
