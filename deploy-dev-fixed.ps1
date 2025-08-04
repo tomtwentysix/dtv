@@ -141,6 +141,9 @@ catch {
     Write-Host "Migration step encountered issues (this might be normal for first run)" -ForegroundColor Yellow
 }
 
+# Wait a moment for migration to fully complete
+Start-Sleep -Seconds 5
+
 # Populate development database with test data
 Write-Host "Populating development database with test data..." -ForegroundColor Yellow
 try {
@@ -149,6 +152,16 @@ try {
 }
 catch {
     Write-Host "Test data population step encountered issues (this might be normal if data already exists)" -ForegroundColor Yellow
+}
+
+# Restart the application to ensure it picks up the latest schema
+Write-Host "Restarting application to apply schema changes..." -ForegroundColor Yellow
+try {
+    docker-compose -f docker-compose.dev.yml restart app-dev
+    Start-Sleep -Seconds 10
+}
+catch {
+    Write-Host "Application restart step encountered issues" -ForegroundColor Yellow
 }
 
 Write-Host ""

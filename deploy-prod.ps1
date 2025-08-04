@@ -159,6 +159,16 @@ try {
     Write-Host "⚠️  Migration step encountered issues (this might be normal for first run)" -ForegroundColor Yellow
 }
 
+# Wait for migration to complete and restart application to apply schema changes
+Start-Sleep -Seconds 5
+Write-Host "🔄 Restarting application to apply schema changes..." -ForegroundColor Yellow
+try {
+    docker-compose -f docker-compose.prod.yml restart app-prod
+    Start-Sleep -Seconds 15
+} catch {
+    Write-Host "⚠️  Application restart step encountered issues" -ForegroundColor Yellow
+}
+
 Write-Host ""
 Write-Host "🎉 Production deployment completed successfully!" -ForegroundColor Green
 Write-Host ""
