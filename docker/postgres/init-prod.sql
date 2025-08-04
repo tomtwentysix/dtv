@@ -24,9 +24,9 @@ BEGIN
     IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'users') 
        AND NOT EXISTS (SELECT 1 FROM users LIMIT 1) THEN
         
-        -- Insert default admin user (password: admin123 - should be changed immediately)
-        INSERT INTO users (id, username, email, password) VALUES 
-        ('default-admin-id', 'admin', 'admin@dtvisuals.com', 'da06ef17a5bce192c00d02e92aa40eb563e38084755fa219643499ef5027c4f8:7301531c4aee740d57796afabb6a00e1ee4f56a6c46376e569534ece5e61dc53a0a682b311f365e5d67acbd5d95df318e802571f8b559ca03b0338efa484a667');
+        -- Insert default admin user with new name fields (password: admin123 - should be changed immediately)
+        INSERT INTO users (id, username, email, password, forename, surname, display_name, is_active) VALUES 
+        ('default-admin-id', 'admin', 'admin@dtvisuals.com', 'da06ef17a5bce192c00d02e92aa40eb563e38084755fa219643499ef5027c4f8:7301531c4aee740d57796afabb6a00e1ee4f56a6c46376e569534ece5e61dc53a0a682b311f365e5d67acbd5d95df318e802571f8b559ca03b0338efa484a667', 'System', 'Administrator', 'System Administrator', true);
 
         -- Insert admin role
         INSERT INTO roles (id, name, description) VALUES 
@@ -67,6 +67,8 @@ BEGIN
         RAISE NOTICE 'Default admin user created successfully';
         RAISE NOTICE 'Login: admin@dtvisuals.com / admin123';
         RAISE NOTICE 'IMPORTANT: Change the default password immediately after first login!';
+        RAISE NOTICE 'Features: Dual authentication system (Admin/Staff + separate Client authentication)';
+        RAISE NOTICE 'Client Portal: Clients use separate client_users table for authentication';
     END IF;
 END;
 $$ LANGUAGE plpgsql;

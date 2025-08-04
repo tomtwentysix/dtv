@@ -7,6 +7,17 @@ dt.visuals is a full-stack showcase website for a cinematic media production com
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (January 2025)
+### Database Cleanup and Architecture Refinement
+**Date**: January 4, 2025  
+**Description**: Completed database cleanup to remove redundant client user from main users table and updated all deployment scripts.
+
+**Key Changes**:
+- **Database Cleanup**: Removed redundant client user from main users table that was no longer needed after client-user separation
+- **Schema Alignment**: Fixed foreign key constraints to properly align with the dual authentication architecture
+- **Deployment Scripts**: Updated all deployment scripts (bash and PowerShell) to reflect current system architecture
+- **Database Initialization**: Updated both development and production init scripts with proper user name fields and client authentication structure
+- **Documentation**: Updated deployment script output to clearly show separate admin/staff and client portal accounts
+
 ### Enhanced User Management with Name Fields
 **Date**: January 4, 2025  
 **Description**: Added comprehensive name fields to user management system with automatic display name population.
