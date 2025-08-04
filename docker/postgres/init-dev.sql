@@ -14,11 +14,24 @@ ALTER DATABASE dt_visuals_dev SET log_duration = on;
 
 -- Wait for Drizzle to create tables, then populate with current data
 -- This function will be called after tables are created
-CREATE OR REPLACE FUNCTION populate_dev_test_data() RETURNS void AS $$
+CREATE OR REPLACE FUNCTION populate_dev_test_data() RETURNS text AS $$
+DECLARE
+    user_count integer;
+    result_text text := '';
 BEGIN
-    -- Check if users table exists and is empty
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'users') 
-       AND NOT EXISTS (SELECT 1 FROM users LIMIT 1) THEN
+    -- Check if users table exists
+    IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'users') THEN
+        result_text := 'ERROR: Users table does not exist yet. Run migrations first.';
+        RAISE NOTICE '%', result_text;
+        RETURN result_text;
+    END IF;
+
+    -- Count existing users
+    SELECT COUNT(*) INTO user_count FROM users;
+    
+    IF user_count = 0 THEN
+        result_text := 'Populating development database with test data...';
+        RAISE NOTICE '%', result_text;
         
         -- Insert current users from production
         INSERT INTO users (id, username, email, password, forename, surname, display_name, is_active, created_at) VALUES 
@@ -82,31 +95,69 @@ BEGIN
         ('68ad17ac-c17e-4324-9b21-bfe3c8cff229', 'd319ea4b-c311-4370-ac23-59771c8fac0b', 'testclient', 'testclient@example.com', '$2b$10$8K1p/a0dHTBS.L90wLAemOuMEDEh.Et6k0L4HkmnJ4/v4DQwE3OFO', true, '2025-08-04 19:40:31.087902', NULL),
         ('ee1f5e5b-b790-4055-9c9e-51ce8e2edf9e', 'e4f8371a-1a0d-4475-b24a-535851e203ec', 'test2', 'test2@client.com', '892f317ed33045523735f967abaf2e2b:03f989540668641d9515b240ade6a25cec613d30307beb471051ce924f2442e69a717c526efaf4facf9b6f230689996ac01e074bf73ac070af8bf6e05abb1eab', true, '2025-08-04 21:05:22.287751', '2025-08-04 22:23:12.115');
 
-        RAISE NOTICE 'Development test data populated successfully!';
+        result_text := 'SUCCESS: Development test data populated successfully! Added 2 users, 5 roles, 12 permissions, 2 clients, and 2 client users.';
+        RAISE NOTICE '%', result_text;
         
     ELSE
-        RAISE NOTICE 'Users table already contains data, skipping population.';
+        result_text := 'INFO: Users table already contains ' || user_count || ' users, skipping population.';
+        RAISE NOTICE '%', result_text;
     END IF;
+    
+    RETURN result_text;
 END;
 $$ LANGUAGE plpgsql;
 
 -- Create a function to display development accounts
-CREATE OR REPLACE FUNCTION show_dev_accounts() RETURNS void AS $$
+CREATE OR REPLACE FUNCTION show_dev_accounts() RETURNS text AS $$
+DECLARE
+    account_info text := '';
+    user_count integer;
+    client_count integer;
 BEGIN
-    RAISE NOTICE '';
-    RAISE NOTICE '=== DEVELOPMENT ACCOUNT INFORMATION ===';
-    RAISE NOTICE '';
-    RAISE NOTICE 'Admin/Staff Portal (Main System):';
-    RAISE NOTICE '  Admin: admin@dtvisuals.com / admin123';
-    RAISE NOTICE '  Staff: staff@dtvisuals.com / staff123';
-    RAISE NOTICE '';
-    RAISE NOTICE 'Client Portal (Separate System):';
-    RAISE NOTICE '  Test Client: testclient@example.com / client123';
-    RAISE NOTICE '  Test2: test2@client.com / client123';
-    RAISE NOTICE '';
-    RAISE NOTICE 'Access URLs:';
-    RAISE NOTICE '  Main App: http://localhost:3000';
-    RAISE NOTICE '  Client Login: http://localhost:3000/client/login';
-    RAISE NOTICE '';
+    SELECT COUNT(*) INTO user_count FROM users;
+    SELECT COUNT(*) INTO client_count FROM clients;
+
+    account_info := E'\n=== DEVELOPMENT ACCOUNT INFORMATION ===\n';
+    account_info := account_info || E'Database Status: ' || user_count || ' users, ' || client_count || E' clients\n\n';
+    account_info := account_info || E'Admin/Staff Portal (Main System):\n';
+    account_info := account_info || E'  Admin: admin@dtvisuals.com / admin123\n';
+    account_info := account_info || E'  Staff: staff@dtvisuals.com / staff123\n\n';
+    account_info := account_info || E'Client Portal (Separate System):\n';
+    account_info := account_info || E'  Test Client: testclient@example.com / client123\n';
+    account_info := account_info || E'  Test2: test2@client.com / client123\n\n';
+    account_info := account_info || E'Access URLs:\n';
+    account_info := account_info || E'  Main App: http://localhost:3000\n';
+    account_info := account_info || E'  Client Login: http://localhost:3000/client/login\n';
+    
+    RAISE NOTICE '%', account_info;
+    RETURN account_info;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Also create a simple verification function
+CREATE OR REPLACE FUNCTION verify_dev_data() RETURNS text AS $$
+DECLARE
+    verification_result text := '';
+    user_count integer;
+    role_count integer;
+    permission_count integer;
+    client_count integer;
+    client_user_count integer;
+BEGIN
+    SELECT COUNT(*) INTO user_count FROM users;
+    SELECT COUNT(*) INTO role_count FROM roles;
+    SELECT COUNT(*) INTO permission_count FROM permissions;
+    SELECT COUNT(*) INTO client_count FROM clients;
+    SELECT COUNT(*) INTO client_user_count FROM client_users;
+    
+    verification_result := 'Database verification:';
+    verification_result := verification_result || E'\n  Users: ' || user_count;
+    verification_result := verification_result || E'\n  Roles: ' || role_count;
+    verification_result := verification_result || E'\n  Permissions: ' || permission_count;
+    verification_result := verification_result || E'\n  Clients: ' || client_count;
+    verification_result := verification_result || E'\n  Client Users: ' || client_user_count;
+    
+    RAISE NOTICE '%', verification_result;
+    RETURN verification_result;
 END;
 $$ LANGUAGE plpgsql;

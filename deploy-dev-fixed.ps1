@@ -147,12 +147,34 @@ Start-Sleep -Seconds 5
 # Populate development database with test data
 Write-Host "Populating development database with test data..." -ForegroundColor Yellow
 try {
-    docker-compose -f docker-compose.dev.yml exec -T postgres-dev psql -U postgres -d dt_visuals_dev -c "SELECT populate_dev_test_data();"
-    docker-compose -f docker-compose.dev.yml exec -T postgres-dev psql -U postgres -d dt_visuals_dev -c "SELECT show_dev_accounts();"
-    Write-Host "Development test data populated successfully!" -ForegroundColor Green
+    Write-Host "  Checking database tables..." -ForegroundColor Gray
+    docker-compose -f docker-compose.dev.yml exec -T postgres-dev psql -U postgres -d dt_visuals_dev -c "\dt"
+    
+    Write-Host "  Running data population function..." -ForegroundColor Gray
+    $populateResult = docker-compose -f docker-compose.dev.yml exec -T postgres-dev psql -U postgres -d dt_visuals_dev -c "SELECT populate_dev_test_data();"
+    Write-Host $populateResult -ForegroundColor White
+    
+    Write-Host "  Verifying data..." -ForegroundColor Gray
+    $verifyResult = docker-compose -f docker-compose.dev.yml exec -T postgres-dev psql -U postgres -d dt_visuals_dev -c "SELECT verify_dev_data();"
+    Write-Host $verifyResult -ForegroundColor White
+    
+    Write-Host "  Displaying account information..." -ForegroundColor Gray
+    $accountInfo = docker-compose -f docker-compose.dev.yml exec -T postgres-dev psql -U postgres -d dt_visuals_dev -c "SELECT show_dev_accounts();"
+    Write-Host $accountInfo -ForegroundColor White
+    
+    Write-Host "Development database setup completed!" -ForegroundColor Green
 }
 catch {
-    Write-Host "Test data population step encountered issues (this might be normal if data already exists)" -ForegroundColor Yellow
+    Write-Host "Test data population step encountered issues:" -ForegroundColor Red
+    Write-Host $_.Exception.Message -ForegroundColor Red
+    Write-Host "Attempting to check database status..." -ForegroundColor Yellow
+    
+    try {
+        docker-compose -f docker-compose.dev.yml exec -T postgres-dev psql -U postgres -d dt_visuals_dev -c "SELECT COUNT(*) as user_count FROM users;" 2>&1
+    }
+    catch {
+        Write-Host "Could not connect to database" -ForegroundColor Red
+    }
 }
 
 # Restart the application to ensure it picks up the latest schema
@@ -177,8 +199,8 @@ Write-Host "   Admin: admin@dtvisuals.com / admin123" -ForegroundColor White
 Write-Host "   Staff: staff@dtvisuals.com / staff123" -ForegroundColor White
 Write-Host ""
 Write-Host "Client Portal Accounts:" -ForegroundColor Cyan
-Write-Host "   Acme Corp: contact@acme.com / client123" -ForegroundColor White
-Write-Host "   Creative Studios: hello@creativestudios.com / client123" -ForegroundColor White
+Write-Host "   Test Client: testclient@example.com / client123" -ForegroundColor White
+Write-Host "   Test2: test2@client.com / client123" -ForegroundColor White
 Write-Host ""
 Write-Host "Development Features:" -ForegroundColor Cyan
 Write-Host "   - Hot reload enabled" -ForegroundColor White
