@@ -419,17 +419,16 @@ export default function ClientDashboard() {
               <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-orange-500 rounded-full" />
               <h1 className="text-xl font-bold">dt.visuals Client Portal</h1>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-6">
               <span className="text-sm text-gray-600 dark:text-gray-400">
                 Welcome, {clientUser?.username}
               </span>
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
                 onClick={logout}
-                className="text-gray-600 dark:text-gray-400 hover:text-red-500"
+                className="border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-950 hover:border-red-300 dark:hover:border-red-700 hover:text-red-600 dark:hover:text-red-400 transition-all duration-200"
               >
-                <X className="h-4 w-4 mr-2" />
                 Logout
               </Button>
             </div>
