@@ -729,8 +729,11 @@ export default function AdminMedia() {
 
   // Get unique values for filter options
   const getUniqueClients = () => {
-    const clientIds = [...new Set((media as any[])?.map(m => m.clientId).filter(Boolean))];
-    return (clients as any[])?.filter(c => clientIds.includes(c.id)) || [];
+    // Get all clients that have media assigned to them using the assignedClients array
+    const assignedClientIds = [...new Set((media as any[])?.flatMap(m => 
+      (m.assignedClients || []).map((client: any) => client.id)
+    ).filter(Boolean))];
+    return (clients as any[])?.filter(c => assignedClientIds.includes(c.id)) || [];
   };
 
   const getUniqueTags = () => {
@@ -768,12 +771,14 @@ export default function AdminMedia() {
       }
     }
 
-    // Client filter
+    // Client filter - updated to use assignedClients array
     if (clientFilter !== "all") {
+      const assignedClients = item.assignedClients || [];
       if (clientFilter === "unassigned") {
-        if (item.clientId) return false;
-      } else if (item.clientId !== clientFilter) {
-        return false;
+        if (assignedClients.length > 0) return false;
+      } else {
+        const isAssignedToClient = assignedClients.some((client: any) => client.id === clientFilter);
+        if (!isAssignedToClient) return false;
       }
     }
 
