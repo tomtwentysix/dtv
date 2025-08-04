@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Navigation } from "@/components/navigation";
+import { Footer } from "@/components/footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { useWebsiteSetting } from "@/hooks/use-website-settings";
 
@@ -153,6 +154,8 @@ export default function About() {
           </div>
         </div>
       </section>
+      
+      <Footer />
     </div>
   );
 }

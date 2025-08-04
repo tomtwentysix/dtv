@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Navigation } from "@/components/navigation";
+import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
@@ -444,6 +445,8 @@ export default function Portfolio() {
           </div>
         </DialogContent>
       </Dialog>
+      
+      <Footer />
     </div>
   );
 }

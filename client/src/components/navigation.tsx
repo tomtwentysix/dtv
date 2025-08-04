@@ -148,9 +148,9 @@ export function Navigation() {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Link href="/auth">
+              <Link href="/client/login">
                 <Button variant="glassPrimary" className="hover:bg-white/20">
-                  Login
+                  Client Portal
                 </Button>
               </Link>
             )}
