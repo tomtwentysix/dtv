@@ -83,7 +83,7 @@ export function setupAuth(app: Express) {
 
   app.post("/api/register", async (req, res, next) => {
     try {
-      const { username, email, password } = req.body;
+      const { username, email, password, forename, surname, displayName } = req.body;
       
       // Check if user already exists
       const existingUserByUsername = await storage.getUserByUsername(username);
@@ -101,6 +101,9 @@ export function setupAuth(app: Express) {
         username,
         email,
         password: await hashPassword(password),
+        forename: forename || "New",
+        surname: surname || "User", 
+        displayName: displayName || `${forename || "New"} ${surname || "User"}`,
       });
 
       // Note: Client role assignment removed - clients now have separate authentication system
