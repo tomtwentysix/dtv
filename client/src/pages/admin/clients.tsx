@@ -106,7 +106,7 @@ export default function ClientsPage() {
   };
 
   const createClientMutation = useMutation({
-    mutationFn: (data: ClientFormData) => apiRequest("/api/clients", "POST", data),
+    mutationFn: (data: ClientFormData) => apiRequest("POST", "/api/clients", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
       setIsDialogOpen(false);
@@ -119,7 +119,7 @@ export default function ClientsPage() {
 
   const updateClientMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<ClientFormData> }) =>
-      apiRequest(`/api/clients/${id}`, "PUT", data),
+      apiRequest("PUT", `/api/clients/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
       setIsDialogOpen(false);
@@ -132,7 +132,7 @@ export default function ClientsPage() {
   });
 
   const deleteClientMutation = useMutation({
-    mutationFn: (id: string) => apiRequest(`/api/clients/${id}`, "DELETE"),
+    mutationFn: (id: string) => apiRequest("DELETE", `/api/clients/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
       toast({ title: "Client deleted successfully" });
@@ -469,7 +469,7 @@ export default function ClientsPage() {
                   size="sm"
                   variant="outline"
                   onClick={() => handleEdit(client)}
-                  className="border-white/20 text-white hover:bg-white/10"
+                  className="border-gray-300 dark:border-white/20 text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-white/10"
                 >
                   <Edit2 className="h-3 w-3 mr-1" />
                   Edit
