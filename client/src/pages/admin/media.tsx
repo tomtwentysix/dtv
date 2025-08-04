@@ -2114,74 +2114,81 @@ export default function AdminMedia() {
                         />
                       </div>
                       
-                      {/* Filtered Client List */}
-                      {clientSearchQuery.length > 0 && (
-                        <div className="border rounded-lg max-h-48 overflow-y-auto">
-                          {Array.isArray(clients) && clients
-                            .filter((client: any) => {
+                      {/* All Clients List (filtered by search) */}
+                      <div className="border rounded-lg max-h-48 overflow-y-auto">
+                        {Array.isArray(clients) && clients
+                          .filter((client: any) => {
+                            // Filter by search query if present
+                            if (clientSearchQuery.length > 0) {
                               const searchTerm = clientSearchQuery.toLowerCase();
                               return client.name.toLowerCase().includes(searchTerm) ||
                                 client.email.toLowerCase().includes(searchTerm) ||
                                 (client.username && client.username.toLowerCase().includes(searchTerm));
-                            })
-                            .filter((client: any) => {
-                              // Don't show already assigned clients
-                              return !selectedMediaForFeedback?.assignedClients?.some((assigned: any) => assigned.id === client.id);
-                            })
-                            .map((client: any) => (
-                              <div
-                                key={client.id}
-                                className="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-800 border-b last:border-b-0 cursor-pointer"
-                                onClick={() => {
-                                  if (selectedMediaForFeedback) {
-                                    addClientToMediaMutation.mutate({
-                                      mediaId: selectedMediaForFeedback.id,
-                                      clientId: client.id,
-                                    });
-                                    setClientSearchQuery(''); // Clear search after assignment
-                                  }
-                                }}
-                              >
-                                <div className="flex items-center space-x-3">
-                                  <Users className="h-4 w-4 text-gray-400" />
-                                  <div>
-                                    <p className="font-medium">{client.name}</p>
-                                    <p className="text-sm text-gray-500">{client.email}</p>
-                                    {client.username && (
-                                      <p className="text-xs text-gray-400">@{client.username}</p>
-                                    )}
-                                  </div>
-                                </div>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-blue-600 hover:text-blue-800"
-                                  disabled={addClientToMediaMutation.isPending}
-                                >
-                                  {addClientToMediaMutation.isPending ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                  ) : (
-                                    <Plus className="h-4 w-4" />
+                            }
+                            return true; // Show all if no search query
+                          })
+                          .filter((client: any) => {
+                            // Don't show already assigned clients
+                            return !selectedMediaForFeedback?.assignedClients?.some((assigned: any) => assigned.id === client.id);
+                          })
+                          .map((client: any) => (
+                            <div
+                              key={client.id}
+                              className="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-800 border-b last:border-b-0 cursor-pointer"
+                              onClick={() => {
+                                if (selectedMediaForFeedback) {
+                                  addClientToMediaMutation.mutate({
+                                    mediaId: selectedMediaForFeedback.id,
+                                    clientId: client.id,
+                                  });
+                                  setClientSearchQuery(''); // Clear search after assignment
+                                }
+                              }}
+                            >
+                              <div className="flex items-center space-x-3">
+                                <Users className="h-4 w-4 text-gray-400" />
+                                <div>
+                                  <p className="font-medium">{client.name}</p>
+                                  <p className="text-sm text-gray-500">{client.email}</p>
+                                  {client.username && (
+                                    <p className="text-xs text-gray-400">@{client.username}</p>
                                   )}
-                                </Button>
+                                </div>
                               </div>
-                            ))}
-                          {Array.isArray(clients) && clients
-                            .filter((client: any) => {
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-blue-600 hover:text-blue-800"
+                                disabled={addClientToMediaMutation.isPending}
+                              >
+                                {addClientToMediaMutation.isPending ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Plus className="h-4 w-4" />
+                                )}
+                              </Button>
+                            </div>
+                          ))}
+                        {Array.isArray(clients) && clients
+                          .filter((client: any) => {
+                            if (clientSearchQuery.length > 0) {
                               const searchTerm = clientSearchQuery.toLowerCase();
                               return client.name.toLowerCase().includes(searchTerm) ||
                                 client.email.toLowerCase().includes(searchTerm) ||
                                 (client.username && client.username.toLowerCase().includes(searchTerm));
-                            })
-                            .filter((client: any) => {
-                              return !selectedMediaForFeedback?.assignedClients?.some((assigned: any) => assigned.id === client.id);
-                            }).length === 0 && (
-                            <div className="p-6 text-center text-gray-500">
-                              No clients match your search.
-                            </div>
-                          )}
-                        </div>
-                      )}
+                            }
+                            return true;
+                          })
+                          .filter((client: any) => {
+                            return !selectedMediaForFeedback?.assignedClients?.some((assigned: any) => assigned.id === client.id);
+                          }).length === 0 && (
+                          <div className="p-6 text-center text-gray-500">
+                            {clientSearchQuery.length > 0 
+                              ? "No clients match your search." 
+                              : "All clients are already assigned to this media."}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </TabsContent>
