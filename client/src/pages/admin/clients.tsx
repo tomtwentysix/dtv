@@ -24,6 +24,8 @@ type ClientFormData = {
   phone: string;
   company: string;
   notes: string;
+  username: string;
+  password: string;
 };
 
 const clientFormSchema = insertClientSchema.pick({
@@ -36,6 +38,8 @@ const clientFormSchema = insertClientSchema.pick({
   phone: insertClientSchema.shape.phone.optional().default(""),
   company: insertClientSchema.shape.company.optional().default(""),
   notes: insertClientSchema.shape.notes.optional().default(""),
+  username: insertClientSchema.shape.name, // Username for client login (string)
+  password: insertClientSchema.shape.name, // Password for client login (string)
 });
 
 export default function ClientsPage() {
@@ -150,6 +154,8 @@ export default function ClientsPage() {
       phone: "",
       company: "",
       notes: "",
+      username: "",
+      password: "",
     },
   });
 
@@ -169,6 +175,8 @@ export default function ClientsPage() {
       phone: client.phone ?? "",
       company: client.company ?? "",
       notes: client.notes ?? "",
+      username: "", // Don't pre-fill for editing
+      password: "", // Don't pre-fill for editing
     });
     setIsDialogOpen(true);
   };
@@ -181,6 +189,8 @@ export default function ClientsPage() {
       phone: "",
       company: "",
       notes: "",
+      username: "",
+      password: "",
     });
     setIsDialogOpen(true);
   };
@@ -305,6 +315,39 @@ export default function ClientsPage() {
                     </FormItem>
                   )}
                 />
+                {!editingClient && (
+                  <>
+                    <div className="border-t pt-4">
+                      <h4 className="text-sm font-medium mb-3 text-gray-900 dark:text-gray-100">Client Login Credentials</h4>
+                      <FormField
+                        control={form.control}
+                        name="username"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Username</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Client login username" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="password"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Password</FormLabel>
+                            <FormControl>
+                              <Input type="password" placeholder="Client login password" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </>
+                )}
                 <div className="flex justify-end space-x-2 pt-4">
                   <Button
                     type="button"

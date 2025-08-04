@@ -510,9 +510,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/clients", requireAuth, requirePermission("edit:clients"), async (req, res) => {
     try {
-      const client = await storage.createClient(req.body);
+      const { username, password, ...clientData } = req.body;
+      
+      // Create the client first
+      const client = await storage.createClient({ ...clientData, createdBy: req.user!.id });
+      
+      // Hash the password for the client user
+      const { scrypt, randomBytes } = await import("crypto");
+      const { promisify } = await import("util");
+      const scryptAsync = promisify(scrypt);
+      
+      const salt = randomBytes(16).toString("hex");
+      const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+      const hashedPassword = `${buf.toString("hex")}.${salt}`;
+      
+      // Create the client user for authentication
+      await storage.createClientUser({
+        clientId: client.id,
+        username,
+        email: client.email,
+        password: hashedPassword,
+        isActive: true
+      });
+      
       res.status(201).json(client);
     } catch (error) {
+      console.error("Failed to create client:", error);
       res.status(500).json({ message: "Failed to create client" });
     }
   });
