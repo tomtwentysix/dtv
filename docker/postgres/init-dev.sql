@@ -20,17 +20,15 @@ BEGIN
     IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'users') 
        AND NOT EXISTS (SELECT 1 FROM users LIMIT 1) THEN
         
-        -- Insert test users with properly hashed passwords (scrypt algorithm)
-        INSERT INTO users (id, username, email, password) VALUES 
-        ('admin-user-id', 'admin', 'admin@dtvisuals.com', 'da06ef17a5bce192c00d02e92aa40eb563e38084755fa219643499ef5027c4f8:7301531c4aee740d57796afabb6a00e1ee4f56a6c46376e569534ece5e61dc53a0a682b311f365e5d67acbd5d95df318e802571f8b559ca03b0338efa484a667'),
-        ('staff-user-id', 'staff', 'staff@dtvisuals.com', '4b4fea840b0bdd38c664b652f8a6be4544b05d82d5cc7f7caab4c96fed86a8c0:843fcb0ed4b9c1d9a0682864ccdfc53256ff2cf842d4b1cddd2753b7597f679d62299e6b6407876c19ed06a5a50c9c25f57ebb493afe6ccd6a39dc5a966e8131'),
-        ('client-user-id', 'client', 'client@example.com', '41dcff7f69dbaa3921683e24c4037acd3bd3bfa4425df7780d8c294ced3d91ec:3280617520d7c6005060dacf9f291ba22df332d008ec673d43d68e4f29289f96768db83637882178c4444e5b41a3419a96727d3e16d64e64c04729315c12962d');
+        -- Insert test users with properly hashed passwords (scrypt algorithm) and name fields
+        INSERT INTO users (id, username, email, password, forename, surname, display_name, is_active) VALUES 
+        ('admin-user-id', 'admin', 'admin@dtvisuals.com', 'da06ef17a5bce192c00d02e92aa40eb563e38084755fa219643499ef5027c4f8:7301531c4aee740d57796afabb6a00e1ee4f56a6c46376e569534ece5e61dc53a0a682b311f365e5d67acbd5d95df318e802571f8b559ca03b0338efa484a667', 'Admin', 'User', 'Admin User', true),
+        ('staff-user-id', 'staff', 'staff@dtvisuals.com', '4b4fea840b0bdd38c664b652f8a6be4544b05d82d5cc7f7caab4c96fed86a8c0:843fcb0ed4b9c1d9a0682864ccdfc53256ff2cf842d4b1cddd2753b7597f679d62299e6b6407876c19ed06a5a50c9c25f57ebb493afe6ccd6a39dc5a966e8131', 'Staff', 'Member', 'Staff Member', true);
 
-        -- Insert roles
+        -- Insert roles (note: client role is no longer used for main users)
         INSERT INTO roles (id, name, description) VALUES 
         ('admin-role-id', 'Admin', 'Full system access with all permissions'),
-        ('staff-role-id', 'Staff', 'Media management and client interaction permissions'),
-        ('client-role-id', 'Client', 'View assigned media content only');
+        ('staff-role-id', 'Staff', 'Media management and client interaction permissions');
 
         -- Insert permissions
         INSERT INTO permissions (id, name, description) VALUES 
@@ -46,11 +44,10 @@ BEGIN
         ('perm-edit-website', 'edit:website', 'Manage website settings and content'),
         ('perm-view-analytics', 'view:analytics', 'View system analytics');
 
-        -- Assign roles to users
+        -- Assign roles to users (client users no longer use this system)
         INSERT INTO user_roles (user_id, role_id) VALUES 
         ('admin-user-id', 'admin-role-id'),
-        ('staff-user-id', 'staff-role-id'),
-        ('client-user-id', 'client-role-id');
+        ('staff-user-id', 'staff-role-id');
 
         -- Assign permissions to roles
         -- Admin gets all permissions
@@ -75,14 +72,15 @@ BEGIN
         ('staff-role-id', 'perm-view-media'),
         ('staff-role-id', 'perm-view-clients');
 
-        -- Client gets only view permissions
-        INSERT INTO role_permissions (role_id, permission_id) VALUES 
-        ('client-role-id', 'perm-view-media');
-
         -- Insert test clients
         INSERT INTO clients (id, name, email, company, phone, notes, created_by) VALUES 
         ('test-client-1', 'Acme Corporation', 'contact@acme.com', 'Acme Corp', '+1-555-0123', 'Main corporate client', 'admin-user-id'),
         ('test-client-2', 'Creative Studios', 'hello@creativestudios.com', 'Creative Studios LLC', '+1-555-0456', 'Independent creative agency', 'staff-user-id');
+
+        -- Insert client users for authentication (separate from main users)
+        INSERT INTO client_users (id, client_id, username, email, password, is_active) VALUES 
+        ('client-user-1', 'test-client-1', 'acme_user', 'contact@acme.com', '41dcff7f69dbaa3921683e24c4037acd3bd3bfa4425df7780d8c294ced3d91ec:3280617520d7c6005060dacf9f291ba22df332d008ec673d43d68e4f29289f96768db83637882178c4444e5b41a3419a96727d3e16d64e64c04729315c12962d', true),
+        ('client-user-2', 'test-client-2', 'creative_user', 'hello@creativestudios.com', '41dcff7f69dbaa3921683e24c4037acd3bd3bfa4425df7780d8c294ced3d91ec:3280617520d7c6005060dacf9f291ba22df332d008ec673d43d68e4f29289f96768db83637882178c4444e5b41a3419a96727d3e16d64e64c04729315c12962d', true);
 
         -- Insert sample media
         INSERT INTO media (id, title, type, url, filename, mime_type, is_featured, show_in_portfolio, tags, project_stage, notes, client_id, uploaded_by) VALUES 

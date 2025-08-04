@@ -161,14 +161,19 @@ Write-Host ""
 Write-Host "Test Accounts:" -ForegroundColor Cyan
 Write-Host "   Admin: admin@dtvisuals.com / admin123" -ForegroundColor White
 Write-Host "   Staff: staff@dtvisuals.com / staff123" -ForegroundColor White
-Write-Host "   Client: client@example.com / client123" -ForegroundColor White
+Write-Host ""
+Write-Host "Client Portal Accounts:" -ForegroundColor Cyan
+Write-Host "   Acme Corp: contact@acme.com / client123" -ForegroundColor White
+Write-Host "   Creative Studios: hello@creativestudios.com / client123" -ForegroundColor White
 Write-Host ""
 Write-Host "Development Features:" -ForegroundColor Cyan
 Write-Host "   - Hot reload enabled" -ForegroundColor White
 Write-Host "   - Debug logging active" -ForegroundColor White
 Write-Host "   - Timeline functionality" -ForegroundColor White
 Write-Host "   - Media management" -ForegroundColor White
-Write-Host "   - RBAC system" -ForegroundColor White
+Write-Host "   - Dual authentication system (Admin/Staff + Client)" -ForegroundColor White
+Write-Host "   - RBAC system with enhanced user management" -ForegroundColor White
+Write-Host "   - Persistent database and uploads" -ForegroundColor White
 Write-Host ""
 Write-Host "Development Commands:" -ForegroundColor Cyan
 Write-Host "   View logs: docker-compose -f docker-compose.dev.yml logs -f" -ForegroundColor White
