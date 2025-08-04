@@ -94,37 +94,8 @@ export default function ClientDashboard() {
     queryKey: ["/api/client/media/timeline-notes"],
     enabled: !!clientUser?.id,
   });
-  
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!isAuthLoading && !isAuthenticated) {
-      setLocation("/client/login");
-    }
-  }, [isAuthenticated, isAuthLoading, setLocation]);
 
-  // Show loading while checking authentication
-  if (isAuthLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-sm text-gray-600 dark:text-gray-400">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Don't render if not authenticated (will redirect)
-  if (!isAuthenticated) {
-    return null;
-  }
-
-  // Ensure arrays are properly typed
-  const typedClientMedia = Array.isArray(clientMedia) ? clientMedia : [];
-  const typedMediaFeedback = Array.isArray(mediaFeedback) ? mediaFeedback : [];
-  const typedTimelineNotes = Array.isArray(timelineNotes) ? timelineNotes : [];
-
-  // Mutations for feedback and notes
+  // Mutations for feedback and notes - MUST be before any early returns
   const feedbackMutation = useMutation({
     mutationFn: async (data: {
       mediaId: string;
@@ -168,6 +139,35 @@ export default function ClientDashboard() {
       setNewNoteText("");
     },
   });
+  
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isAuthLoading && !isAuthenticated) {
+      setLocation("/client/login");
+    }
+  }, [isAuthenticated, isAuthLoading, setLocation]);
+
+  // Show loading while checking authentication
+  if (isAuthLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p className="text-sm text-gray-600 dark:text-gray-400">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render if not authenticated (will redirect)
+  if (!isAuthenticated) {
+    return null;
+  }
+
+  // Ensure arrays are properly typed
+  const typedClientMedia = Array.isArray(clientMedia) ? clientMedia : [];
+  const typedMediaFeedback = Array.isArray(mediaFeedback) ? mediaFeedback : [];
+  const typedTimelineNotes = Array.isArray(timelineNotes) ? timelineNotes : [];
 
   const handleDownload = (mediaUrl: string, filename: string) => {
     const link = document.createElement("a");
