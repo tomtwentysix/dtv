@@ -11,7 +11,8 @@ import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
-import { Eye, EyeOff, LogIn, Loader2 } from "lucide-react";
+import { Eye, EyeOff, LogIn, Loader2, ArrowLeft } from "lucide-react";
+import { Link } from "wouter";
 
 const clientLoginSchema = z.object({
   username: z.string().min(1, "Username is required"),
@@ -62,7 +63,17 @@ export default function ClientLoginPage() {
   return (
     <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2">
       {/* Left Side - Form */}
-      <div className="flex items-center justify-center p-8 bg-white dark:bg-black">
+      <div className="flex items-center justify-center p-8 bg-white dark:bg-black relative">
+        <Link href="/">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="absolute top-8 left-8 text-gray-600 dark:text-gray-400 hover:text-dark-teal"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Home
+          </Button>
+        </Link>
         <div className="w-full max-w-md space-y-8">
           <div className="text-center">
             <h1 className="text-3xl font-bold text-dark-teal mb-2">dt.visuals</h1>
