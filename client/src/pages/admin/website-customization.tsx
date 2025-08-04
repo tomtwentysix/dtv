@@ -2,17 +2,20 @@ import { AdminNavigation } from "@/components/admin-navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
+import * as React from "react";
 import { 
   Image as ImageIcon,
   Loader2,
   Search,
   Plus,
-  Play
+  Play,
+  Contact
 } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
 
@@ -156,6 +159,49 @@ export default function WebsiteCustomization() {
     queryKey: ['/api/website-settings'],
   });
 
+  // Fetch contact information
+  const { data: contactInfo, isLoading: isContactLoading } = useQuery({
+    queryKey: ['/api/contact-info'],
+  });
+
+  // Contact info form state
+  const [contactForm, setContactForm] = useState({
+    contactEmail: '',
+    contactPhone: '',
+    contactAddress: ''
+  });
+
+  // Initialize contact form when data loads
+  React.useEffect(() => {
+    if (contactInfo) {
+      setContactForm({
+        contactEmail: contactInfo.contactEmail || '',
+        contactPhone: contactInfo.contactPhone || '',
+        contactAddress: contactInfo.contactAddress || ''
+      });
+    }
+  }, [contactInfo]);
+
+  // Update contact information mutation
+  const updateContactMutation = useMutation({
+    mutationFn: async (data: { contactEmail: string; contactPhone: string; contactAddress: string }) => {
+      const response = await fetch('/api/contact-info', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error('Failed to update contact info');
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Contact information updated successfully" });
+      queryClient.invalidateQueries({ queryKey: ['/api/contact-info'] });
+    },
+    onError: () => {
+      toast({ title: "Failed to update contact information", variant: "destructive" });
+    },
+  });
+
   // Update website settings mutation
   const updateSettingsMutation = useMutation({
     mutationFn: async (data: { section: string; background_image_id?: string; background_video_id?: string }) => {
@@ -264,11 +310,12 @@ export default function WebsiteCustomization() {
         </div>
 
         <Tabs defaultValue="Homepage" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="Homepage">Homepage</TabsTrigger>
             <TabsTrigger value="Portfolio">Portfolio</TabsTrigger>
             <TabsTrigger value="About">About</TabsTrigger>
             <TabsTrigger value="Services">Services</TabsTrigger>
+            <TabsTrigger value="Contact">Contact Info</TabsTrigger>
           </TabsList>
 
           {Object.entries(pageGroups).map(([pageName, sections]) => (
@@ -374,6 +421,74 @@ export default function WebsiteCustomization() {
               </div>
             </TabsContent>
           ))}
+
+          {/* Contact Information Tab */}
+          <TabsContent value="Contact" className="space-y-6">
+            <Card className="w-full">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Contact className="h-5 w-5" />
+                  Contact Information
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Manage the contact information displayed in the footer and contact page
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="contactEmail">Email Address</Label>
+                    <Input
+                      id="contactEmail"
+                      type="email"
+                      placeholder="hello@company.com"
+                      value={contactForm.contactEmail}
+                      onChange={(e) => setContactForm(prev => ({ ...prev, contactEmail: e.target.value }))}
+                      disabled={updateContactMutation.isPending}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="contactPhone">Phone Number</Label>
+                    <Input
+                      id="contactPhone"
+                      type="tel"
+                      placeholder="+1 (555) 123-4567"
+                      value={contactForm.contactPhone}
+                      onChange={(e) => setContactForm(prev => ({ ...prev, contactPhone: e.target.value }))}
+                      disabled={updateContactMutation.isPending}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="contactAddress">Address</Label>
+                    <Input
+                      id="contactAddress"
+                      placeholder="City, State/Country"
+                      value={contactForm.contactAddress}
+                      onChange={(e) => setContactForm(prev => ({ ...prev, contactAddress: e.target.value }))}
+                      disabled={updateContactMutation.isPending}
+                    />
+                  </div>
+                  
+                  <Button
+                    onClick={() => updateContactMutation.mutate(contactForm)}
+                    disabled={updateContactMutation.isPending}
+                    className="w-full"
+                  >
+                    {updateContactMutation.isPending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Updating...
+                      </>
+                    ) : (
+                      'Update Contact Information'
+                    )}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
       </div>
     </div>

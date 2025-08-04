@@ -820,6 +820,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Contact information routes
+  app.get("/api/contact-info", async (req, res) => {
+    try {
+      const contactInfo = await storage.getContactInfo();
+      res.json(contactInfo || { contactEmail: '', contactPhone: '', contactAddress: '' });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch contact information" });
+    }
+  });
+
+  app.put("/api/contact-info", requireAuth, requirePermission("edit:website"), async (req, res) => {
+    try {
+      const { contactEmail, contactPhone, contactAddress } = req.body;
+      
+      const contactInfo = await storage.updateContactInfo({
+        contactEmail,
+        contactPhone,
+        contactAddress,
+        updatedBy: req.user!.id,
+      });
+      
+      res.json(contactInfo);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update contact information" });
+    }
+  });
+
   // Dashboard stats
   app.get("/api/stats", requireAuth, requireAnyRole(["Admin", "Staff"]), async (req, res) => {
     try {

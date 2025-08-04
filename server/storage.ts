@@ -115,6 +115,10 @@ export interface IStorage {
   getWebsiteSettingBySection(section: string): Promise<WebsiteSettings | undefined>;
   updateWebsiteSetting(section: string, setting: InsertWebsiteSettings): Promise<WebsiteSettings>;
   
+  // Contact information management
+  getContactInfo(): Promise<WebsiteSettings | undefined>;
+  updateContactInfo(contactInfo: { contactEmail?: string; contactPhone?: string; contactAddress?: string; updatedBy: string }): Promise<WebsiteSettings>;
+  
   // Client feedback and timeline notes (now using clientUserId)
   createMediaFeedback(feedback: { mediaId: string; clientUserId: string; feedbackText: string; rating: number }): Promise<any>;
   getClientUserFeedback(clientUserId: string): Promise<any[]>;
@@ -568,6 +572,50 @@ export class DatabaseStorage implements IStorage {
       .from(mediaTimelineNotes)
       .where(eq(mediaTimelineNotes.clientUserId, clientUserId));
     return results;
+  }
+
+  // Contact information management implementation
+  async getContactInfo(): Promise<WebsiteSettings | undefined> {
+    const [contactSetting] = await db
+      .select()
+      .from(websiteSettings)
+      .where(eq(websiteSettings.section, 'contact_info'))
+      .limit(1);
+    return contactSetting;
+  }
+
+  async updateContactInfo(contactInfo: { contactEmail?: string; contactPhone?: string; contactAddress?: string; updatedBy: string }): Promise<WebsiteSettings> {
+    const section = 'contact_info';
+    
+    // Try to update existing setting first
+    const [existingSetting] = await db
+      .update(websiteSettings)
+      .set({ 
+        contactEmail: contactInfo.contactEmail,
+        contactPhone: contactInfo.contactPhone,
+        contactAddress: contactInfo.contactAddress,
+        updatedBy: contactInfo.updatedBy,
+        updatedAt: new Date() 
+      })
+      .where(eq(websiteSettings.section, section))
+      .returning();
+
+    // If no existing setting, create a new one
+    if (!existingSetting) {
+      const [newSetting] = await db
+        .insert(websiteSettings)
+        .values({ 
+          section,
+          contactEmail: contactInfo.contactEmail,
+          contactPhone: contactInfo.contactPhone,
+          contactAddress: contactInfo.contactAddress,
+          updatedBy: contactInfo.updatedBy
+        })
+        .returning();
+      return newSetting;
+    }
+
+    return existingSetting;
   }
 }
 

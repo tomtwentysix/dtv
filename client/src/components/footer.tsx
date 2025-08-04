@@ -1,9 +1,15 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { useQuery } from "@tanstack/react-query";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
+  
+  // Fetch contact information
+  const { data: contactInfo } = useQuery({
+    queryKey: ['/api/contact-info'],
+  });
 
   return (
     <footer className="bg-black text-white py-16">
@@ -43,18 +49,13 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Staff Access */}
+          {/* Contact */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-white">Contact</h3>
             <ul className="space-y-2 text-sm text-gray-400">
-              <li>hello@dt-visuals.com</li>
-              <li>+1 (555) 123-4567</li>
-              <li>Los Angeles, CA</li>
-              <li>
-                <Link href="/auth" className="text-gray-500 hover:text-gray-400 transition-colors text-xs">
-                  Staff Access
-                </Link>
-              </li>
+              <li>{contactInfo?.contactEmail || 'hello@dt-visuals.com'}</li>
+              <li>{contactInfo?.contactPhone || '+1 (555) 123-4567'}</li>
+              <li>{contactInfo?.contactAddress || 'Los Angeles, CA'}</li>
             </ul>
           </div>
         </div>
@@ -68,6 +69,9 @@ export function Footer() {
           <div className="flex space-x-6 text-sm text-gray-400">
             <span className="hover:text-teal-400 transition-colors cursor-pointer">Privacy Policy</span>
             <span className="hover:text-teal-400 transition-colors cursor-pointer">Terms of Service</span>
+            <Link href="/auth" className="text-gray-500 hover:text-gray-400 transition-colors text-xs">
+              Staff Access
+            </Link>
           </div>
         </div>
       </div>

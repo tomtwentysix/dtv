@@ -90,9 +90,13 @@ export const mediaClients = pgTable("media_clients", {
 
 export const websiteSettings = pgTable("website_settings", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  section: text("section").notNull().unique(), // 'hero', 'featured_work', 'services', 'portfolio_header', 'portfolio_gallery', 'about_header', 'about_values', 'services_header', 'services_section', 'services_cta'
+  section: text("section").notNull().unique(), // 'hero', 'featured_work', 'services', 'portfolio_header', 'portfolio_gallery', 'about_header', 'about_values', 'services_header', 'services_section', 'services_cta', 'contact_info'
   backgroundImageId: varchar("background_image_id").references(() => media.id),
   backgroundVideoId: varchar("background_video_id").references(() => media.id),
+  // Contact information fields
+  contactEmail: text("contact_email"),
+  contactPhone: text("contact_phone"),
+  contactAddress: text("contact_address"),
   updatedBy: varchar("updated_by").notNull().references(() => users.id),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
