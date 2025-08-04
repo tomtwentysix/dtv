@@ -515,14 +515,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create the client first
       const client = await storage.createClient({ ...clientData, createdBy: req.user!.id });
       
-      // Hash the password for the client user
+      // Hash the password for the client user using the client auth format (salt:hash)
       const { scrypt, randomBytes } = await import("crypto");
       const { promisify } = await import("util");
       const scryptAsync = promisify(scrypt);
       
       const salt = randomBytes(16).toString("hex");
       const buf = (await scryptAsync(password, salt, 64)) as Buffer;
-      const hashedPassword = `${buf.toString("hex")}.${salt}`;
+      const hashedPassword = `${salt}:${buf.toString("hex")}`;
       
       // Create the client user for authentication
       await storage.createClientUser({
