@@ -41,6 +41,10 @@ type CreateUserFormData = z.infer<typeof createUserSchema>;
 export default function AdminUsers() {
   const { toast } = useToast();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<any>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<any>(null);
 
   const { data: users, isLoading: usersLoading } = useQuery({
     queryKey: ["/api/users"],
@@ -57,6 +61,13 @@ export default function AdminUsers() {
       email: "",
       password: "",
       confirmPassword: "",
+    },
+  });
+
+  const editUserForm = useForm({
+    defaultValues: {
+      username: "",
+      email: "",
     },
   });
 
@@ -86,6 +97,79 @@ export default function AdminUsers() {
   const onCreateUser = (data: CreateUserFormData) => {
     const { confirmPassword, ...userData } = data;
     createUserMutation.mutate(userData);
+  };
+
+  const editUserMutation = useMutation({
+    mutationFn: async (data: { id: string; username: string; email: string }) => {
+      const res = await apiRequest("PUT", `/api/users/${data.id}`, {
+        username: data.username,
+        email: data.email,
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      toast({
+        title: "User updated",
+        description: "User has been successfully updated.",
+      });
+      setIsEditDialogOpen(false);
+      setEditingUser(null);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to update user",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const res = await apiRequest("DELETE", `/api/users/${userId}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      toast({
+        title: "User deleted",
+        description: "User has been successfully deleted.",
+      });
+      setIsDeleteDialogOpen(false);
+      setUserToDelete(null);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to delete user",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleEditUser = (user: any) => {
+    setEditingUser(user);
+    editUserForm.reset({
+      username: user.username,
+      email: user.email,
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleDeleteUser = (user: any) => {
+    setUserToDelete(user);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const onEditUser = (data: { username: string; email: string }) => {
+    if (editingUser) {
+      editUserMutation.mutate({
+        id: editingUser.id,
+        username: data.username,
+        email: data.email,
+      });
+    }
   };
 
   return (
@@ -278,10 +362,18 @@ export default function AdminUsers() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end space-x-2">
-                            <Button variant="ghost" size="sm">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleEditUser(user)}
+                            >
                               <Edit className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="sm">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleDeleteUser(user)}
+                            >
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
@@ -293,6 +385,97 @@ export default function AdminUsers() {
               )}
             </CardContent>
           </Card>
+
+          {/* Edit User Dialog */}
+          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Edit User</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={editUserForm.handleSubmit(onEditUser)} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-username">Username</Label>
+                  <Input
+                    id="edit-username"
+                    {...editUserForm.register("username")}
+                    placeholder="Enter username"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-email">Email</Label>
+                  <Input
+                    id="edit-email"
+                    type="email"
+                    {...editUserForm.register("email")}
+                    placeholder="Enter email address"
+                  />
+                </div>
+
+                <div className="flex justify-end space-x-2 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsEditDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="btn-primary"
+                    disabled={editUserMutation.isPending}
+                  >
+                    {editUserMutation.isPending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Updating...
+                      </>
+                    ) : (
+                      "Update User"
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+
+          {/* Delete User Dialog */}
+          <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Delete User</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Are you sure you want to delete the user "{userToDelete?.username}"? This action cannot be undone.
+                </p>
+                
+                <div className="flex justify-end space-x-2 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsDeleteDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={() => userToDelete && deleteUserMutation.mutate(userToDelete.id)}
+                    disabled={deleteUserMutation.isPending}
+                  >
+                    {deleteUserMutation.isPending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Deleting...
+                      </>
+                    ) : (
+                      "Delete User"
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     </div>

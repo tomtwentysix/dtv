@@ -191,6 +191,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put("/api/users/:id", requireAuth, requirePermission("edit:users"), async (req, res) => {
+    try {
+      const { username, email } = req.body;
+      const user = await storage.updateUser(req.params.id, { username, email });
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      res.json(user);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+
+  app.delete("/api/users/:id", requireAuth, requirePermission("edit:users"), async (req, res) => {
+    try {
+      const success = await storage.deleteUser(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      res.sendStatus(204);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete user" });
+    }
+  });
+
   // Role management routes
   app.get("/api/roles", requireAuth, requirePermission("edit:roles"), async (req, res) => {
     try {
