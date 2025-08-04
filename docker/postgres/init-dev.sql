@@ -25,7 +25,7 @@ BEGIN
         ('admin-user-id', 'admin', 'admin@dtvisuals.com', 'da06ef17a5bce192c00d02e92aa40eb563e38084755fa219643499ef5027c4f8:7301531c4aee740d57796afabb6a00e1ee4f56a6c46376e569534ece5e61dc53a0a682b311f365e5d67acbd5d95df318e802571f8b559ca03b0338efa484a667', 'Admin', 'User', 'Admin User', true),
         ('staff-user-id', 'staff', 'staff@dtvisuals.com', '4b4fea840b0bdd38c664b652f8a6be4544b05d82d5cc7f7caab4c96fed86a8c0:843fcb0ed4b9c1d9a0682864ccdfc53256ff2cf842d4b1cddd2753b7597f679d62299e6b6407876c19ed06a5a50c9c25f57ebb493afe6ccd6a39dc5a966e8131', 'Staff', 'Member', 'Staff Member', true);
 
-        -- Insert roles (note: client role is no longer used for main users)
+        -- Insert roles (client role removed - clients use separate client_users table)
         INSERT INTO roles (id, name, description) VALUES 
         ('admin-role-id', 'Admin', 'Full system access with all permissions'),
         ('staff-role-id', 'Staff', 'Media management and client interaction permissions');
