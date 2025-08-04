@@ -1339,7 +1339,7 @@ export default function AdminMedia() {
                   className="overflow-hidden group cursor-pointer hover:shadow-lg transition-shadow"
                   onClick={() => {
                     setSelectedMediaForFeedback(item);
-                    setSelectedClientForFeedbackModal(item.clientId || "unassign");
+                    setSelectedClientForFeedbackModal(item.assignedClients?.[0]?.id || "unassign");
                     setActiveTab("feedback");
                     setShowFeedbackModal(true);
                   }}
@@ -1387,7 +1387,7 @@ export default function AdminMedia() {
                               e.stopPropagation();
                               e.preventDefault();
                               setSelectedMediaForFeedback(item);
-                              setSelectedClientForFeedbackModal(item.clientId || "unassign");
+                              setSelectedClientForFeedbackModal(item.assignedClients?.[0]?.id || "unassign");
                               setActiveTab("feedback");
                               setShowFeedbackModal(true);
                             }}
@@ -1402,7 +1402,7 @@ export default function AdminMedia() {
                                 e.stopPropagation();
                                 e.preventDefault();
                                 setSelectedMediaForFeedback(item);
-                                setSelectedClientForFeedbackModal(item.clientId || "unassign");
+                                setSelectedClientForFeedbackModal(item.assignedClients?.[0]?.id || "unassign");
                                 setActiveTab("edit");
                                 setShowFeedbackModal(true);
                               }}
@@ -1418,7 +1418,7 @@ export default function AdminMedia() {
                                 e.stopPropagation();
                                 e.preventDefault();
                                 setSelectedMediaForFeedback(item);
-                                setSelectedClientForFeedbackModal(item.clientId || "unassign");
+                                setSelectedClientForFeedbackModal(item.assignedClients?.[0]?.id || "unassign");
                                 setActiveTab("assign");
                                 setShowFeedbackModal(true);
                               }}
@@ -1433,7 +1433,7 @@ export default function AdminMedia() {
                               e.stopPropagation();
                               e.preventDefault();
                               setSelectedMediaForFeedback(item);
-                              setSelectedClientForFeedbackModal(item.clientId || "unassign");
+                              setSelectedClientForFeedbackModal(item.assignedClients?.[0]?.id || "unassign");
                               setActiveTab("settings");
                               setShowFeedbackModal(true);
                             }}
@@ -2159,7 +2159,7 @@ export default function AdminMedia() {
                     <div>
                       <label className="block text-sm font-medium mb-2">Assign to Client</label>
                       <Select 
-                        defaultValue={selectedMediaForFeedback?.clientId || "unassign"}
+                        defaultValue={selectedMediaForFeedback?.assignedClients?.[0]?.id || "unassign"}
                         onValueChange={(value) => setSelectedClientForFeedbackModal(value)}
                       >
                         <SelectTrigger>

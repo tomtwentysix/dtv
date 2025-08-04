@@ -428,8 +428,18 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(media).where(inArray(media.id, ids));
   }
 
-  async getAllMedia(): Promise<Media[]> {
-    return await db.select().from(media);
+  async getAllMedia(): Promise<(Media & { assignedClients?: Client[] })[]> {
+    const allMedia = await db.select().from(media);
+    
+    // For each media item, get assigned clients
+    const mediaWithClients = await Promise.all(
+      allMedia.map(async (mediaItem) => {
+        const assignedClients = await this.getMediaClients(mediaItem.id);
+        return { ...mediaItem, assignedClients };
+      })
+    );
+    
+    return mediaWithClients;
   }
 
   async getFeaturedMedia(): Promise<Media[]> {
@@ -444,21 +454,55 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(media).where(eq(media.uploadedBy, uploaderId));
   }
 
-  async createMedia(insertMedia: InsertMedia): Promise<Media> {
+  async createMedia(insertMedia: InsertMedia & { clientId?: string | null }): Promise<Media> {
+    // Extract clientId if provided
+    const { clientId, ...mediaData } = insertMedia;
+    
     const [mediaItem] = await db
       .insert(media)
-      .values(insertMedia)
+      .values(mediaData)
       .returning();
+    
+    // If a client is specified, create assignment in media_clients table
+    if (clientId) {
+      await db.insert(mediaClients).values({ mediaId: mediaItem.id, clientId });
+    }
+    
     return mediaItem;
   }
 
-  async updateMedia(id: string, updates: Partial<InsertMedia>): Promise<Media | undefined> {
+  async updateMedia(id: string, updates: Partial<InsertMedia> & { clientId?: string | null }): Promise<Media | undefined> {
+    // Handle client assignment separately using media_clients table
+    let clientId: string | null | undefined;
+    const mediaUpdates = { ...updates };
+    
+    // Extract clientId from updates if present
+    if ('clientId' in updates) {
+      clientId = updates.clientId;
+      delete mediaUpdates.clientId; // Remove from media table updates
+    }
+    
+    // Update the media record (without clientId)
     const [mediaItem] = await db
       .update(media)
-      .set(updates)
+      .set(mediaUpdates)
       .where(eq(media.id, id))
       .returning();
-    return mediaItem || undefined;
+    
+    if (!mediaItem) return undefined;
+    
+    // Handle client assignment via media_clients table
+    if (clientId !== undefined) {
+      // First, remove all existing assignments for this media
+      await db.delete(mediaClients).where(eq(mediaClients.mediaId, id));
+      
+      // If a client is specified (not null), create new assignment
+      if (clientId !== null) {
+        await db.insert(mediaClients).values({ mediaId: id, clientId });
+      }
+    }
+    
+    return mediaItem;
   }
 
   async deleteMedia(id: string): Promise<boolean> {
