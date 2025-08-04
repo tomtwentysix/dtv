@@ -476,13 +476,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/media/:id", requireAuth, requirePermission("upload:media"), async (req, res) => {
     try {
+      console.log('Updating media:', req.params.id, req.body);
       const media = await storage.updateMedia(req.params.id, req.body);
       if (!media) {
         return res.status(404).json({ message: "Media not found" });
       }
       res.json(media);
     } catch (error) {
-      res.status(500).json({ message: "Failed to update media" });
+      console.error('Media update error:', error);
+      res.status(500).json({ message: "Failed to update media", error: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
 
