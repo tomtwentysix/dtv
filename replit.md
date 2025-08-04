@@ -8,6 +8,17 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (January 2025)
 
+### Docker Database Initialization Fix
+**Date**: January 4, 2025  
+**Description**: Fixed Docker deployment database schema and test data initialization issues.
+
+**Key Changes**:
+- **Database Schema Fix**: Fixed missing column errors during Docker deployment by adding proper migration sequencing and application restart
+- **Updated Init Scripts**: Completely rebuilt docker/postgres/init-dev.sql with current production data and docker/postgres/init-prod.sql with proper default admin user
+- **Deployment Script Enhancement**: Added proper wait times, migration completion checks, and application restarts to ensure schema is applied correctly
+- **Auth System Fix**: Updated server/auth.ts to include required name fields (forename, surname, displayName) in user creation
+- **Data Migration**: Exported complete current database structure including users, roles, permissions, clients, and client_users to ensure Docker environments match production
+
 ### Multi-Client Media Assignment System Completion
 **Date**: January 4, 2025  
 **Description**: Completed implementation of live-updating multi-client media assignment system with search-based interface.

@@ -148,6 +148,7 @@ Start-Sleep -Seconds 5
 Write-Host "Populating development database with test data..." -ForegroundColor Yellow
 try {
     docker-compose -f docker-compose.dev.yml exec -T postgres-dev psql -U postgres -d dt_visuals_dev -c "SELECT populate_dev_test_data();"
+    docker-compose -f docker-compose.dev.yml exec -T postgres-dev psql -U postgres -d dt_visuals_dev -c "SELECT show_dev_accounts();"
     Write-Host "Development test data populated successfully!" -ForegroundColor Green
 }
 catch {

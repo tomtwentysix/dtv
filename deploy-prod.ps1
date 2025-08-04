@@ -169,6 +169,16 @@ try {
     Write-Host "⚠️  Application restart step encountered issues" -ForegroundColor Yellow
 }
 
+# Populate database with essential data if needed
+Write-Host "🔧 Setting up essential database data..." -ForegroundColor Yellow
+try {
+    docker-compose -f docker-compose.prod.yml exec -T postgres-prod psql -U postgres -d dt_visuals_prod -c "SELECT populate_prod_essential_data();"
+    docker-compose -f docker-compose.prod.yml exec -T postgres-prod psql -U postgres -d dt_visuals_prod -c "SELECT show_prod_accounts();"
+    Write-Host "✅ Essential database data configured successfully!" -ForegroundColor Green
+} catch {
+    Write-Host "⚠️ Essential data setup encountered issues (this might be normal if data already exists)" -ForegroundColor Yellow
+}
+
 Write-Host ""
 Write-Host "🎉 Production deployment completed successfully!" -ForegroundColor Green
 Write-Host ""

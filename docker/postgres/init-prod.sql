@@ -1,5 +1,5 @@
 -- Production Database Initialization Script
--- This script sets up the production database with necessary extensions and default admin user
+-- This script sets up the production database with essential admin user
 
 -- Enable necessary PostgreSQL extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -8,70 +8,97 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 -- Set timezone
 SET timezone = 'UTC';
 
--- Create production-specific configurations for performance
-ALTER DATABASE dt_visuals_prod SET shared_preload_libraries = 'pg_stat_statements';
-ALTER DATABASE dt_visuals_prod SET log_statement = 'mod';
+-- Create production-specific configurations
+ALTER DATABASE dt_visuals_prod SET log_statement = 'none';
 ALTER DATABASE dt_visuals_prod SET log_duration = off;
 
--- Optimize for production workload
-ALTER DATABASE dt_visuals_prod SET effective_cache_size = '256MB';
-ALTER DATABASE dt_visuals_prod SET random_page_cost = '1.1';
-
--- Create function to set up default admin user
-CREATE OR REPLACE FUNCTION create_default_admin() RETURNS void AS $$
+-- Wait for Drizzle to create tables, then populate with essential data
+-- This function will be called after tables are created
+CREATE OR REPLACE FUNCTION populate_prod_essential_data() RETURNS void AS $$
 BEGIN
     -- Check if users table exists and is empty
     IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'users') 
        AND NOT EXISTS (SELECT 1 FROM users LIMIT 1) THEN
         
-        -- Insert default admin user only (no client users in main table - they use client_users table)
-        INSERT INTO users (id, username, email, password, forename, surname, display_name, is_active) VALUES 
-        ('default-admin-id', 'admin', 'admin@dtvisuals.com', 'da06ef17a5bce192c00d02e92aa40eb563e38084755fa219643499ef5027c4f8:7301531c4aee740d57796afabb6a00e1ee4f56a6c46376e569534ece5e61dc53a0a682b311f365e5d67acbd5d95df318e802571f8b559ca03b0338efa484a667', 'System', 'Administrator', 'System Administrator', true);
+        -- Insert default admin user (password: admin123)
+        INSERT INTO users (id, username, email, password, forename, surname, display_name, is_active, created_at) VALUES 
+        ('admin-prod-id', 'admin', 'admin@dtvisuals.com', 'df10c71f317ded80d49fc8ebd89b928fdb6706e3bb45ea330da8a7caa009d98ebc3c57461844955f37b7dbb5651a00c42a0a924e7030550d4eb8bb2b1196878a.4e8dad95ff12fe8b727f303f8ac1a12f', 'Admin', 'User', 'Admin User', true, NOW());
 
-        -- Insert admin role
+        -- Insert essential roles
         INSERT INTO roles (id, name, description) VALUES 
-        ('prod-admin-role', 'Admin', 'Full system administrator access');
+        ('admin-role-prod', 'Admin', 'Full access to all admin features'),
+        ('staff-role-prod', 'Staff', 'Limited access based on assigned permissions'),
+        ('client-role-prod', 'Client', 'Login to view only their assigned media');
 
-        -- Insert all permissions
+        -- Insert essential permissions
         INSERT INTO permissions (id, name, description) VALUES 
-        ('prod-perm-upload-media', 'upload:media', 'Upload new media files'),
-        ('prod-perm-edit-media', 'edit:media', 'Edit media metadata and properties'),
-        ('prod-perm-delete-media', 'delete:media', 'Delete media files'),
-        ('prod-perm-assign-client', 'assign:client', 'Assign media to clients'),
-        ('prod-perm-view-media', 'view:media', 'View media content'),
-        ('prod-perm-view-clients', 'view:clients', 'View client information'),
-        ('prod-perm-edit-clients', 'edit:clients', 'Edit client information'),
-        ('prod-perm-edit-users', 'edit:users', 'Manage user accounts'),
-        ('prod-perm-edit-roles', 'edit:roles', 'Manage roles and permissions'),
-        ('prod-perm-edit-website', 'edit:website', 'Manage website settings and content'),
-        ('prod-perm-view-analytics', 'view:analytics', 'View system analytics');
+        ('perm-upload-media', 'upload:media', 'Can upload new media'),
+        ('perm-assign-media', 'assign:media', 'Can assign media to clients'),
+        ('perm-delete-media', 'delete:media', 'Can delete media'),
+        ('perm-view-clients', 'view:clients', 'Can view client profiles'),
+        ('perm-edit-users', 'edit:users', 'Can create/edit staff users'),
+        ('perm-edit-roles', 'edit:roles', 'Can create/edit roles and permissions'),
+        ('perm-view-analytics', 'view:analytics', 'Can view analytics and stats'),
+        ('perm-manage-system', 'manage:system', 'Full system management access'),
+        ('perm-edit-website', 'edit:website', 'Manage website customization settings'),
+        ('perm-edit-clients', 'edit:clients', 'Manage client accounts and information'),
+        ('perm-view-users', 'view:users', 'View system users'),
+        ('perm-view-media', 'view:media', 'Can view media in admin panel');
 
-        -- Assign admin role to default user
+        -- Assign admin role to default admin user
         INSERT INTO user_roles (user_id, role_id) VALUES 
-        ('default-admin-id', 'prod-admin-role');
+        ('admin-prod-id', 'admin-role-prod');
 
         -- Assign all permissions to admin role
         INSERT INTO role_permissions (role_id, permission_id) VALUES 
-        ('prod-admin-role', 'prod-perm-upload-media'),
-        ('prod-admin-role', 'prod-perm-edit-media'),
-        ('prod-admin-role', 'prod-perm-delete-media'),
-        ('prod-admin-role', 'prod-perm-assign-client'),
-        ('prod-admin-role', 'prod-perm-view-media'),
-        ('prod-admin-role', 'prod-perm-view-clients'),
-        ('prod-admin-role', 'prod-perm-edit-clients'),
-        ('prod-admin-role', 'prod-perm-edit-users'),
-        ('prod-admin-role', 'prod-perm-edit-roles'),
-        ('prod-admin-role', 'prod-perm-edit-website'),
-        ('prod-admin-role', 'prod-perm-view-analytics');
+        ('admin-role-prod', 'perm-upload-media'),
+        ('admin-role-prod', 'perm-assign-media'),
+        ('admin-role-prod', 'perm-delete-media'),
+        ('admin-role-prod', 'perm-view-clients'),
+        ('admin-role-prod', 'perm-edit-users'),
+        ('admin-role-prod', 'perm-edit-roles'),
+        ('admin-role-prod', 'perm-view-analytics'),
+        ('admin-role-prod', 'perm-manage-system'),
+        ('admin-role-prod', 'perm-edit-website'),
+        ('admin-role-prod', 'perm-edit-clients'),
+        ('admin-role-prod', 'perm-view-users'),
+        ('admin-role-prod', 'perm-view-media');
 
-        RAISE NOTICE 'Default admin user created successfully';
-        RAISE NOTICE 'Login: admin@dtvisuals.com / admin123';
-        RAISE NOTICE 'IMPORTANT: Change the default password immediately after first login!';
-        RAISE NOTICE 'Features: Dual authentication system (Admin/Staff + separate Client authentication)';
-        RAISE NOTICE 'Client Portal: Clients use separate client_users table for authentication';
+        -- Assign basic permissions to staff role
+        INSERT INTO role_permissions (role_id, permission_id) VALUES 
+        ('staff-role-prod', 'perm-upload-media'),
+        ('staff-role-prod', 'perm-assign-media'),
+        ('staff-role-prod', 'perm-view-clients'),
+        ('staff-role-prod', 'perm-edit-clients'),
+        ('staff-role-prod', 'perm-view-media');
+
+        RAISE NOTICE 'Production essential data populated successfully!';
+        
+    ELSE
+        RAISE NOTICE 'Users table already contains data, skipping population.';
     END IF;
 END;
 $$ LANGUAGE plpgsql;
 
--- Production database is ready for Drizzle migrations
-SELECT 'Production database initialized successfully' as status;
+-- Create a function to display production account info
+CREATE OR REPLACE FUNCTION show_prod_accounts() RETURNS void AS $$
+BEGIN
+    RAISE NOTICE '';
+    RAISE NOTICE '=== PRODUCTION ACCOUNT INFORMATION ===';
+    RAISE NOTICE '';
+    RAISE NOTICE 'Default Admin Account:';
+    RAISE NOTICE '  Username: admin';
+    RAISE NOTICE '  Email: admin@dtvisuals.com';
+    RAISE NOTICE '  Password: admin123';
+    RAISE NOTICE '';
+    RAISE NOTICE 'IMPORTANT: Change the default admin password immediately after first login!';
+    RAISE NOTICE 'IMPORTANT: Create additional staff users and disable default admin if not needed!';
+    RAISE NOTICE '';
+    RAISE NOTICE 'System Features:';
+    RAISE NOTICE '  - Dual authentication system (Admin/Staff + Client)';
+    RAISE NOTICE '  - Role-based access control (RBAC)';
+    RAISE NOTICE '  - Media management with client assignment';
+    RAISE NOTICE '  - Website customization system';
+    RAISE NOTICE '';
+END;
+$$ LANGUAGE plpgsql;
