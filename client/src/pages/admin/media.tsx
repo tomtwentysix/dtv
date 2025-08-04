@@ -40,8 +40,6 @@ import {
   MessageSquare,
   Clock,
   Settings,
-  Check,
-  ChevronsUpDown,
 } from "lucide-react";
 import {
   Select,
@@ -66,9 +64,6 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
-import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { usePermissions } from "@/hooks/use-permissions";
@@ -534,7 +529,7 @@ export default function AdminMedia() {
   // Old assignment dialog function removed - now using Assign tab in media management dialog
 
   const [selectedClientForAssignment, setSelectedClientForAssignment] = useState<string>("");
-  const [clientDropdownOpen, setClientDropdownOpen] = useState(false);
+  const [clientSearchQuery, setClientSearchQuery] = useState("");
   // Removed old unused state variables
 
   // Old assignment function removed
@@ -2105,82 +2100,88 @@ export default function AdminMedia() {
                     </div>
                     
                     {/* Add New Client */}
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       <Label>Add Client</Label>
-                      <div className="flex gap-2">
-                        <Popover open={clientDropdownOpen} onOpenChange={setClientDropdownOpen}>
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="outline"
-                              role="combobox"
-                              aria-expanded={clientDropdownOpen}
-                              className="flex-1 justify-between"
-                            >
-                              {selectedClientForAssignment
-                                ? clients?.find((client: any) => client.id === selectedClientForAssignment)?.name
-                                : "Choose a client to add..."}
-                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-[400px] p-0">
-                            <Command>
-                              <CommandInput placeholder="Search clients..." />
-                              <CommandEmpty>No clients found.</CommandEmpty>
-                              <CommandGroup className="max-h-64 overflow-auto">
-                                {Array.isArray(clients) && clients
-                                  .filter((client: any) => {
-                                    // Don't show already assigned clients
-                                    const assignedClientIds = (selectedMediaForFeedback?.assignedClients || []).map((c: any) => c.id);
-                                    return !assignedClientIds.includes(client.id);
-                                  })
-                                  .map((client: any) => (
-                                    <CommandItem
-                                      key={client.id}
-                                      value={`${client.name} ${client.email}`}
-                                      onSelect={() => {
-                                        setSelectedClientForAssignment(client.id);
-                                        setClientDropdownOpen(false);
-                                      }}
-                                    >
-                                      <Check
-                                        className={cn(
-                                          "mr-2 h-4 w-4",
-                                          selectedClientForAssignment === client.id ? "opacity-100" : "opacity-0"
-                                        )}
-                                      />
-                                      <div className="flex items-center space-x-2">
-                                        <Users className="h-4 w-4" />
-                                        <div className="flex flex-col">
-                                          <span className="font-medium">{client.name}</span>
-                                          <span className="text-sm text-gray-500">{client.email}</span>
-                                        </div>
-                                      </div>
-                                    </CommandItem>
-                                  ))}
-                              </CommandGroup>
-                            </Command>
-                          </PopoverContent>
-                        </Popover>
-                        <Button
-                          onClick={() => {
-                            if (selectedMediaForFeedback && selectedClientForAssignment) {
-                              addClientToMediaMutation.mutate({
-                                mediaId: selectedMediaForFeedback.id,
-                                clientId: selectedClientForAssignment,
-                              });
-                              setSelectedClientForAssignment("");
-                            }
-                          }}
-                          disabled={addClientToMediaMutation.isPending || !selectedClientForAssignment}
-                          className="shrink-0"
-                        >
-                          {addClientToMediaMutation.isPending ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Plus className="h-4 w-4" />
-                          )}
-                        </Button>
+                      
+                      {/* Search Input */}
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <Input
+                          placeholder="Search clients by name or email..."
+                          className="pl-10"
+                          value={clientSearchQuery}
+                          onChange={(e) => setClientSearchQuery(e.target.value)}
+                        />
                       </div>
+                      
+                      {/* Filtered Client List */}
+                      {clientSearchQuery.length > 0 && (
+                        <div className="border rounded-lg max-h-48 overflow-y-auto">
+                          {Array.isArray(clients) && clients
+                            .filter((client: any) => {
+                              const searchTerm = clientSearchQuery.toLowerCase();
+                              return client.name.toLowerCase().includes(searchTerm) ||
+                                client.email.toLowerCase().includes(searchTerm) ||
+                                (client.username && client.username.toLowerCase().includes(searchTerm));
+                            })
+                            .filter((client: any) => {
+                              // Don't show already assigned clients
+                              return !selectedMediaForFeedback?.assignedClients?.some((assigned: any) => assigned.id === client.id);
+                            })
+                            .map((client: any) => (
+                              <div
+                                key={client.id}
+                                className="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-800 border-b last:border-b-0 cursor-pointer"
+                                onClick={() => {
+                                  if (selectedMediaForFeedback) {
+                                    addClientToMediaMutation.mutate({
+                                      mediaId: selectedMediaForFeedback.id,
+                                      clientId: client.id,
+                                    });
+                                    setClientSearchQuery(''); // Clear search after assignment
+                                  }
+                                }}
+                              >
+                                <div className="flex items-center space-x-3">
+                                  <Users className="h-4 w-4 text-gray-400" />
+                                  <div>
+                                    <p className="font-medium">{client.name}</p>
+                                    <p className="text-sm text-gray-500">{client.email}</p>
+                                    {client.username && (
+                                      <p className="text-xs text-gray-400">@{client.username}</p>
+                                    )}
+                                  </div>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-blue-600 hover:text-blue-800"
+                                  disabled={addClientToMediaMutation.isPending}
+                                >
+                                  {addClientToMediaMutation.isPending ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <Plus className="h-4 w-4" />
+                                  )}
+                                </Button>
+                              </div>
+                            ))}
+                          {Array.isArray(clients) && clients
+                            .filter((client: any) => {
+                              const searchTerm = clientSearchQuery.toLowerCase();
+                              return client.name.toLowerCase().includes(searchTerm) ||
+                                client.email.toLowerCase().includes(searchTerm) ||
+                                (client.username && client.username.toLowerCase().includes(searchTerm));
+                            })
+                            .filter((client: any) => {
+                              return !selectedMediaForFeedback?.assignedClients?.some((assigned: any) => assigned.id === client.id);
+                            }).length === 0 && (
+                            <div className="p-6 text-center text-gray-500">
+                              No clients match your search.
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </TabsContent>
