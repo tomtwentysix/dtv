@@ -45,21 +45,17 @@ export function Footer() {
 
           {/* Staff Access */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-white">Team Access</h3>
-            <div className="space-y-3">
-              <p className="text-sm text-gray-400">
-                Staff and administrative access
-              </p>
-              <Link href="/auth">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="bg-transparent border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-white hover:border-gray-400 transition-colors"
-                >
-                  Staff Login
-                </Button>
-              </Link>
-            </div>
+            <h3 className="text-lg font-semibold text-white">Contact</h3>
+            <ul className="space-y-2 text-sm text-gray-400">
+              <li>hello@dt-visuals.com</li>
+              <li>+1 (555) 123-4567</li>
+              <li>Los Angeles, CA</li>
+              <li>
+                <Link href="/auth" className="text-gray-500 hover:text-gray-400 transition-colors text-xs">
+                  Staff Access
+                </Link>
+              </li>
+            </ul>
           </div>
         </div>
 
