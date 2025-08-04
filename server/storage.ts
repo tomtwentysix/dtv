@@ -482,14 +482,23 @@ export class DatabaseStorage implements IStorage {
       delete mediaUpdates.clientId; // Remove from media table updates
     }
     
-    // Update the media record (without clientId)
-    const [mediaItem] = await db
-      .update(media)
-      .set(mediaUpdates)
-      .where(eq(media.id, id))
-      .returning();
-    
-    if (!mediaItem) return undefined;
+    // Only update media record if there are fields to update
+    let mediaItem: Media;
+    if (Object.keys(mediaUpdates).length > 0) {
+      const [updatedMedia] = await db
+        .update(media)
+        .set(mediaUpdates)
+        .where(eq(media.id, id))
+        .returning();
+      
+      if (!updatedMedia) return undefined;
+      mediaItem = updatedMedia;
+    } else {
+      // If no media fields to update, just get the current record
+      const [currentMedia] = await db.select().from(media).where(eq(media.id, id));
+      if (!currentMedia) return undefined;
+      mediaItem = currentMedia;
+    }
     
     // Handle client assignment via media_clients table
     if (clientId !== undefined) {
@@ -513,6 +522,16 @@ export class DatabaseStorage implements IStorage {
   // Media-Client associations
   async assignMediaToClient(mediaId: string, clientId: string): Promise<boolean> {
     try {
+      // Check if assignment already exists
+      const existing = await db
+        .select()
+        .from(mediaClients)
+        .where(and(eq(mediaClients.mediaId, mediaId), eq(mediaClients.clientId, clientId)));
+      
+      if (existing.length > 0) {
+        return true; // Already assigned
+      }
+      
       await db.insert(mediaClients).values({ mediaId, clientId });
       return true;
     } catch {
