@@ -111,7 +111,7 @@ export default function AdminMedia() {
   const [selectedMediaForFeedback, setSelectedMediaForFeedback] = useState<any>(null);
   const [feedbackVideoRef, setFeedbackVideoRef] = useState<HTMLVideoElement | null>(null);
   const [activeTab, setActiveTab] = useState("feedback");
-  const [clientSearchQuery, setClientSearchQuery] = useState("");
+  // Removed old client search query state
 
   // Check URL parameters to auto-open upload dialog
   useEffect(() => {
@@ -526,58 +526,16 @@ export default function AdminMedia() {
     });
   };
 
-  const handleAssignMedia = (mediaId: string) => {
-    setSelectedMediaId(mediaId);
-    setSelectedClientForAssignment(""); // Reset selection when dialog opens
-    setIsAssignDialogOpen(true);
-  };
+  // Old assignment dialog function removed - now using Assign tab in media management dialog
 
   const [selectedClientForAssignment, setSelectedClientForAssignment] = useState<string>("");
-  const [selectedClientForFeedbackModal, setSelectedClientForFeedbackModal] = useState<string>("");
+  // Removed old unused state variables
 
-  const onAssignToClient = (clientId: string) => {
-    setSelectedClientForAssignment(clientId);
-  };
+  // Old assignment function removed
 
   // Note: This function is now replaced by the new multi-client assignment interface
 
-  const updateFeedbackModalAssignmentMutation = useMutation({
-    mutationFn: async ({ mediaId, clientId }: { mediaId: string; clientId: string | null }) => {
-      const res = await apiRequest("PUT", `/api/media/${mediaId}`, {
-        clientId: clientId === "unassign" ? null : clientId,
-      });
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/media"] });
-      toast({
-        title: "Assignment updated",
-        description: "Media assignment has been updated successfully.",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Assignment failed",
-        description: error.message || "Failed to update media assignment.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleUpdateFeedbackModalAssignment = () => {
-    if (selectedMediaForFeedback && selectedClientForFeedbackModal !== undefined) {
-      updateFeedbackModalAssignmentMutation.mutate({
-        mediaId: selectedMediaForFeedback.id,
-        clientId: selectedClientForFeedbackModal === "unassign" ? null : selectedClientForFeedbackModal,
-      });
-    } else {
-      toast({
-        title: "Please select a client",
-        description: "Choose a client from the dropdown to update the assignment.",
-        variant: "destructive"
-      });
-    }
-  };
+  // Old single-client assignment system removed - now using multi-client REST endpoints
 
   // Add mutation for updating media details in feedback modal
   const updateMediaDetailsMutation = useMutation({
@@ -1121,135 +1079,7 @@ export default function AdminMedia() {
               </DialogContent>
             </Dialog>
 
-            {/* Multi-Client Assignment Dialog */}
-            <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
-              <DialogContent className="sm:max-w-lg">
-                <DialogHeader>
-                  <DialogTitle>Manage Client Access</DialogTitle>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Add or remove clients who can access this media content.
-                  </p>
-                </DialogHeader>
-                <div className="space-y-4">
-                  {/* Currently Assigned Clients */}
-                  {(() => {
-                    const currentMedia = Array.isArray(media) ? 
-                      media.find((m: any) => m.id === selectedMediaId) : null;
-                    const assignedClients = currentMedia?.assignedClients || [];
-                    
-                    return (
-                      <div className="space-y-2">
-                        <Label>Currently Assigned Clients</Label>
-                        {assignedClients.length > 0 ? (
-                          <div className="border rounded-md p-3 space-y-2 bg-gray-50 dark:bg-gray-900">
-                            {assignedClients.map((client: any) => (
-                              <div key={client.id} className="flex items-center justify-between">
-                                <div className="flex items-center space-x-2">
-                                  <Users className="h-4 w-4 text-green-600" />
-                                  <span className="text-sm font-medium">{client.name}</span>
-                                  <span className="text-xs text-gray-500">({client.email})</span>
-                                </div>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    if (selectedMediaId) {
-                                      removeClientFromMediaMutation.mutate({
-                                        mediaId: selectedMediaId,
-                                        clientId: client.id,
-                                      });
-                                    }
-                                  }}
-                                  disabled={removeClientFromMediaMutation.isPending}
-                                  className="h-8 w-8 p-0 hover:bg-red-100 hover:text-red-600"
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="border rounded-md p-3 text-center text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900">
-                            <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                            <p className="text-sm">No clients assigned</p>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })()}
-                  
-                  {/* Add New Client */}
-                  <div className="space-y-2">
-                    <Label>Add Client</Label>
-                    <div className="flex gap-2">
-                      <Select onValueChange={setSelectedClientForAssignment} value={selectedClientForAssignment}>
-                        <SelectTrigger className="flex-1">
-                          <SelectValue placeholder="Choose a client to add..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Array.isArray(clients) && clients
-                            .filter((client: any) => {
-                              const currentMedia = Array.isArray(media) ? 
-                                media.find((m: any) => m.id === selectedMediaId) : null;
-                              const assignedClientIds = (currentMedia?.assignedClients || []).map((c: any) => c.id);
-                              return !assignedClientIds.includes(client.id);
-                            })
-                            .map((client: any) => (
-                              <SelectItem key={client.id} value={client.id}>
-                                <div className="flex items-center space-x-2">
-                                  <Users className="h-4 w-4" />
-                                  <span>{client.name} ({client.email})</span>
-                                </div>
-                              </SelectItem>
-                            ))}
-                          {!Array.isArray(clients) || clients.length === 0 && (
-                            <SelectItem value="no-clients" disabled>
-                              No clients available
-                            </SelectItem>
-                          )}
-                        </SelectContent>
-                      </Select>
-                      <Button
-                        onClick={() => {
-                          if (selectedMediaId && selectedClientForAssignment) {
-                            addClientToMediaMutation.mutate({
-                              mediaId: selectedMediaId,
-                              clientId: selectedClientForAssignment,
-                            });
-                            setSelectedClientForAssignment("");
-                          }
-                        }}
-                        disabled={addClientToMediaMutation.isPending || !selectedClientForAssignment}
-                        className="shrink-0"
-                      >
-                        {addClientToMediaMutation.isPending ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          </>
-                        ) : (
-                          <>
-                            <Plus className="h-4 w-4" />
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </div>
 
-                  <div className="flex justify-end space-x-2 pt-4">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        setIsAssignDialogOpen(false);
-                        setSelectedClientForAssignment("");
-                      }}
-                    >
-                      Done
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
             </div>
           </div>
 
@@ -1416,7 +1246,6 @@ export default function AdminMedia() {
                   className="overflow-hidden group cursor-pointer hover:shadow-lg transition-shadow"
                   onClick={() => {
                     setSelectedMediaForFeedback(item);
-                    setSelectedClientForFeedbackModal(item.assignedClients?.[0]?.id || "unassign");
                     setActiveTab("feedback");
                     setShowFeedbackModal(true);
                   }}
@@ -1464,7 +1293,6 @@ export default function AdminMedia() {
                               e.stopPropagation();
                               e.preventDefault();
                               setSelectedMediaForFeedback(item);
-                              setSelectedClientForFeedbackModal(item.assignedClients?.[0]?.id || "unassign");
                               setActiveTab("feedback");
                               setShowFeedbackModal(true);
                             }}
@@ -1479,7 +1307,6 @@ export default function AdminMedia() {
                                 e.stopPropagation();
                                 e.preventDefault();
                                 setSelectedMediaForFeedback(item);
-                                setSelectedClientForFeedbackModal(item.assignedClients?.[0]?.id || "unassign");
                                 setActiveTab("edit");
                                 setShowFeedbackModal(true);
                               }}
@@ -1495,7 +1322,6 @@ export default function AdminMedia() {
                                 e.stopPropagation();
                                 e.preventDefault();
                                 setSelectedMediaForFeedback(item);
-                                setSelectedClientForFeedbackModal(item.assignedClients?.[0]?.id || "unassign");
                                 setActiveTab("assign");
                                 setShowFeedbackModal(true);
                               }}
@@ -1510,7 +1336,6 @@ export default function AdminMedia() {
                               e.stopPropagation();
                               e.preventDefault();
                               setSelectedMediaForFeedback(item);
-                              setSelectedClientForFeedbackModal(item.assignedClients?.[0]?.id || "unassign");
                               setActiveTab("settings");
                               setShowFeedbackModal(true);
                             }}
@@ -2235,132 +2060,95 @@ export default function AdminMedia() {
                     </h3>
                     
                     {/* Currently Assigned Clients */}
-                    {selectedMediaForFeedback?.assignedClients && selectedMediaForFeedback.assignedClients.length > 0 && (
-                      <div className="space-y-2">
-                        <label className="block text-sm font-medium">Currently Assigned to:</label>
-                        <div className="flex flex-wrap gap-2">
+                    <div className="space-y-2">
+                      <Label>Currently Assigned Clients</Label>
+                      {selectedMediaForFeedback?.assignedClients && selectedMediaForFeedback.assignedClients.length > 0 ? (
+                        <div className="border rounded-md p-3 space-y-2 bg-gray-50 dark:bg-gray-900">
                           {selectedMediaForFeedback.assignedClients.map((client: any) => (
-                            <div key={client.id} className="flex items-center bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-full text-sm">
-                              <Users className="h-3 w-3 mr-1" />
-                              {client.name}
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-5 w-5 p-0 ml-2 hover:bg-red-200 dark:hover:bg-red-800"
-                                onClick={() => {
-                                  updateFeedbackModalAssignmentMutation.mutate({
-                                    mediaId: selectedMediaForFeedback.id,
-                                    clientId: null, // Remove assignment
-                                  });
-                                }}
-                              >
-                                <X className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Add New Client Assignment */}
-                    <div className="space-y-3">
-                      <label className="block text-sm font-medium">Add Client Assignment</label>
-                      
-                      {/* Search Input */}
-                      <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <Input
-                          placeholder="Search clients by name or email..."
-                          className="pl-10"
-                          value={clientSearchQuery}
-                          onChange={(e) => setClientSearchQuery(e.target.value)}
-                        />
-                      </div>
-                      
-                      {/* Filtered Client List */}
-                      <div className="border rounded-lg max-h-48 overflow-y-auto">
-                        {Array.isArray(clients) && clients
-                          .filter((client: any) => {
-                            const searchTerm = clientSearchQuery.toLowerCase();
-                            return !searchTerm || 
-                              client.name.toLowerCase().includes(searchTerm) ||
-                              client.email.toLowerCase().includes(searchTerm) ||
-                              (client.username && client.username.toLowerCase().includes(searchTerm));
-                          })
-                          .filter((client: any) => {
-                            // Don't show already assigned clients
-                            return !selectedMediaForFeedback?.assignedClients?.some((assigned: any) => assigned.id === client.id);
-                          })
-                          .map((client: any) => (
-                            <div
-                              key={client.id}
-                              className="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-800 border-b last:border-b-0 cursor-pointer"
-                              onClick={() => {
-                                updateFeedbackModalAssignmentMutation.mutate({
-                                  mediaId: selectedMediaForFeedback.id,
-                                  clientId: client.id,
-                                });
-                                setClientSearchQuery(''); // Clear search after assignment
-                              }}
-                            >
-                              <div className="flex items-center space-x-3">
-                                <Users className="h-4 w-4 text-gray-400" />
-                                <div>
-                                  <p className="font-medium">{client.name}</p>
-                                  <p className="text-sm text-gray-500">{client.email}</p>
-                                  {client.username && (
-                                    <p className="text-xs text-gray-400">@{client.username}</p>
-                                  )}
-                                </div>
+                            <div key={client.id} className="flex items-center justify-between">
+                              <div className="flex items-center space-x-2">
+                                <Users className="h-4 w-4 text-green-600" />
+                                <span className="text-sm font-medium">{client.name}</span>
+                                <span className="text-xs text-gray-500">({client.email})</span>
                               </div>
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="text-blue-600 hover:text-blue-800"
+                                onClick={() => {
+                                  if (selectedMediaForFeedback) {
+                                    removeClientFromMediaMutation.mutate({
+                                      mediaId: selectedMediaForFeedback.id,
+                                      clientId: client.id,
+                                    });
+                                  }
+                                }}
+                                disabled={removeClientFromMediaMutation.isPending}
+                                className="h-8 w-8 p-0 hover:bg-red-100 hover:text-red-600"
                               >
-                                <Plus className="h-4 w-4" />
+                                <X className="h-4 w-4" />
                               </Button>
                             </div>
                           ))}
-                        {Array.isArray(clients) && clients
-                          .filter((client: any) => {
-                            const searchTerm = clientSearchQuery.toLowerCase();
-                            return !searchTerm || 
-                              client.name.toLowerCase().includes(searchTerm) ||
-                              client.email.toLowerCase().includes(searchTerm) ||
-                              (client.username && client.username.toLowerCase().includes(searchTerm));
-                          })
-                          .filter((client: any) => {
-                            return !selectedMediaForFeedback?.assignedClients?.some((assigned: any) => assigned.id === client.id);
-                          }).length === 0 && (
-                          <div className="p-6 text-center text-gray-500">
-                            {clientSearchQuery ? 'No clients match your search.' : 'All clients are already assigned to this media.'}
-                          </div>
-                        )}
-                      </div>
+                        </div>
+                      ) : (
+                        <div className="border rounded-md p-3 text-center text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900">
+                          <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                          <p className="text-sm">No clients assigned</p>
+                        </div>
+                      )}
                     </div>
                     
-                    {/* Bulk Unassign Option */}
-                    {selectedMediaForFeedback?.assignedClients && selectedMediaForFeedback.assignedClients.length > 1 && (
-                      <div className="pt-4 border-t">
-                        <Button 
-                          variant="outline"
+                    {/* Add New Client */}
+                    <div className="space-y-2">
+                      <Label>Add Client</Label>
+                      <div className="flex gap-2">
+                        <Select onValueChange={setSelectedClientForAssignment} value={selectedClientForAssignment}>
+                          <SelectTrigger className="flex-1">
+                            <SelectValue placeholder="Choose a client to add..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Array.isArray(clients) && clients
+                              .filter((client: any) => {
+                                // Don't show already assigned clients
+                                const assignedClientIds = (selectedMediaForFeedback?.assignedClients || []).map((c: any) => c.id);
+                                return !assignedClientIds.includes(client.id);
+                              })
+                              .map((client: any) => (
+                                <SelectItem key={client.id} value={client.id}>
+                                  <div className="flex items-center space-x-2">
+                                    <Users className="h-4 w-4" />
+                                    <span>{client.name} ({client.email})</span>
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            {!Array.isArray(clients) || clients.length === 0 && (
+                              <SelectItem value="no-clients" disabled>
+                                No clients available
+                              </SelectItem>
+                            )}
+                          </SelectContent>
+                        </Select>
+                        <Button
                           onClick={() => {
-                            if (confirm('Remove all client assignments from this media?')) {
-                              updateFeedbackModalAssignmentMutation.mutate({
+                            if (selectedMediaForFeedback && selectedClientForAssignment) {
+                              addClientToMediaMutation.mutate({
                                 mediaId: selectedMediaForFeedback.id,
-                                clientId: null,
+                                clientId: selectedClientForAssignment,
                               });
+                              setSelectedClientForAssignment("");
                             }
                           }}
-                          disabled={updateFeedbackModalAssignmentMutation.isPending}
-                          className="w-full"
+                          disabled={addClientToMediaMutation.isPending || !selectedClientForAssignment}
+                          className="shrink-0"
                         >
-                          <X className="h-4 w-4 mr-2" />
-                          Remove All Assignments
+                          {addClientToMediaMutation.isPending ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Plus className="h-4 w-4" />
+                          )}
                         </Button>
                       </div>
-                    )}
+                    </div>
                   </div>
                 </TabsContent>
                 
