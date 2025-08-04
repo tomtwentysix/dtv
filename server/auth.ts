@@ -103,11 +103,7 @@ export function setupAuth(app: Express) {
         password: await hashPassword(password),
       });
 
-      // Auto-assign client role for new registrations
-      const clientRole = await storage.getRoleByName("Client");
-      if (clientRole) {
-        await storage.assignRoleToUser(user.id, clientRole.id);
-      }
+      // Note: Client role assignment removed - clients now have separate authentication system
 
       req.login(user, (err) => {
         if (err) return next(err);

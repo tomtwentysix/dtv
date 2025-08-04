@@ -7,8 +7,9 @@ import { setupAuth } from "./auth";
 import { storage } from "./storage";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
-import { users, media, mediaFeedback, mediaTimelineNotes } from "@shared/schema";
+import { users, media, mediaFeedback, mediaTimelineNotes, clientUsers, clients } from "@shared/schema";
 import { requireAuth, requirePermission, requireRole, requireAnyRole } from "./middleware/rbac";
+import { requireClientAuth, loginClientUser, registerClientUser } from "./client-auth";
 import multer from "multer";
 
 // Initialize default roles and permissions
@@ -65,13 +66,7 @@ async function initializeRBAC() {
       }
     }
 
-    const clientRole = await storage.getRoleByName("Client");
-    if (!clientRole) {
-      await storage.createRole({
-        name: "Client",
-        description: "Login to view only their assigned media",
-      });
-    }
+    // Note: Client role removed - clients now have their own authentication system separate from users
   } catch (error) {
     console.error("Error initializing RBAC:", error);
   }
@@ -463,6 +458,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Client User management routes for admins
+  app.post("/api/clients/:clientId/user", requireAuth, requirePermission("edit:clients"), async (req, res) => {
+    try {
+      const { clientId } = req.params;
+      const { username, email, password } = req.body;
+      
+      if (!username || !email || !password) {
+        return res.status(400).json({ message: "Username, email, and password are required" });
+      }
+
+      const clientUser = await registerClientUser(clientId, username, email, password);
+      if (!clientUser) {
+        return res.status(400).json({ message: "Username or email already exists" });
+      }
+
+      res.status(201).json({
+        id: clientUser.id,
+        username: clientUser.username,
+        email: clientUser.email,
+        clientId: clientUser.clientId,
+        isActive: clientUser.isActive
+      });
+    } catch (error) {
+      console.error("Create client user error:", error);
+      res.status(500).json({ message: "Failed to create client user" });
+    }
+  });
+
+  app.get("/api/clients/:clientId/user", requireAuth, requirePermission("view:clients"), async (req, res) => {
+    try {
+      const { clientId } = req.params;
+      const clientUser = await storage.getClientUserByClientId(clientId);
+      
+      if (!clientUser) {
+        return res.status(404).json({ message: "Client user not found" });
+      }
+
+      res.json({
+        id: clientUser.id,
+        username: clientUser.username,
+        email: clientUser.email,
+        clientId: clientUser.clientId,
+        isActive: clientUser.isActive,
+        createdAt: clientUser.createdAt,
+        lastLoginAt: clientUser.lastLoginAt
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch client user" });
+    }
+  });
+
+  app.put("/api/clients/:clientId/user", requireAuth, requirePermission("edit:clients"), async (req, res) => {
+    try {
+      const { clientId } = req.params;
+      const { username, email, isActive } = req.body;
+      
+      const clientUser = await storage.getClientUserByClientId(clientId);
+      if (!clientUser) {
+        return res.status(404).json({ message: "Client user not found" });
+      }
+
+      const updates: any = {};
+      if (username) updates.username = username;
+      if (email) updates.email = email;
+      if (typeof isActive === 'boolean') updates.isActive = isActive;
+
+      const updatedClientUser = await storage.updateClientUser(clientUser.id, updates);
+      if (!updatedClientUser) {
+        return res.status(404).json({ message: "Failed to update client user" });
+      }
+
+      res.json({
+        id: updatedClientUser.id,
+        username: updatedClientUser.username,
+        email: updatedClientUser.email,
+        clientId: updatedClientUser.clientId,
+        isActive: updatedClientUser.isActive
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update client user" });
+    }
+  });
+
   // Media assignment route (simplified endpoint)
   app.post("/api/media/assign", requireAuth, requirePermission("assign:media"), async (req, res) => {
     try {
@@ -502,27 +580,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Client portal routes
-  app.get("/api/client/media", requireAuth, requireRole("Client"), async (req, res) => {
+  // Client authentication routes
+  app.post("/api/client/login", async (req, res) => {
     try {
-      const media = await storage.getClientMedia(req.user!.id);
+      const { username, password } = req.body;
+      
+      if (!username || !password) {
+        return res.status(400).json({ message: "Username and password are required" });
+      }
+
+      const clientUser = await loginClientUser(username, password);
+      if (!clientUser) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      req.session.clientUserId = clientUser.id;
+      res.json({ 
+        success: true, 
+        clientUser: { 
+          id: clientUser.id, 
+          username: clientUser.username, 
+          email: clientUser.email 
+        } 
+      });
+    } catch (error) {
+      console.error("Client login error:", error);
+      res.status(500).json({ message: "Login failed" });
+    }
+  });
+
+  app.post("/api/client/logout", (req, res) => {
+    req.session.clientUserId = undefined;
+    res.json({ success: true });
+  });
+
+  app.get("/api/client/profile", requireClientAuth, async (req, res) => {
+    try {
+      const clientUser = req.clientUser!;
+      const client = await storage.getClient(clientUser.clientId);
+      
+      res.json({
+        id: clientUser.id,
+        username: clientUser.username,
+        email: clientUser.email,
+        client: client ? {
+          id: client.id,
+          name: client.name,
+          company: client.company,
+          phone: client.phone
+        } : null
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch profile" });
+    }
+  });
+
+  // Client portal routes (updated to use client authentication)
+  app.get("/api/client/media", requireClientAuth, async (req, res) => {
+    try {
+      const media = await storage.getClientUserMedia(req.clientUser!.id);
       res.json(media);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch client media" });
     }
   });
 
-  // Client feedback routes
-  app.get("/api/client/media/feedback", requireAuth, requireRole("Client"), async (req, res) => {
+  // Client feedback routes (updated to use client authentication)
+  app.get("/api/client/media/feedback", requireClientAuth, async (req, res) => {
     try {
-      const feedback = await storage.getClientFeedback(req.user!.id);
+      const feedback = await storage.getClientUserFeedback(req.clientUser!.id);
       res.json(feedback);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch feedback" });
     }
   });
 
-  app.post("/api/client/media/:mediaId/feedback", requireAuth, requireRole("Client"), async (req, res) => {
+  app.post("/api/client/media/:mediaId/feedback", requireClientAuth, async (req, res) => {
     try {
       const { mediaId } = req.params;
       const { feedbackText, rating } = req.body;
@@ -533,7 +666,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const feedback = await storage.createMediaFeedback({
         mediaId,
-        clientId: req.user!.id,
+        clientUserId: req.clientUser!.id,
         feedbackText,
         rating
       });
@@ -544,17 +677,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Client timeline notes routes
-  app.get("/api/client/media/timeline-notes", requireAuth, requireRole("Client"), async (req, res) => {
+  // Client timeline notes routes (updated to use client authentication)
+  app.get("/api/client/media/timeline-notes", requireClientAuth, async (req, res) => {
     try {
-      const notes = await storage.getClientTimelineNotes(req.user!.id);
+      const notes = await storage.getClientUserTimelineNotes(req.clientUser!.id);
       res.json(notes);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch timeline notes" });
     }
   });
 
-  app.post("/api/client/media/:mediaId/timeline-notes", requireAuth, requireRole("Client"), async (req, res) => {
+  app.post("/api/client/media/:mediaId/timeline-notes", requireClientAuth, async (req, res) => {
     try {
       const { mediaId } = req.params;
       const { timestampSeconds, noteText } = req.body;
@@ -565,7 +698,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const note = await storage.createTimelineNote({
         mediaId,
-        clientId: req.user!.id,
+        clientUserId: req.clientUser!.id,
         timestampSeconds: Math.floor(timestampSeconds),
         noteText
       });
@@ -576,23 +709,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Admin routes for viewing all feedback and timeline notes
+  // Admin routes for viewing all feedback and timeline notes (updated for client user system)
   app.get("/api/admin/media/feedback", requireAuth, requirePermission("view:clients"), async (req, res) => {
     try {
       const feedback = await db
         .select({
           id: mediaFeedback.id,
           mediaId: mediaFeedback.mediaId,
-          clientId: mediaFeedback.clientId,
+          clientUserId: mediaFeedback.clientUserId,
           feedbackText: mediaFeedback.feedbackText,
           rating: mediaFeedback.rating,
           createdAt: mediaFeedback.createdAt,
-          clientUsername: users.username,
-          clientEmail: users.email,
+          clientUsername: clientUsers.username,
+          clientEmail: clientUsers.email,
+          clientName: clients.name,
+          clientCompany: clients.company,
           mediaTitle: media.title
         })
         .from(mediaFeedback)
-        .leftJoin(users, eq(mediaFeedback.clientId, users.id))
+        .leftJoin(clientUsers, eq(mediaFeedback.clientUserId, clientUsers.id))
+        .leftJoin(clients, eq(clientUsers.clientId, clients.id))
         .leftJoin(media, eq(mediaFeedback.mediaId, media.id));
       
       res.json(feedback);
@@ -607,16 +743,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .select({
           id: mediaTimelineNotes.id,
           mediaId: mediaTimelineNotes.mediaId,
-          clientId: mediaTimelineNotes.clientId,
+          clientUserId: mediaTimelineNotes.clientUserId,
           timestampSeconds: mediaTimelineNotes.timestampSeconds,
           noteText: mediaTimelineNotes.noteText,
           createdAt: mediaTimelineNotes.createdAt,
-          clientUsername: users.username,
-          clientEmail: users.email,
+          clientUsername: clientUsers.username,
+          clientEmail: clientUsers.email,
+          clientName: clients.name,
+          clientCompany: clients.company,
           mediaTitle: media.title
         })
         .from(mediaTimelineNotes)
-        .leftJoin(users, eq(mediaTimelineNotes.clientId, users.id))
+        .leftJoin(clientUsers, eq(mediaTimelineNotes.clientUserId, clientUsers.id))
+        .leftJoin(clients, eq(clientUsers.clientId, clients.id))
         .leftJoin(media, eq(mediaTimelineNotes.mediaId, media.id));
       
       res.json(notes);

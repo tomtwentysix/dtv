@@ -1,6 +1,7 @@
 import { 
   users, 
   clients,
+  clientUsers,
   roles, 
   permissions, 
   userRoles, 
@@ -14,6 +15,8 @@ import {
   type InsertUser,
   type Client,
   type InsertClient,
+  type ClientUser,
+  type InsertClientUser,
   type Role,
   type InsertRole,
   type Permission,
@@ -50,6 +53,16 @@ export interface IStorage {
   createClient(client: InsertClient): Promise<Client>;
   updateClient(id: string, updates: Partial<InsertClient>): Promise<Client | undefined>;
   deleteClient(id: string): Promise<boolean>;
+  
+  // Client User management (for client authentication)
+  getClientUser(id: string): Promise<ClientUser | undefined>;
+  getClientUserByUsername(username: string): Promise<ClientUser | undefined>;
+  getClientUserByEmail(email: string): Promise<ClientUser | undefined>;
+  getClientUserByClientId(clientId: string): Promise<ClientUser | undefined>;
+  createClientUser(clientUser: InsertClientUser): Promise<ClientUser>;
+  updateClientUser(id: string, updates: Partial<InsertClientUser>): Promise<ClientUser | undefined>;
+  deleteClientUser(id: string): Promise<boolean>;
+  updateClientUserLastLogin(id: string): Promise<void>;
   
   // Role management
   getRole(id: string): Promise<Role | undefined>;
@@ -94,18 +107,19 @@ export interface IStorage {
   assignMediaToClient(mediaId: string, clientId: string): Promise<boolean>;
   removeMediaFromClient(mediaId: string, clientId: string): Promise<boolean>;
   getClientMedia(clientId: string): Promise<Media[]>;
-  getMediaClients(mediaId: string): Promise<User[]>;
+  getClientUserMedia(clientUserId: string): Promise<Media[]>;
+  getMediaClients(mediaId: string): Promise<Client[]>;
   
   // Website settings
   getWebsiteSettings(): Promise<WebsiteSettings[]>;
   getWebsiteSettingBySection(section: string): Promise<WebsiteSettings | undefined>;
   updateWebsiteSetting(section: string, setting: InsertWebsiteSettings): Promise<WebsiteSettings>;
   
-  // Client feedback and timeline notes
-  createMediaFeedback(feedback: { mediaId: string; clientId: string; feedbackText: string; rating: number }): Promise<any>;
-  getClientFeedback(clientId: string): Promise<any[]>;
-  createTimelineNote(note: { mediaId: string; clientId: string; timestampSeconds: number; noteText: string }): Promise<any>;
-  getClientTimelineNotes(clientId: string): Promise<any[]>;
+  // Client feedback and timeline notes (now using clientUserId)
+  createMediaFeedback(feedback: { mediaId: string; clientUserId: string; feedbackText: string; rating: number }): Promise<any>;
+  getClientUserFeedback(clientUserId: string): Promise<any[]>;
+  createTimelineNote(note: { mediaId: string; clientUserId: string; timestampSeconds: number; noteText: string }): Promise<any>;
+  getClientUserTimelineNotes(clientUserId: string): Promise<any[]>;
   
   // Session store
   sessionStore: any;
@@ -198,6 +212,56 @@ export class DatabaseStorage implements IStorage {
   async deleteClient(id: string): Promise<boolean> {
     const result = await db.delete(clients).where(eq(clients.id, id));
     return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  // Client User management (for client authentication)
+  async getClientUser(id: string): Promise<ClientUser | undefined> {
+    const [clientUser] = await db.select().from(clientUsers).where(eq(clientUsers.id, id));
+    return clientUser || undefined;
+  }
+
+  async getClientUserByUsername(username: string): Promise<ClientUser | undefined> {
+    const [clientUser] = await db.select().from(clientUsers).where(eq(clientUsers.username, username));
+    return clientUser || undefined;
+  }
+
+  async getClientUserByEmail(email: string): Promise<ClientUser | undefined> {
+    const [clientUser] = await db.select().from(clientUsers).where(eq(clientUsers.email, email));
+    return clientUser || undefined;
+  }
+
+  async getClientUserByClientId(clientId: string): Promise<ClientUser | undefined> {
+    const [clientUser] = await db.select().from(clientUsers).where(eq(clientUsers.clientId, clientId));
+    return clientUser || undefined;
+  }
+
+  async createClientUser(insertClientUser: InsertClientUser): Promise<ClientUser> {
+    const [clientUser] = await db
+      .insert(clientUsers)
+      .values(insertClientUser)
+      .returning();
+    return clientUser;
+  }
+
+  async updateClientUser(id: string, updates: Partial<InsertClientUser>): Promise<ClientUser | undefined> {
+    const [clientUser] = await db
+      .update(clientUsers)
+      .set(updates)
+      .where(eq(clientUsers.id, id))
+      .returning();
+    return clientUser || undefined;
+  }
+
+  async deleteClientUser(id: string): Promise<boolean> {
+    const result = await db.delete(clientUsers).where(eq(clientUsers.id, id));
+    return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  async updateClientUserLastLogin(id: string): Promise<void> {
+    await db
+      .update(clientUsers)
+      .set({ lastLoginAt: new Date() })
+      .where(eq(clientUsers.id, id));
   }
 
   // Role management
@@ -425,14 +489,22 @@ export class DatabaseStorage implements IStorage {
     return clientMediaResults.map(result => result.media);
   }
 
-  async getMediaClients(mediaId: string): Promise<User[]> {
+  async getClientUserMedia(clientUserId: string): Promise<Media[]> {
+    // Get the client ID from client user ID, then get media assigned to that client
+    const clientUser = await this.getClientUser(clientUserId);
+    if (!clientUser) return [];
+    
+    return await this.getClientMedia(clientUser.clientId);
+  }
+
+  async getMediaClients(mediaId: string): Promise<Client[]> {
     const mediaClientResults = await db
-      .select({ user: users })
+      .select({ client: clients })
       .from(mediaClients)
-      .innerJoin(users, eq(mediaClients.clientId, users.id))
+      .innerJoin(clients, eq(mediaClients.clientId, clients.id))
       .where(eq(mediaClients.mediaId, mediaId));
     
-    return mediaClientResults.map(result => result.user);
+    return mediaClientResults.map(result => result.client);
   }
 
   // Website settings
@@ -465,8 +537,8 @@ export class DatabaseStorage implements IStorage {
     return existingSetting;
   }
 
-  // Client feedback and timeline notes implementation
-  async createMediaFeedback(feedback: { mediaId: string; clientId: string; feedbackText: string; rating: number }): Promise<any> {
+  // Client feedback and timeline notes implementation (now using clientUserId)
+  async createMediaFeedback(feedback: { mediaId: string; clientUserId: string; feedbackText: string; rating: number }): Promise<any> {
     const [result] = await db
       .insert(mediaFeedback)
       .values(feedback)
@@ -474,15 +546,15 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
-  async getClientFeedback(clientId: string): Promise<any[]> {
+  async getClientUserFeedback(clientUserId: string): Promise<any[]> {
     const results = await db
       .select()
       .from(mediaFeedback)
-      .where(eq(mediaFeedback.clientId, clientId));
+      .where(eq(mediaFeedback.clientUserId, clientUserId));
     return results;
   }
 
-  async createTimelineNote(note: { mediaId: string; clientId: string; timestampSeconds: number; noteText: string }): Promise<any> {
+  async createTimelineNote(note: { mediaId: string; clientUserId: string; timestampSeconds: number; noteText: string }): Promise<any> {
     const [result] = await db
       .insert(mediaTimelineNotes)
       .values(note)
@@ -490,11 +562,11 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
-  async getClientTimelineNotes(clientId: string): Promise<any[]> {
+  async getClientUserTimelineNotes(clientUserId: string): Promise<any[]> {
     const results = await db
       .select()
       .from(mediaTimelineNotes)
-      .where(eq(mediaTimelineNotes.clientId, clientId));
+      .where(eq(mediaTimelineNotes.clientUserId, clientUserId));
     return results;
   }
 }

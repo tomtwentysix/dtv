@@ -20,6 +20,7 @@ import AdminRoles from "@/pages/admin/roles";
 import AdminMedia from "@/pages/admin/media";
 import AdminWebsiteCustomization from "@/pages/admin/website-customization";
 import ClientDashboard from "@/pages/client/dashboard";
+import ClientLoginPage from "@/pages/client-login";
 
 function Router() {
   return (
@@ -32,6 +33,9 @@ function Router() {
       <Route path="/contact" component={Contact} />
       <Route path="/auth" component={AuthPage} />
       
+      {/* Client Authentication */}
+      <Route path="/client/login" component={ClientLoginPage} />
+      
       {/* Protected Admin Routes */}
       <ProtectedRoute path="/admin/dashboard" component={AdminDashboard} requiredRole="Admin" />
       <ProtectedRoute path="/admin/users" component={AdminUsers} requiredPermission="view:users" />
@@ -40,8 +44,8 @@ function Router() {
       <ProtectedRoute path="/admin/media" component={AdminMedia} requiredPermission="upload:media" />
       <ProtectedRoute path="/admin/website-customization" component={AdminWebsiteCustomization} requiredPermission="edit:website" />
       
-      {/* Protected Client Routes */}
-      <ProtectedRoute path="/client/dashboard" component={ClientDashboard} requiredRole="Client" />
+      {/* Client Routes - Authentication handled internally */}
+      <Route path="/client/dashboard" component={ClientDashboard} />
       
       {/* Fallback to 404 */}
       <Route component={NotFound} />

@@ -38,10 +38,7 @@ function getDashboardPath(userRoles: any[] | undefined): string {
     return "/admin/dashboard"; // Staff also goes to admin dashboard
   }
 
-  // Check for Client role
-  if (userRoles.some((role) => role.name === "Client")) {
-    return "/client/dashboard";
-  }
+  // Client role removed - clients now have separate authentication system
 
   // Default fallback
   return "/auth";

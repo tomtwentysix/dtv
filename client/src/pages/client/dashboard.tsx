@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Navigation } from "@/components/navigation";
+import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,8 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useAuth } from "@/hooks/use-auth";
-import { usePermissions } from "@/hooks/use-permissions";
+import { useClientAuth } from "@/hooks/use-client-auth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import {
@@ -54,9 +53,34 @@ import {
 } from "lucide-react";
 
 export default function ClientDashboard() {
-  const { user } = useAuth();
-  const { hasPermission } = usePermissions();
+  const { clientUser, isAuthenticated, isAuthLoading, logout } = useClientAuth();
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
+  
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isAuthLoading && !isAuthenticated) {
+      setLocation("/client/login");
+    }
+  }, [isAuthenticated, isAuthLoading, setLocation]);
+
+  // Show loading while checking authentication
+  if (isAuthLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p className="text-sm text-gray-600 dark:text-gray-400">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render if not authenticated (will redirect)
+  if (!isAuthenticated) {
+    return null;
+  }
+
   const [selectedVideo, setSelectedVideo] = useState<any>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(1);
@@ -86,12 +110,12 @@ export default function ClientDashboard() {
   // Queries for feedback and timeline notes
   const { data: mediaFeedback = [] } = useQuery({
     queryKey: ["/api/client/media/feedback"],
-    enabled: !!user?.id,
+    enabled: !!clientUser?.id,
   });
 
   const { data: timelineNotes = [] } = useQuery({
     queryKey: ["/api/client/media/timeline-notes"],
-    enabled: !!user?.id,
+    enabled: !!clientUser?.id,
   });
 
   // Ensure arrays are properly typed
@@ -384,14 +408,38 @@ export default function ClientDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-black">
-      <Navigation />
+      {/* Client-specific header */}
+      <header className="fixed top-0 w-full z-50 bg-white/95 dark:bg-black/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center space-x-4">
+              <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-orange-500 rounded-full" />
+              <h1 className="text-xl font-bold">dt.visuals Client Portal</h1>
+            </div>
+            <div className="flex items-center space-x-4">
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                Welcome, {clientUser?.username}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={logout}
+                className="text-gray-600 dark:text-gray-400 hover:text-red-500"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
 
       <div className="pt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-4xl font-bold mb-2">
-              Welcome, {user?.username}
+              Welcome, {clientUser?.username}
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
               Access your exclusive media content from dt.visuals

@@ -6,6 +6,26 @@ dt.visuals is a full-stack showcase website for a cinematic media production com
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes (January 2025)
+### Major Architecture Refactoring: Client-User Separation
+**Date**: January 4, 2025  
+**Description**: Completed major refactoring to completely separate client management from user management system.
+
+**Key Changes**:
+- **Database Schema**: Added `client_users` table to completely decouple clients from the main users system
+- **Authentication Systems**: Implemented dual authentication architecture:
+  - Admin/Staff users continue using RBAC-based authentication system
+  - Clients now have completely independent authentication with separate login endpoints
+- **API Routes**: Created dedicated client API routes (`/api/client/*`) for client-specific functionality
+- **Frontend Updates**: 
+  - Created dedicated client login page (`/client/login`)
+  - Updated client dashboard to use separate client authentication system
+  - Removed client role dependencies from main navigation system
+- **Media Assignment**: Updated media feedback and timeline systems to properly connect to client user accounts
+- **Session Management**: Separate session handling for client users vs admin/staff users
+
+**Impact**: This change ensures that when media is assigned to clients, it properly connects to their corresponding login accounts, providing a cleaner separation of concerns and better user experience for clients.
+
 ## System Architecture
 
 ### Frontend Architecture
@@ -33,11 +53,15 @@ Preferred communication style: Simple, everyday language.
 
 ### Key Features & Design Decisions
 - **Authentication System**: Custom local authentication using secure scrypt hashing and session-based authentication without JWTs.
-- **Role-Based Access Control (RBAC)**: Granular permissions system (`users`, `roles`, `permissions`, `user_roles`, `role_permissions` tables) with custom middleware for route protection.
-- **Media Management**: File upload, categorization, tagging, featured media selection, and client-specific media assignment.
+- **Dual Authentication Architecture**: Completely separate authentication systems:
+  - **Admin/Staff Authentication**: Traditional RBAC system with roles and permissions for internal users
+  - **Client Authentication**: Independent client user system with direct client associations
+- **Role-Based Access Control (RBAC)**: Granular permissions system (`users`, `roles`, `permissions`, `user_roles`, `role_permissions` tables) with custom middleware for route protection - applies only to admin/staff users.
+- **Client Management System**: Separate client user system (`client_users` table) that connects clients to their own authentication accounts, completely decoupled from the main user management system.
+- **Media Management**: File upload, categorization, tagging, featured media selection, and client-specific media assignment with proper linkage to client user accounts.
 - **Website Customization System**: Admin interface for managing background media (images/videos) and sections (Hero, Featured Work, Services) with specific video requirements (auto-play, muted, looped, no controls).
 - **UI/UX Design**: Cinematic dark/light theme, responsive layout, glass morphism effects, cinematic shadows, custom color scheme, and smooth animations.
-- **Data Flow**: Defined authentication, RBAC, and media upload flows ensuring secure and efficient data handling.
+- **Data Flow**: Defined authentication, RBAC, and media upload flows ensuring secure and efficient data handling with separate client and admin workflows.
 - **Deployment Strategy**: Monorepo structure with separate configurations for development and production environments, including comprehensive Docker support for Windows and Linux with isolated databases and persistent volumes.
 - **Security Considerations**: Secure session configuration, CSRF protection, crypto-secure password hashing, environment-based secret management, and trusted proxy configurations.
 

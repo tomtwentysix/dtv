@@ -25,6 +25,18 @@ export const clients = pgTable("clients", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Separate authentication table for client logins
+export const clientUsers = pgTable("client_users", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  clientId: varchar("client_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
+  username: text("username").notNull().unique(),
+  email: text("email").notNull().unique(),
+  password: text("password").notNull(),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  lastLoginAt: timestamp("last_login_at"),
+});
+
 export const roles = pgTable("roles", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull().unique(),
@@ -88,7 +100,7 @@ export const websiteSettings = pgTable("website_settings", {
 export const mediaFeedback = pgTable("media_feedback", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   mediaId: varchar("media_id").notNull().references(() => media.id, { onDelete: "cascade" }),
-  clientId: varchar("client_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  clientUserId: varchar("client_user_id").notNull().references(() => clientUsers.id, { onDelete: "cascade" }),
   feedbackText: text("feedback_text"),
   rating: integer("rating"), // 1-5 stars
   createdAt: timestamp("created_at").defaultNow(),
@@ -97,7 +109,7 @@ export const mediaFeedback = pgTable("media_feedback", {
 export const mediaTimelineNotes = pgTable("media_timeline_notes", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   mediaId: varchar("media_id").notNull().references(() => media.id, { onDelete: "cascade" }),
-  clientId: varchar("client_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  clientUserId: varchar("client_user_id").notNull().references(() => clientUsers.id, { onDelete: "cascade" }),
   timestampSeconds: integer("timestamp_seconds").notNull(),
   noteText: text("note_text").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
@@ -117,6 +129,16 @@ export const clientsRelations = relations(clients, ({ one, many }) => ({
   }),
   assignedMedia: many(mediaClients),
   directAssignedMedia: many(media),
+  clientUsers: many(clientUsers),
+}));
+
+export const clientUsersRelations = relations(clientUsers, ({ one, many }) => ({
+  client: one(clients, {
+    fields: [clientUsers.clientId],
+    references: [clients.id],
+  }),
+  mediaFeedback: many(mediaFeedback),
+  timelineNotes: many(mediaTimelineNotes),
 }));
 
 export const rolesRelations = relations(roles, ({ many }) => ({
@@ -169,9 +191,9 @@ export const mediaFeedbackRelations = relations(mediaFeedback, ({ one }) => ({
     fields: [mediaFeedback.mediaId],
     references: [media.id],
   }),
-  client: one(users, {
-    fields: [mediaFeedback.clientId],
-    references: [users.id],
+  clientUser: one(clientUsers, {
+    fields: [mediaFeedback.clientUserId],
+    references: [clientUsers.id],
   }),
 }));
 
@@ -180,9 +202,9 @@ export const mediaTimelineNotesRelations = relations(mediaTimelineNotes, ({ one 
     fields: [mediaTimelineNotes.mediaId],
     references: [media.id],
   }),
-  client: one(users, {
-    fields: [mediaTimelineNotes.clientId],
-    references: [users.id],
+  clientUser: one(clientUsers, {
+    fields: [mediaTimelineNotes.clientUserId],
+    references: [clientUsers.id],
   }),
 }));
 
@@ -228,6 +250,12 @@ export const insertClientSchema = createInsertSchema(clients).omit({
   updatedAt: true,
 });
 
+export const insertClientUserSchema = createInsertSchema(clientUsers).omit({
+  id: true,
+  createdAt: true,
+  lastLoginAt: true,
+});
+
 export const insertMediaSchema = createInsertSchema(media).omit({
   id: true,
   createdAt: true,
@@ -251,6 +279,8 @@ export type Permission = typeof permissions.$inferSelect;
 export type InsertPermission = z.infer<typeof insertPermissionSchema>;
 export type Client = typeof clients.$inferSelect;
 export type InsertClient = z.infer<typeof insertClientSchema>;
+export type ClientUser = typeof clientUsers.$inferSelect;
+export type InsertClientUser = z.infer<typeof insertClientUserSchema>;
 export type Media = typeof media.$inferSelect;
 export type InsertMedia = z.infer<typeof insertMediaSchema>;
 export type MediaClient = typeof mediaClients.$inferSelect;
