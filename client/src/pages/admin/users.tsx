@@ -23,6 +23,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Users, Plus, Edit, Trash2, Loader2, Shield } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -68,6 +76,8 @@ export default function AdminUsers() {
     defaultValues: {
       username: "",
       email: "",
+      isActive: true,
+      selectedRoles: [] as string[],
     },
   });
 
@@ -100,12 +110,20 @@ export default function AdminUsers() {
   };
 
   const editUserMutation = useMutation({
-    mutationFn: async (data: { id: string; username: string; email: string }) => {
-      const res = await apiRequest("PUT", `/api/users/${data.id}`, {
+    mutationFn: async (data: { id: string; username: string; email: string; isActive: boolean; selectedRoles: string[] }) => {
+      // Update basic user info
+      const userRes = await apiRequest("PUT", `/api/users/${data.id}`, {
         username: data.username,
         email: data.email,
+        isActive: data.isActive,
       });
-      return res.json();
+      
+      // Update user roles
+      const rolesRes = await apiRequest("PUT", `/api/users/${data.id}/roles`, {
+        roleIds: data.selectedRoles,
+      });
+      
+      return userRes.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
@@ -153,6 +171,8 @@ export default function AdminUsers() {
     editUserForm.reset({
       username: user.username,
       email: user.email,
+      isActive: user.isActive ?? true,
+      selectedRoles: user.roles?.map((role: any) => role.id) || [],
     });
     setIsEditDialogOpen(true);
   };
@@ -162,12 +182,14 @@ export default function AdminUsers() {
     setIsDeleteDialogOpen(true);
   };
 
-  const onEditUser = (data: { username: string; email: string }) => {
+  const onEditUser = (data: { username: string; email: string; isActive: boolean; selectedRoles: string[] }) => {
     if (editingUser) {
       editUserMutation.mutate({
         id: editingUser.id,
         username: data.username,
         email: data.email,
+        isActive: data.isActive,
+        selectedRoles: data.selectedRoles,
       });
     }
   };
@@ -353,8 +375,14 @@ export default function AdminUsers() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="default" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">
-                            Active
+                          <Badge 
+                            variant={user.isActive ? "default" : "secondary"} 
+                            className={user.isActive 
+                              ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100" 
+                              : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100"
+                            }
+                          >
+                            {user.isActive ? "Active" : "Inactive"}
                           </Badge>
                         </TableCell>
                         <TableCell>
@@ -410,6 +438,58 @@ export default function AdminUsers() {
                     {...editUserForm.register("email")}
                     placeholder="Enter email address"
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="edit-active"
+                      checked={editUserForm.watch("isActive")}
+                      onCheckedChange={(checked) => editUserForm.setValue("isActive", !!checked)}
+                    />
+                    <Label htmlFor="edit-active" className="cursor-pointer">
+                      Account Active
+                    </Label>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Inactive users cannot log in to the system
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Roles</Label>
+                  <div className="space-y-2 max-h-40 overflow-y-auto border rounded-md p-3">
+                    {roles?.map((role: any) => {
+                      const isChecked = editUserForm.watch("selectedRoles").includes(role.id);
+                      return (
+                        <div key={role.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`role-${role.id}`}
+                            checked={isChecked}
+                            onCheckedChange={(checked) => {
+                              const currentRoles = editUserForm.getValues("selectedRoles");
+                              if (checked) {
+                                editUserForm.setValue("selectedRoles", [...currentRoles, role.id]);
+                              } else {
+                                editUserForm.setValue("selectedRoles", currentRoles.filter(id => id !== role.id));
+                              }
+                            }}
+                          />
+                          <label
+                            htmlFor={`role-${role.id}`}
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                          >
+                            {role.name}
+                          </label>
+                          {role.description && (
+                            <span className="text-xs text-muted-foreground">
+                              - {role.description}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 <div className="flex justify-end space-x-2 pt-4">

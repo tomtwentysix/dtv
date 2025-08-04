@@ -216,6 +216,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put("/api/users/:id/roles", requireAuth, requirePermission("edit:users"), async (req, res) => {
+    try {
+      const { roleIds } = req.body;
+      const userId = req.params.id;
+      
+      // Get current user roles
+      const currentRoles = await storage.getUserRoles(userId);
+      const currentRoleIds = currentRoles.map(role => role.id);
+      
+      // Remove roles that are no longer selected
+      for (const roleId of currentRoleIds) {
+        if (!roleIds.includes(roleId)) {
+          await storage.removeRoleFromUser(userId, roleId);
+        }
+      }
+      
+      // Add new roles
+      for (const roleId of roleIds) {
+        if (!currentRoleIds.includes(roleId)) {
+          await storage.assignRoleToUser(userId, roleId);
+        }
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update user roles" });
+    }
+  });
+
   // Role management routes
   app.get("/api/roles", requireAuth, requirePermission("edit:roles"), async (req, res) => {
     try {
