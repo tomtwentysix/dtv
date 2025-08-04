@@ -84,6 +84,8 @@ export default function AdminUsers() {
       displayName: "",
       isActive: true,
       selectedRoles: [] as string[],
+      newPassword: "",
+      confirmNewPassword: "",
     },
   });
 
@@ -120,16 +122,22 @@ export default function AdminUsers() {
   };
 
   const editUserMutation = useMutation({
-    mutationFn: async (data: { id: string; username: string; email: string; forename: string; surname: string; displayName: string; isActive: boolean; selectedRoles: string[] }) => {
-      // Update basic user info
-      const userRes = await apiRequest("PUT", `/api/users/${data.id}`, {
+    mutationFn: async (data: { id: string; username: string; email: string; forename: string; surname: string; displayName: string; isActive: boolean; selectedRoles: string[]; newPassword?: string }) => {
+      // Update basic user info (including password if provided)
+      const updateData: any = {
         username: data.username,
         email: data.email,
         forename: data.forename,
         surname: data.surname,
         displayName: data.displayName,
         isActive: data.isActive,
-      });
+      };
+      
+      if (data.newPassword) {
+        updateData.password = data.newPassword;
+      }
+      
+      const userRes = await apiRequest("PUT", `/api/users/${data.id}`, updateData);
       
       // Update user roles
       const rolesRes = await apiRequest("PUT", `/api/users/${data.id}/roles`, {
@@ -189,6 +197,8 @@ export default function AdminUsers() {
       displayName: user.displayName || "",
       isActive: user.isActive ?? true,
       selectedRoles: user.roles?.map((role: any) => role.id) || [],
+      newPassword: "",
+      confirmNewPassword: "",
     });
     setIsEditDialogOpen(true);
   };
@@ -198,8 +208,26 @@ export default function AdminUsers() {
     setIsDeleteDialogOpen(true);
   };
 
-  const onEditUser = (data: { username: string; email: string; forename: string; surname: string; displayName: string; isActive: boolean; selectedRoles: string[] }) => {
+  const onEditUser = (data: { username: string; email: string; forename: string; surname: string; displayName: string; isActive: boolean; selectedRoles: string[]; newPassword: string; confirmNewPassword: string }) => {
     if (editingUser) {
+      // Validate password fields if provided
+      if (data.newPassword || data.confirmNewPassword) {
+        if (data.newPassword !== data.confirmNewPassword) {
+          editUserForm.setError("confirmNewPassword", {
+            type: "validate",
+            message: "Passwords don't match"
+          });
+          return;
+        }
+        if (data.newPassword.length < 6) {
+          editUserForm.setError("newPassword", {
+            type: "validate", 
+            message: "Password must be at least 6 characters"
+          });
+          return;
+        }
+      }
+      
       editUserMutation.mutate({
         id: editingUser.id,
         username: data.username,
@@ -209,6 +237,7 @@ export default function AdminUsers() {
         displayName: data.displayName,
         isActive: data.isActive,
         selectedRoles: data.selectedRoles,
+        newPassword: data.newPassword || undefined,
       });
     }
   };
@@ -565,6 +594,40 @@ export default function AdminUsers() {
                     {...editUserForm.register("email")}
                     placeholder="Enter email address"
                   />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-new-password">New Password</Label>
+                    <Input
+                      id="edit-new-password"
+                      type="password"
+                      {...editUserForm.register("newPassword")}
+                      placeholder="Leave empty to keep current"
+                      className={editUserForm.formState.errors.newPassword ? "border-destructive" : ""}
+                    />
+                    {editUserForm.formState.errors.newPassword && (
+                      <p className="text-sm text-destructive">
+                        {editUserForm.formState.errors.newPassword.message}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-confirm-password">Confirm New Password</Label>
+                    <Input
+                      id="edit-confirm-password"
+                      type="password"
+                      {...editUserForm.register("confirmNewPassword")}
+                      placeholder="Confirm new password"
+                      className={editUserForm.formState.errors.confirmNewPassword ? "border-destructive" : ""}
+                    />
+                    {editUserForm.formState.errors.confirmNewPassword && (
+                      <p className="text-sm text-destructive">
+                        {editUserForm.formState.errors.confirmNewPassword.message}
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 <div className="space-y-2">

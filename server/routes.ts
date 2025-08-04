@@ -200,15 +200,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/users/:id", requireAuth, requirePermission("edit:users"), async (req, res) => {
     try {
-      const { username, email, forename, surname, displayName, isActive } = req.body;
-      const user = await storage.updateUser(req.params.id, { 
+      const { username, email, forename, surname, displayName, isActive, password } = req.body;
+      
+      let updateData: any = { 
         username, 
         email, 
         forename, 
         surname, 
         displayName, 
         isActive 
-      });
+      };
+      
+      // If password is provided, hash it
+      if (password) {
+        const { scrypt, randomBytes } = await import("crypto");
+        const { promisify } = await import("util");
+        const scryptAsync = promisify(scrypt);
+        
+        const salt = randomBytes(16).toString("hex");
+        const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+        const hashedPassword = `${buf.toString("hex")}.${salt}`;
+        updateData.password = hashedPassword;
+      }
+      
+      const user = await storage.updateUser(req.params.id, updateData);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
