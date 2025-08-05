@@ -293,7 +293,7 @@ export default function Portfolio() {
 
       {/* Full-screen Video Player Modal */}
       <Dialog open={!!selectedVideo} onOpenChange={closeVideoModal}>
-        <DialogContent className="p-0 overflow-hidden bg-black/95 border-none max-w-[98vw] max-h-[98vh] w-auto h-auto" aria-describedby="video-player-description">
+        <DialogContent className="p-0 overflow-hidden bg-black/95 border-none w-[98vw] h-[98vh]" aria-describedby="video-player-description"></DialogContent>
           <DialogTitle className="sr-only">
             Video Player - {selectedVideo?.title}
           </DialogTitle>
@@ -301,14 +301,14 @@ export default function Portfolio() {
             Full-screen video player for {selectedVideo?.title}
           </div>
           
-          <div className="relative group" style={{ maxWidth: '98vw', maxHeight: '98vh' }}>
+          <div className="relative group w-full h-full">
             {/* Media Content */}
             {selectedVideo && (
               selectedVideo.type === "image" ? (
                 <img
                   src={selectedVideo.url}
                   alt={selectedVideo.title}
-                  className="block max-w-full max-h-[98vh] w-auto h-auto bg-black"
+                  className="block w-full h-full bg-black"
                   style={{
                     filter: 'none',
                     mixBlendMode: 'normal',
@@ -320,7 +320,7 @@ export default function Portfolio() {
                 <video
                   ref={modalVideoRef}
                   src={selectedVideo.url}
-                  className="block max-w-full max-h-[98vh] w-auto h-auto bg-black"
+                  className="block w-full h-full bg-black"
                   style={{
                     filter: 'none',
                     mixBlendMode: 'normal',
