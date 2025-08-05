@@ -879,13 +879,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const settings = await storage.getWebsiteSettings();
       
-      // Get all background image IDs
+      // Get all background image and video IDs
       const imageIds = settings
         .filter(s => s.backgroundImageId)
         .map(s => s.backgroundImageId!) as string[];
       
+      const videoIds = settings
+        .filter(s => s.backgroundVideoId)
+        .map(s => s.backgroundVideoId!) as string[];
+      
       // Fetch all media items at once
-      const mediaItems = await storage.getMediaByIds(imageIds);
+      const allMediaIds = [...new Set([...imageIds, ...videoIds])];
+      const mediaItems = await storage.getMediaByIds(allMediaIds);
       
       // Create a map for quick lookup
       const mediaMap = new Map(mediaItems.map(m => [m.id, m]));
@@ -893,7 +898,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Enhance settings with media information
       const enhancedSettings = settings.map(setting => ({
         ...setting,
-        backgroundImage: setting.backgroundImageId ? mediaMap.get(setting.backgroundImageId) : null
+        backgroundImage: setting.backgroundImageId ? mediaMap.get(setting.backgroundImageId) : null,
+        backgroundVideo: setting.backgroundVideoId ? mediaMap.get(setting.backgroundVideoId) : null
       }));
       
       res.json(enhancedSettings);

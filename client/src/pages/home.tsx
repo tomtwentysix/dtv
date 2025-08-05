@@ -27,8 +27,22 @@ export default function Home() {
   // Get background media for a section
   const getBackgroundMedia = (section: string) => {
     const setting = (websiteSettings as any[])?.find((s: any) => s.section === section);
+    
+    // Check for video first, then image
+    if (setting?.backgroundVideo) {
+      return {
+        type: "video",
+        url: setting.backgroundVideo.url,
+        title: setting.backgroundVideo.title
+      };
+    }
+    
     if (setting?.backgroundImage) {
-      return setting.backgroundImage;
+      return {
+        type: "image",
+        url: setting.backgroundImage.url,
+        title: setting.backgroundImage.title
+      };
     }
     
     // Fallback to default images
@@ -143,7 +157,7 @@ export default function Home() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {featuredMedia?.slice(0, 6).map((media: any) => (
+              {Array.isArray(featuredMedia) && featuredMedia.slice(0, 6).map((media: any) => (
                 <Card key={media.id} className="group cursor-pointer overflow-hidden glass-card">
                   <div className="relative">
                     {media.type === "image" ? (

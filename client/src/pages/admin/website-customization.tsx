@@ -175,9 +175,9 @@ export default function WebsiteCustomization() {
   React.useEffect(() => {
     if (contactInfo) {
       setContactForm({
-        contactEmail: contactInfo.contactEmail || '',
-        contactPhone: contactInfo.contactPhone || '',
-        contactAddress: contactInfo.contactAddress || ''
+        contactEmail: (contactInfo as any).contactEmail || '',
+        contactPhone: (contactInfo as any).contactPhone || '',
+        contactAddress: (contactInfo as any).contactAddress || ''
       });
     }
   }, [contactInfo]);
