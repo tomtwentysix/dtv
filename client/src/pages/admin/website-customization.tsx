@@ -15,8 +15,11 @@ import {
   Search,
   Plus,
   Play,
-  Contact
+  Contact,
+  Building,
+  Save
 } from "lucide-react";
+import { BrandingManager } from "@/components/branding-manager";
 import { queryClient } from "@/lib/queryClient";
 
 type MediaType = {
@@ -313,11 +316,12 @@ export default function WebsiteCustomization() {
         </div>
 
         <Tabs defaultValue="Homepage" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="Homepage">Homepage</TabsTrigger>
             <TabsTrigger value="Portfolio">Portfolio</TabsTrigger>
             <TabsTrigger value="About">About</TabsTrigger>
             <TabsTrigger value="Services">Services</TabsTrigger>
+            <TabsTrigger value="Branding">Branding</TabsTrigger>
             <TabsTrigger value="Contact">Contact Info</TabsTrigger>
           </TabsList>
 
@@ -424,6 +428,11 @@ export default function WebsiteCustomization() {
               </div>
             </TabsContent>
           ))}
+
+          {/* Branding Tab */}
+          <TabsContent value="Branding" className="space-y-6">
+            <BrandingManager />
+          </TabsContent>
 
           {/* Contact Information Tab */}
           <TabsContent value="Contact" className="space-y-6">

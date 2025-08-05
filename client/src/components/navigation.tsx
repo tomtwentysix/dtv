@@ -6,6 +6,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu, Moon, Sun, User, LogOut } from "lucide-react";
 import { useTheme } from "@/hooks/use-theme";
 import { useAuth } from "@/hooks/use-auth";
+import { useBrandingSettings } from "@/hooks/use-branding-settings";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,6 +50,7 @@ export function Navigation() {
   const { theme, setTheme } = useTheme();
   const { user, logoutMutation } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { data: brandingSettings } = useBrandingSettings();
 
   // Fetch user roles to determine dashboard destination
   const { data: userRoles } = useQuery({
@@ -70,8 +72,24 @@ export function Navigation() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/">
-            <div className="text-2xl font-bold nav-text-dynamic cursor-pointer">
-              dt.visuals
+            <div className="flex items-center cursor-pointer">
+              {brandingSettings?.logoImage && (
+                <img 
+                  src={brandingSettings.logoImage.url} 
+                  alt={brandingSettings.logoImage.title || brandingSettings.companyName || "Logo"}
+                  className="h-8 w-auto mr-3"
+                />
+              )}
+              {brandingSettings?.showCompanyText && (
+                <div className="text-2xl font-bold nav-text-dynamic">
+                  {brandingSettings?.companyName || "dt.visuals"}
+                </div>
+              )}
+              {!brandingSettings?.logoImage && !brandingSettings?.showCompanyText && (
+                <div className="text-2xl font-bold nav-text-dynamic">
+                  {brandingSettings?.companyName || "dt.visuals"}
+                </div>
+              )}
             </div>
           </Link>
 

@@ -105,6 +105,16 @@ export const websiteSettings = pgTable("website_settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const brandingSettings = pgTable("branding_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  companyName: text("company_name").notNull().default("dt.visuals"),
+  showCompanyText: boolean("show_company_text").notNull().default(true),
+  logoImageId: varchar("logo_image_id").references(() => media.id),
+  faviconImageId: varchar("favicon_image_id").references(() => media.id),
+  updatedBy: varchar("updated_by").notNull().references(() => users.id),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const mediaFeedback = pgTable("media_feedback", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   mediaId: varchar("media_id").notNull().references(() => media.id, { onDelete: "cascade" }),
@@ -232,8 +242,27 @@ export const websiteSettingsRelations = relations(websiteSettings, ({ one }) => 
     fields: [websiteSettings.backgroundImageId],
     references: [media.id],
   }),
+  backgroundVideo: one(media, {
+    fields: [websiteSettings.backgroundVideoId],
+    references: [media.id],
+  }),
   updater: one(users, {
     fields: [websiteSettings.updatedBy],
+    references: [users.id],
+  }),
+}));
+
+export const brandingSettingsRelations = relations(brandingSettings, ({ one }) => ({
+  logoImage: one(media, {
+    fields: [brandingSettings.logoImageId],
+    references: [media.id],
+  }),
+  faviconImage: one(media, {
+    fields: [brandingSettings.faviconImageId],
+    references: [media.id],
+  }),
+  updater: one(users, {
+    fields: [brandingSettings.updatedBy],
     references: [users.id],
   }),
 }));
@@ -272,6 +301,15 @@ export const insertMediaSchema = createInsertSchema(media).omit({
 export const insertMediaClientSchema = createInsertSchema(mediaClients).omit({
   id: true,
 });
+
+export const insertBrandingSettingsSchema = createInsertSchema(brandingSettings).omit({
+  id: true,
+  updatedAt: true,
+});
+
+// Types
+export type BrandingSettings = typeof brandingSettings.$inferSelect;
+export type InsertBrandingSettings = typeof insertBrandingSettingsSchema._type;
 
 export const insertWebsiteSettingsSchema = createInsertSchema(websiteSettings).omit({
   id: true,

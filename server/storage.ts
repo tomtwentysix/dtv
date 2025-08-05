@@ -9,6 +9,7 @@ import {
   media, 
   mediaClients,
   websiteSettings,
+  brandingSettings,
   mediaFeedback,
   mediaTimelineNotes,
   type User, 
@@ -26,7 +27,9 @@ import {
   type MediaClient,
   type InsertMediaClient,
   type WebsiteSettings,
-  type InsertWebsiteSettings
+  type InsertWebsiteSettings,
+  type BrandingSettings,
+  type InsertBrandingSettings
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, inArray } from "drizzle-orm";
@@ -118,6 +121,10 @@ export interface IStorage {
   // Contact information management
   getContactInfo(): Promise<WebsiteSettings | undefined>;
   updateContactInfo(contactInfo: { contactEmail?: string; contactPhone?: string; contactAddress?: string; updatedBy: string }): Promise<WebsiteSettings>;
+  
+  // Branding settings management
+  getBrandingSettings(): Promise<BrandingSettings | undefined>;
+  updateBrandingSettings(updates: Partial<InsertBrandingSettings>): Promise<BrandingSettings>;
   
   // Client feedback and timeline notes (now using clientUserId)
   createMediaFeedback(feedback: { mediaId: string; clientUserId: string; feedbackText: string; rating: number }): Promise<any>;
@@ -684,6 +691,37 @@ export class DatabaseStorage implements IStorage {
     }
 
     return existingSetting;
+  }
+
+  // Branding settings management
+  async getBrandingSettings(): Promise<BrandingSettings | undefined> {
+    const [settings] = await db
+      .select()
+      .from(brandingSettings)
+      .limit(1);
+    return settings || undefined;
+  }
+
+  async updateBrandingSettings(updates: Partial<InsertBrandingSettings>): Promise<BrandingSettings> {
+    // First try to get existing settings
+    const existing = await this.getBrandingSettings();
+    
+    if (existing) {
+      // Update existing settings
+      const [updated] = await db
+        .update(brandingSettings)
+        .set({ ...updates, updatedAt: new Date() })
+        .where(eq(brandingSettings.id, existing.id))
+        .returning();
+      return updated;
+    } else {
+      // Create new settings if none exist
+      const [created] = await db
+        .insert(brandingSettings)
+        .values(updates as InsertBrandingSettings)
+        .returning();
+      return created;
+    }
   }
 }
 

@@ -965,6 +965,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Branding settings routes
+  app.get("/api/branding-settings", async (req, res) => {
+    try {
+      const brandingSettings = await storage.getBrandingSettings();
+      res.json(brandingSettings || {
+        companyName: "dt.visuals",
+        showCompanyText: true,
+        logoImageId: null,
+        faviconImageId: null
+      });
+    } catch (error) {
+      console.error("Error fetching branding settings:", error);
+      res.status(500).json({ message: "Failed to fetch branding settings" });
+    }
+  });
+
+  app.put("/api/branding-settings", requireAuth, requirePermission("edit:website"), async (req, res) => {
+    try {
+      const { companyName, showCompanyText, logoImageId, faviconImageId } = req.body;
+      const userId = req.user!.id;
+      
+      const updatedSettings = await storage.updateBrandingSettings({
+        companyName,
+        showCompanyText,
+        logoImageId,
+        faviconImageId,
+        updatedBy: userId,
+      });
+      
+      res.json(updatedSettings);
+    } catch (error) {
+      console.error("Error updating branding settings:", error);
+      res.status(500).json({ message: "Failed to update branding settings" });
+    }
+  });
+
   // Dashboard stats
   app.get("/api/stats", requireAuth, requireAnyRole(["Admin", "Staff"]), async (req, res) => {
     try {
