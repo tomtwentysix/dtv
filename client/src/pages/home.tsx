@@ -6,16 +6,14 @@ import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { getBackgroundMedia, useWebsiteSettings } from "@/lib/background-utils";
 
 export default function Home() {
   const { data: featuredMedia, isLoading } = useQuery({
     queryKey: ["/api/media/featured"],
   });
 
-  const { data: websiteSettings } = useQuery({
-    queryKey: ["/api/website-settings"],
-  });
-
+  const { data: websiteSettings } = useWebsiteSettings();
   const [scrollY, setScrollY] = useState(0);
 
   useEffect(() => {
@@ -24,49 +22,17 @@ export default function Home() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Get background media for a section
-  const getBackgroundMedia = (section: string) => {
-    const setting = (websiteSettings as any[])?.find((s: any) => s.section === section);
-    
-    // Check for video first, then image
-    if (setting?.backgroundVideo) {
-      return {
-        type: "video",
-        url: setting.backgroundVideo.url,
-        title: setting.backgroundVideo.title
-      };
-    }
-    
-    if (setting?.backgroundImage) {
-      return {
-        type: "image",
-        url: setting.backgroundImage.url,
-        title: setting.backgroundImage.title
-      };
-    }
-    
-    // Fallback to default images
-    const defaultImages = {
-      hero: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&h=1080",
-      featured_work: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&h=1080",
-      services: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&h=1080"
-    };
-    
-    return {
-      type: "image",
-      url: defaultImages[section as keyof typeof defaultImages]
-    };
-  };
-
   return (
     <div className="min-h-screen">
       <Navigation />
       
       {/* Hero Section */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden">
+      <section className="relative h-screen flex items-center justify-center overflow-hidden bg-white dark:bg-black">
         {(() => {
-          const heroMedia = getBackgroundMedia("hero");
-          return heroMedia.type === "video" ? (
+          const heroMedia = getBackgroundMedia(websiteSettings || [], "hero");
+          if (!heroMedia) return null;
+          
+          return heroMedia?.type === "video" ? (
             <video
               className="absolute inset-0 w-full h-full object-cover parallax-bg"
               style={{
@@ -90,7 +56,9 @@ export default function Home() {
             />
           );
         })()}
-        <div className="absolute inset-0 hero-video-overlay" />
+        {getBackgroundMedia(websiteSettings || [], "hero") && (
+          <div className="absolute inset-0 hero-video-overlay" />
+        )}
         
         <div className="relative z-10 text-center max-w-4xl mx-auto px-4 animate-fade-in">
           <h1 className="text-6xl md:text-8xl font-black mb-6 leading-tight">
@@ -118,8 +86,10 @@ export default function Home() {
       {/* Featured Work Section */}
       <section className="relative py-20 bg-white dark:bg-black overflow-hidden">
         {(() => {
-          const featuredMedia = getBackgroundMedia("featured_work");
-          return featuredMedia.type === "video" ? (
+          const featuredMedia = getBackgroundMedia(websiteSettings || [], "featured_work");
+          if (!featuredMedia) return null;
+          
+          return featuredMedia?.type === "video" ? (
             <video
               className="absolute inset-0 w-full h-full object-cover parallax-bg opacity-20"
               style={{
@@ -226,8 +196,10 @@ export default function Home() {
       {/* Services Preview */}
       <section className="relative py-20 bg-white dark:bg-black overflow-hidden">
         {(() => {
-          const servicesMedia = getBackgroundMedia("services");
-          return servicesMedia.type === "video" ? (
+          const servicesMedia = getBackgroundMedia(websiteSettings || [], "services");
+          if (!servicesMedia) return null;
+          
+          return servicesMedia?.type === "video" ? (
             <video
               className="absolute inset-0 w-full h-full object-cover parallax-bg opacity-10"
               style={{

@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, Play, Pause, Volume2, VolumeX, Maximize, SkipBack, SkipForward, X } from "lucide-react";
-import { useWebsiteSetting } from "@/hooks/use-website-settings";
+import { getBackgroundMedia, useWebsiteSettings } from "@/lib/background-utils";
 
 const categories = ["All", "Commercial", "Documentary", "Corporate", "Music Video"];
 
@@ -24,8 +24,7 @@ export default function Portfolio() {
   const modalVideoRef = useRef<HTMLVideoElement>(null);
 
   // Get website settings for backgrounds
-  const portfolioHeader = useWebsiteSetting('portfolio_header');
-  const portfolioGallery = useWebsiteSetting('portfolio_gallery');
+  const { data: websiteSettings } = useWebsiteSettings();
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
@@ -136,27 +135,34 @@ export default function Portfolio() {
       <Navigation />
 
       {/* Header */}
-      <section className="relative pt-24 pb-12 h-96 flex items-center justify-center overflow-hidden">
-        {portfolioHeader.backgroundType === 'video' ? (
-          <video
-            className="absolute inset-0 w-full h-full object-cover parallax-bg"
-            style={{ transform: `translateY(${scrollY * 0.5}px)` }}
-            autoPlay
-            loop
-            muted
-            playsInline
-            src={portfolioHeader.backgroundUrl}
-          />
-        ) : (
-          <div 
-            className="absolute inset-0 bg-cover bg-center parallax-bg"
-            style={{
-              backgroundImage: `url('${portfolioHeader.backgroundUrl || 'https://images.unsplash.com/photo-1485846234645-a62644f84728?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&h=1080'}')`,
-              transform: `translateY(${scrollY * 0.5}px)`,
-            }}
-          />
+      <section className="relative pt-24 pb-12 h-96 flex items-center justify-center overflow-hidden bg-white dark:bg-black">
+        {(() => {
+          const portfolioHeaderMedia = getBackgroundMedia(websiteSettings || [], "portfolio_header");
+          if (!portfolioHeaderMedia) return null;
+          
+          return portfolioHeaderMedia.type === "video" ? (
+            <video
+              className="absolute inset-0 w-full h-full object-cover parallax-bg"
+              style={{ transform: `translateY(${scrollY * 0.5}px)` }}
+              autoPlay
+              loop
+              muted
+              playsInline
+              src={portfolioHeaderMedia.url}
+            />
+          ) : (
+            <div 
+              className="absolute inset-0 bg-cover bg-center parallax-bg"
+              style={{
+                backgroundImage: `url('${portfolioHeaderMedia.url}')`,
+                transform: `translateY(${scrollY * 0.5}px)`,
+              }}
+            />
+          );
+        })()}
+        {getBackgroundMedia(websiteSettings || [], "portfolio_header") && (
+          <div className="absolute inset-0 hero-video-overlay" />
         )}
-        <div className="absolute inset-0 hero-video-overlay" />
         <div className="relative z-10 text-center max-w-4xl mx-auto px-4">
           <h1 className="text-5xl md:text-6xl font-bold mb-6 hero-title">Portfolio</h1>
           <p className="text-xl max-w-3xl mx-auto hero-subtitle">
@@ -189,25 +195,30 @@ export default function Portfolio() {
 
       {/* Portfolio Grid */}
       <section className="relative py-12 bg-white dark:bg-black overflow-hidden">
-        {portfolioGallery.backgroundType === 'video' ? (
-          <video
-            className="absolute inset-0 w-full h-full object-cover parallax-bg opacity-10"
-            style={{ transform: `translateY(${scrollY * 0.2}px)` }}
-            autoPlay
-            loop
-            muted
-            playsInline
-            src={portfolioGallery.backgroundUrl}
-          />
-        ) : (
-          <div 
-            className="absolute inset-0 bg-cover bg-center parallax-bg opacity-10"
-            style={{
-              backgroundImage: `url('${portfolioGallery.backgroundUrl || 'https://images.unsplash.com/photo-1594736797933-d0501ba2fe65?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&h=1080'}')`,
-              transform: `translateY(${scrollY * 0.2}px)`,
-            }}
-          />
-        )}
+        {(() => {
+          const portfolioGalleryMedia = getBackgroundMedia(websiteSettings || [], "portfolio_gallery");
+          if (!portfolioGalleryMedia) return null;
+          
+          return portfolioGalleryMedia.type === "video" ? (
+            <video
+              className="absolute inset-0 w-full h-full object-cover parallax-bg opacity-10"
+              style={{ transform: `translateY(${scrollY * 0.2}px)` }}
+              autoPlay
+              loop
+              muted
+              playsInline
+              src={portfolioGalleryMedia.url}
+            />
+          ) : (
+            <div 
+              className="absolute inset-0 bg-cover bg-center parallax-bg opacity-10"
+              style={{
+                backgroundImage: `url('${portfolioGalleryMedia.url}')`,
+                transform: `translateY(${scrollY * 0.2}px)`,
+              }}
+            />
+          );
+        })()}
         <div className="relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {isLoading ? (

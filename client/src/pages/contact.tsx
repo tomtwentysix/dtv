@@ -11,10 +11,12 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Mail, Phone, MapPin, Instagram, Youtube, Linkedin } from "lucide-react";
+import { getBackgroundMedia, useWebsiteSettings } from "@/lib/background-utils";
 
 export default function Contact() {
   const { toast } = useToast();
   const [scrollY, setScrollY] = useState(0);
+  const { data: websiteSettings } = useWebsiteSettings();
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
@@ -70,7 +72,43 @@ export default function Contact() {
       <Navigation />
       
       {/* Header */}
-      <section className="pt-24 pb-12 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-black">
+      <section className="relative pt-24 pb-12 h-96 flex items-center justify-center overflow-hidden bg-white dark:bg-black">
+        {(() => {
+          const contactHeaderMedia = getBackgroundMedia(websiteSettings || [], "contact_header");
+          if (!contactHeaderMedia) return null;
+          
+          return contactHeaderMedia.type === "video" ? (
+            <video
+              className="absolute inset-0 w-full h-full object-cover parallax-bg"
+              style={{ transform: `translateY(${scrollY * 0.5}px)` }}
+              autoPlay
+              loop
+              muted
+              playsInline
+              src={contactHeaderMedia.url}
+            />
+          ) : (
+            <div 
+              className="absolute inset-0 bg-cover bg-center parallax-bg"
+              style={{
+                backgroundImage: `url('${contactHeaderMedia.url}')`,
+                transform: `translateY(${scrollY * 0.5}px)`,
+              }}
+            />
+          );
+        })()}
+        {getBackgroundMedia(websiteSettings || [], "contact_header") && (
+          <div className="absolute inset-0 hero-video-overlay" />
+        )}
+        <div className="relative z-10 text-center max-w-4xl mx-auto px-4">
+          <h1 className="text-5xl md:text-6xl font-bold mb-6 hero-title">Get In Touch</h1>
+          <p className="text-xl max-w-3xl mx-auto hero-subtitle">
+            Ready to bring your vision to life? Let's discuss your project and create something extraordinary together.
+          </p>
+        </div>
+      </section>
+
+      <section className="py-20 bg-white dark:bg-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-5xl md:text-6xl font-bold mb-6">Get In Touch</h1>

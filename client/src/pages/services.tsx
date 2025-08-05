@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "wouter";
 import { Check } from "lucide-react";
-import { useWebsiteSetting } from "@/hooks/use-website-settings";
+import { getBackgroundMedia, useWebsiteSettings } from "@/lib/background-utils";
 
 const services = [
   {
@@ -86,9 +86,7 @@ export default function Services() {
   const [scrollY, setScrollY] = useState(0);
 
   // Get website settings for backgrounds
-  const servicesHeader = useWebsiteSetting('services_header');
-  const servicesSection = useWebsiteSetting('services_section');
-  const servicesCta = useWebsiteSetting('services_cta');
+  const { data: websiteSettings } = useWebsiteSettings();
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
@@ -101,27 +99,34 @@ export default function Services() {
       <Navigation />
       
       {/* Header */}
-      <section className="relative pt-24 pb-12 h-96 flex items-center justify-center overflow-hidden">
-        {servicesHeader.backgroundType === 'video' ? (
-          <video
-            className="absolute inset-0 w-full h-full object-cover parallax-bg"
-            style={{ transform: `translateY(${scrollY * 0.5}px)` }}
-            autoPlay
-            loop
-            muted
-            playsInline
-            src={servicesHeader.backgroundUrl}
-          />
-        ) : (
-          <div 
-            className="absolute inset-0 bg-cover bg-center parallax-bg"
-            style={{
-              backgroundImage: `url('${servicesHeader.backgroundUrl || 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&h=1080'}')`,
-              transform: `translateY(${scrollY * 0.5}px)`,
-            }}
-          />
+      <section className="relative pt-24 pb-12 h-96 flex items-center justify-center overflow-hidden bg-white dark:bg-black">
+        {(() => {
+          const servicesHeaderMedia = getBackgroundMedia(websiteSettings || [], "services_header");
+          if (!servicesHeaderMedia) return null;
+          
+          return servicesHeaderMedia.type === "video" ? (
+            <video
+              className="absolute inset-0 w-full h-full object-cover parallax-bg"
+              style={{ transform: `translateY(${scrollY * 0.5}px)` }}
+              autoPlay
+              loop
+              muted
+              playsInline
+              src={servicesHeaderMedia.url}
+            />
+          ) : (
+            <div 
+              className="absolute inset-0 bg-cover bg-center parallax-bg"
+              style={{
+                backgroundImage: `url('${servicesHeaderMedia.url}')`,
+                transform: `translateY(${scrollY * 0.5}px)`,
+              }}
+            />
+          );
+        })()}
+        {getBackgroundMedia(websiteSettings || [], "services_header") && (
+          <div className="absolute inset-0 hero-video-overlay" />
         )}
-        <div className="absolute inset-0 hero-video-overlay" />
         <div className="relative z-10 text-center max-w-4xl mx-auto px-4">
           <h1 className="text-5xl md:text-6xl font-bold mb-6 hero-title">Our Services</h1>
           <p className="text-xl max-w-3xl mx-auto hero-subtitle">
@@ -132,25 +137,30 @@ export default function Services() {
 
       {/* Services Grid */}
       <section className="relative py-20 bg-white dark:bg-black overflow-hidden">
-        {servicesSection.backgroundType === 'video' ? (
-          <video
-            className="absolute inset-0 w-full h-full object-cover parallax-bg opacity-10"
-            style={{ transform: `translateY(${scrollY * 0.3}px)` }}
-            autoPlay
-            loop
-            muted
-            playsInline
-            src={servicesSection.backgroundUrl}
-          />
-        ) : (
-          <div 
-            className="absolute inset-0 bg-cover bg-center parallax-bg opacity-10"
-            style={{
-              backgroundImage: `url('${servicesSection.backgroundUrl || 'https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&h=1080'}')`,
-              transform: `translateY(${scrollY * 0.3}px)`,
-            }}
-          />
-        )}
+        {(() => {
+          const servicesSectionMedia = getBackgroundMedia(websiteSettings || [], "services_section");
+          if (!servicesSectionMedia) return null;
+          
+          return servicesSectionMedia.type === "video" ? (
+            <video
+              className="absolute inset-0 w-full h-full object-cover parallax-bg opacity-10"
+              style={{ transform: `translateY(${scrollY * 0.3}px)` }}
+              autoPlay
+              loop
+              muted
+              playsInline
+              src={servicesSectionMedia.url}
+            />
+          ) : (
+            <div 
+              className="absolute inset-0 bg-cover bg-center parallax-bg opacity-10"
+              style={{
+                backgroundImage: `url('${servicesSectionMedia.url}')`,
+                transform: `translateY(${scrollY * 0.3}px)`,
+              }}
+            />
+          );
+        })()}
         <div className="relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

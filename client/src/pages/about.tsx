@@ -2,14 +2,13 @@ import { useState, useEffect } from "react";
 import { Navigation } from "@/components/navigation";
 import { Footer } from "@/components/footer";
 import { Card, CardContent } from "@/components/ui/card";
-import { useWebsiteSetting } from "@/hooks/use-website-settings";
+import { getBackgroundMedia, useWebsiteSettings } from "@/lib/background-utils";
 
 export default function About() {
   const [scrollY, setScrollY] = useState(0);
 
   // Get website settings for backgrounds
-  const aboutHeader = useWebsiteSetting('about_header');
-  const aboutValues = useWebsiteSetting('about_values');
+  const { data: websiteSettings } = useWebsiteSettings();
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
@@ -22,27 +21,34 @@ export default function About() {
       <Navigation />
       
       {/* Header */}
-      <section className="relative pt-24 pb-12 h-96 flex items-center justify-center overflow-hidden">
-        {aboutHeader.backgroundType === 'video' ? (
-          <video
-            className="absolute inset-0 w-full h-full object-cover parallax-bg"
-            style={{ transform: `translateY(${scrollY * 0.5}px)` }}
-            autoPlay
-            loop
-            muted
-            playsInline
-            src={aboutHeader.backgroundUrl}
-          />
-        ) : (
-          <div 
-            className="absolute inset-0 bg-cover bg-center parallax-bg"
-            style={{
-              backgroundImage: `url('${aboutHeader.backgroundUrl || 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&h=1080'}')`,
-              transform: `translateY(${scrollY * 0.5}px)`,
-            }}
-          />
+      <section className="relative pt-24 pb-12 h-96 flex items-center justify-center overflow-hidden bg-white dark:bg-black">
+        {(() => {
+          const aboutHeaderMedia = getBackgroundMedia(websiteSettings || [], "about_header");
+          if (!aboutHeaderMedia) return null;
+          
+          return aboutHeaderMedia.type === "video" ? (
+            <video
+              className="absolute inset-0 w-full h-full object-cover parallax-bg"
+              style={{ transform: `translateY(${scrollY * 0.5}px)` }}
+              autoPlay
+              loop
+              muted
+              playsInline
+              src={aboutHeaderMedia.url}
+            />
+          ) : (
+            <div 
+              className="absolute inset-0 bg-cover bg-center parallax-bg"
+              style={{
+                backgroundImage: `url('${aboutHeaderMedia.url}')`,
+                transform: `translateY(${scrollY * 0.5}px)`,
+              }}
+            />
+          );
+        })()}
+        {getBackgroundMedia(websiteSettings || [], "about_header") && (
+          <div className="absolute inset-0 hero-video-overlay" />
         )}
-        <div className="absolute inset-0 hero-video-overlay" />
         <div className="relative z-10 text-center max-w-4xl mx-auto px-4">
           <h1 className="text-5xl md:text-6xl font-bold mb-6 hero-title">About dt.visuals</h1>
           <p className="text-xl max-w-3xl mx-auto hero-subtitle">

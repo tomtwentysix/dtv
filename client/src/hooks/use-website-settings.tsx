@@ -25,17 +25,3 @@ export function useWebsiteSettings() {
   });
 }
 
-export function useWebsiteSetting(section: string) {
-  const { data: settings, isLoading, error } = useWebsiteSettings();
-  
-  const setting = settings?.find(s => s.section === section);
-  
-  return {
-    setting,
-    isLoading,
-    error,
-    backgroundUrl: setting?.backgroundImage?.url || setting?.backgroundVideo?.url,
-    backgroundType: setting?.backgroundImage ? 'image' : setting?.backgroundVideo ? 'video' : null,
-    backgroundTitle: setting?.backgroundImage?.title || setting?.backgroundVideo?.title
-  };
-}
