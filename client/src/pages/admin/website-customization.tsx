@@ -204,11 +204,14 @@ export default function WebsiteCustomization() {
 
   // Update website settings mutation
   const updateSettingsMutation = useMutation({
-    mutationFn: async (data: { section: string; background_image_id?: string; background_video_id?: string }) => {
-      const response = await fetch('/api/website-settings', {
+    mutationFn: async (data: { section: string; backgroundImageId?: string; backgroundVideoId?: string }) => {
+      const response = await fetch(`/api/website-settings/${data.section}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          backgroundImageId: data.backgroundImageId,
+          backgroundVideoId: data.backgroundVideoId
+        }),
       });
       if (!response.ok) throw new Error('Failed to update settings');
       return response.json();
@@ -225,8 +228,8 @@ export default function WebsiteCustomization() {
   const handleMediaSelect = (section: string, mediaId: string, mediaType: 'image' | 'video') => {
     const updateData = {
       section,
-      background_image_id: mediaType === 'image' ? mediaId : undefined,
-      background_video_id: mediaType === 'video' ? mediaId : undefined,
+      backgroundImageId: mediaType === 'image' ? mediaId : undefined,
+      backgroundVideoId: mediaType === 'video' ? mediaId : undefined,
     };
     
     updateSettingsMutation.mutate(updateData);

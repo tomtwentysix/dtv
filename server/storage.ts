@@ -588,7 +588,12 @@ export class DatabaseStorage implements IStorage {
     // Try to update existing setting first
     const [existingSetting] = await db
       .update(websiteSettings)
-      .set({ ...insertSetting, updatedAt: new Date() })
+      .set({ 
+        backgroundImageId: insertSetting.backgroundImageId,
+        backgroundVideoId: insertSetting.backgroundVideoId,
+        updatedBy: insertSetting.updatedBy,
+        updatedAt: new Date() 
+      })
       .where(eq(websiteSettings.section, section))
       .returning();
 

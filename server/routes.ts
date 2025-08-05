@@ -21,8 +21,10 @@ async function initializeRBAC() {
       { name: "assign:media", description: "Can assign media to clients" },
       { name: "delete:media", description: "Can delete media" },
       { name: "view:clients", description: "Can view client profiles" },
+      { name: "edit:clients", description: "Can create/edit clients" },
       { name: "edit:users", description: "Can create/edit staff users" },
       { name: "edit:roles", description: "Can create/edit roles and permissions" },
+      { name: "edit:website", description: "Can edit website settings and customization" },
       { name: "view:analytics", description: "Can view analytics and stats" },
       { name: "manage:system", description: "Full system management access" },
     ];
@@ -57,7 +59,7 @@ async function initializeRBAC() {
       });
       
       // Assign basic permissions to staff
-      const basicPermissions = ["upload:media", "assign:media", "view:clients"];
+      const basicPermissions = ["upload:media", "assign:media", "view:clients", "edit:website"];
       for (const permName of basicPermissions) {
         const permission = await storage.getPermissionByName(permName);
         if (permission) {
@@ -914,16 +916,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/website-settings/:section", requireAuth, requirePermission("edit:website"), async (req, res) => {
     try {
-      const { backgroundImageId } = req.body;
+      const { backgroundImageId, backgroundVideoId } = req.body;
       
       const setting = await storage.updateWebsiteSetting(req.params.section, {
         section: req.params.section,
-        backgroundImageId,
+        backgroundImageId: backgroundImageId || null,
+        backgroundVideoId: backgroundVideoId || null,
         updatedBy: req.user!.id,
       });
       
       res.json(setting);
     } catch (error) {
+      console.error('Website settings update error:', error);
       res.status(500).json({ message: "Failed to update website setting" });
     }
   });
