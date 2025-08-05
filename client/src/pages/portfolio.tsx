@@ -293,7 +293,7 @@ export default function Portfolio() {
 
       {/* Full-screen Video Player Modal */}
       <Dialog open={!!selectedVideo} onOpenChange={closeVideoModal}>
-        <DialogContent className="p-0 overflow-hidden bg-black/95 border-none w-[95vw] h-[95vh] max-w-none max-h-none" aria-describedby="video-player-description">
+        <DialogContent className="p-0 overflow-hidden bg-black/95 border-none max-w-[95vw] max-h-[95vh] w-auto h-auto" aria-describedby="video-player-description">
           <DialogTitle className="sr-only">
             Video Player - {selectedVideo?.title}
           </DialogTitle>
