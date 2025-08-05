@@ -220,7 +220,7 @@ export default function Portfolio() {
                 <Card 
                   key={item.id} 
                   className="group cursor-pointer overflow-hidden glass-card"
-                  onClick={() => item.type === "video" ? openVideoModal(item) : null}
+                  onClick={() => openVideoModal(item)}
                 >
                   <div className="relative">
                     {item.type === "image" ? (
@@ -293,7 +293,7 @@ export default function Portfolio() {
 
       {/* Full-screen Video Player Modal */}
       <Dialog open={!!selectedVideo} onOpenChange={closeVideoModal}>
-        <DialogContent className="p-0 overflow-hidden bg-black/95 border-none max-w-[95vw] max-h-[95vh] w-auto h-auto" aria-describedby="video-player-description">
+        <DialogContent className="p-0 overflow-hidden bg-black/95 border-none max-w-[98vw] max-h-[98vh] w-auto h-auto" aria-describedby="video-player-description">
           <DialogTitle className="sr-only">
             Video Player - {selectedVideo?.title}
           </DialogTitle>
@@ -301,45 +301,60 @@ export default function Portfolio() {
             Full-screen video player for {selectedVideo?.title}
           </div>
           
-          <div className="relative group" style={{ maxWidth: '95vw', maxHeight: '95vh' }}>
-            {/* Video */}
+          <div className="relative group" style={{ maxWidth: '98vw', maxHeight: '98vh' }}>
+            {/* Media Content */}
             {selectedVideo && (
-              <video
-                ref={modalVideoRef}
-                src={selectedVideo.url}
-                className="block max-w-full max-h-[95vh] w-auto h-auto bg-black"
-                style={{
-                  filter: 'none',
-                  mixBlendMode: 'normal',
-                  opacity: 1,
-                  objectFit: 'contain'
-                }}
-                onLoadedMetadata={() => {
-                  if (modalVideoRef.current) {
-                    setDuration(modalVideoRef.current.duration);
-                    modalVideoRef.current.volume = volume;
-                    modalVideoRef.current.muted = isMuted;
-                  }
-                }}
-                onTimeUpdate={() => {
-                  if (modalVideoRef.current) {
-                    setCurrentTime(modalVideoRef.current.currentTime);
-                  }
-                }}
-                onPlay={() => setIsPlaying(true)}
-                onPause={() => setIsPlaying(false)}
-                onEnded={() => setIsPlaying(false)}
-                onClick={(e) => {
-                  // Only toggle play if clicking directly on video, not on controls
-                  if (e.target === modalVideoRef.current) {
-                    togglePlay();
-                  }
-                }}
-              />
+              selectedVideo.type === "image" ? (
+                <img
+                  src={selectedVideo.url}
+                  alt={selectedVideo.title}
+                  className="block max-w-full max-h-[98vh] w-auto h-auto bg-black"
+                  style={{
+                    filter: 'none',
+                    mixBlendMode: 'normal',
+                    opacity: 1,
+                    objectFit: 'contain'
+                  }}
+                />
+              ) : (
+                <video
+                  ref={modalVideoRef}
+                  src={selectedVideo.url}
+                  className="block max-w-full max-h-[98vh] w-auto h-auto bg-black"
+                  style={{
+                    filter: 'none',
+                    mixBlendMode: 'normal',
+                    opacity: 1,
+                    objectFit: 'contain'
+                  }}
+                  onLoadedMetadata={() => {
+                    if (modalVideoRef.current) {
+                      setDuration(modalVideoRef.current.duration);
+                      modalVideoRef.current.volume = volume;
+                      modalVideoRef.current.muted = isMuted;
+                    }
+                  }}
+                  onTimeUpdate={() => {
+                    if (modalVideoRef.current) {
+                      setCurrentTime(modalVideoRef.current.currentTime);
+                    }
+                  }}
+                  onPlay={() => setIsPlaying(true)}
+                  onPause={() => setIsPlaying(false)}
+                  onEnded={() => setIsPlaying(false)}
+                  onClick={(e) => {
+                    // Only toggle play if clicking directly on video, not on controls
+                    if (e.target === modalVideoRef.current) {
+                      togglePlay();
+                    }
+                  }}
+                />
+              )
             )}
 
-            {/* Floating Controls - Show on hover */}
-            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none group-hover:pointer-events-auto">
+            {/* Floating Controls - Show on hover (only for videos) */}
+            {selectedVideo?.type === "video" && (
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none group-hover:pointer-events-auto">
               
               {/* Close button */}
               <Button
@@ -478,7 +493,8 @@ export default function Portfolio() {
                   </div>
                 </div>
               </div>
-            </div>
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
