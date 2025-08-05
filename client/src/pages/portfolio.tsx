@@ -293,7 +293,7 @@ export default function Portfolio() {
 
       {/* Full-screen Video Player Modal */}
       <Dialog open={!!selectedVideo} onOpenChange={closeVideoModal}>
-        <DialogContent className="max-w-7xl w-full h-[95vh] p-0 overflow-hidden bg-black/95" aria-describedby="video-player-description">
+        <DialogContent className="p-0 overflow-hidden bg-black/95 border-none max-w-[95vw] max-h-[95vh] w-auto h-auto" aria-describedby="video-player-description">
           <DialogTitle className="sr-only">
             Video Player - {selectedVideo?.title}
           </DialogTitle>
@@ -301,17 +301,18 @@ export default function Portfolio() {
             Full-screen video player for {selectedVideo?.title}
           </div>
           
-          <div className="relative w-full h-full group">
+          <div className="relative group" style={{ maxWidth: '95vw', maxHeight: '95vh' }}>
             {/* Video */}
             {selectedVideo && (
               <video
                 ref={modalVideoRef}
                 src={selectedVideo.url}
-                className="w-full h-full object-contain bg-black"
+                className="block max-w-full max-h-[95vh] w-auto h-auto bg-black"
                 style={{
                   filter: 'none',
                   mixBlendMode: 'normal',
-                  opacity: 1
+                  opacity: 1,
+                  objectFit: 'contain'
                 }}
                 onLoadedMetadata={() => {
                   if (modalVideoRef.current) {
@@ -328,7 +329,12 @@ export default function Portfolio() {
                 onPlay={() => setIsPlaying(true)}
                 onPause={() => setIsPlaying(false)}
                 onEnded={() => setIsPlaying(false)}
-                onClick={togglePlay}
+                onClick={(e) => {
+                  // Only toggle play if clicking directly on video, not on controls
+                  if (e.target === modalVideoRef.current) {
+                    togglePlay();
+                  }
+                }}
               />
             )}
 
@@ -339,7 +345,10 @@ export default function Portfolio() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={closeVideoModal}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  closeVideoModal();
+                }}
                 className="absolute top-4 right-4 z-30 text-white bg-black/50 hover:bg-black/70 rounded-full w-10 h-10 pointer-events-auto"
               >
                 <X className="h-5 w-5" />
@@ -364,7 +373,10 @@ export default function Portfolio() {
                 <Button
                   variant="ghost"
                   size="lg"
-                  onClick={togglePlay}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    togglePlay();
+                  }}
                   className="text-white bg-black/50 hover:bg-black/70 rounded-full w-20 h-20 backdrop-blur-sm transition-all duration-200"
                 >
                   {isPlaying ? (
@@ -376,10 +388,10 @@ export default function Portfolio() {
               </div>
 
               {/* Bottom controls bar */}
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent p-4 pointer-events-auto">
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent p-4 pointer-events-auto" onClick={(e) => e.stopPropagation()}>
                 <div className="space-y-3">
                   {/* Progress bar */}
-                  <div className="space-y-2">
+                  <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
                     <Slider
                       value={[currentTime]}
                       max={duration}
@@ -400,7 +412,10 @@ export default function Portfolio() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={skipBackward}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          skipBackward();
+                        }}
                         className="text-white hover:bg-white/20 rounded-full w-10 h-10"
                       >
                         <SkipBack className="h-5 w-5" />
@@ -410,7 +425,10 @@ export default function Portfolio() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={skipForward}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          skipForward();
+                        }}
                         className="text-white hover:bg-white/20 rounded-full w-10 h-10"
                       >
                         <SkipForward className="h-5 w-5" />
@@ -421,7 +439,10 @@ export default function Portfolio() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={toggleMute}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleMute();
+                          }}
                           className="text-white hover:bg-white/20 rounded-full w-10 h-10"
                         >
                           {isMuted ? (
@@ -430,7 +451,7 @@ export default function Portfolio() {
                             <Volume2 className="h-5 w-5" />
                           )}
                         </Button>
-                        <div className="w-20">
+                        <div className="w-20" onClick={(e) => e.stopPropagation()}>
                           <Slider
                             value={[isMuted ? 0 : volume]}
                             max={1}
@@ -446,7 +467,10 @@ export default function Portfolio() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={requestFullscreen}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        requestFullscreen();
+                      }}
                       className="text-white hover:bg-white/20 rounded-full w-10 h-10"
                     >
                       <Maximize className="h-5 w-5" />
