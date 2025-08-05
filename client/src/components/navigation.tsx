@@ -78,7 +78,7 @@ export function Navigation() {
                 <img 
                   src={brandingSettings.logoLightImage.url} 
                   alt={brandingSettings.logoLightImage.title || brandingSettings.companyName || "Logo"}
-                  className="w-[90px] h-[90px] object-contain mr-3 dark:hidden"
+                  className="w-[75px] h-[75px] object-contain mr-3 dark:hidden"
                 />
               )}
               {/* Dark mode logo */}
@@ -86,7 +86,7 @@ export function Navigation() {
                 <img 
                   src={brandingSettings.logoDarkImage.url} 
                   alt={brandingSettings.logoDarkImage.title || brandingSettings.companyName || "Logo"}
-                  className="w-[90px] h-[90px] object-contain mr-3 hidden dark:block"
+                  className="w-[75px] h-[75px] object-contain mr-3 hidden dark:block"
                 />
               )}
               {/* Fallback: show light logo in dark mode if no dark logo is set */}
@@ -94,7 +94,7 @@ export function Navigation() {
                 <img 
                   src={brandingSettings.logoLightImage.url} 
                   alt={brandingSettings.logoLightImage.title || brandingSettings.companyName || "Logo"}
-                  className="w-[90px] h-[90px] object-contain mr-3 hidden dark:block"
+                  className="w-[75px] h-[75px] object-contain mr-3 hidden dark:block"
                 />
               )}
               {brandingSettings?.showCompanyText && (
