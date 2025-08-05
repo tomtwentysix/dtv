@@ -246,25 +246,30 @@ export default function Services() {
 
       {/* CTA Section */}
       <section className="relative py-20 bg-black text-white overflow-hidden">
-        {servicesCta.backgroundType === 'video' ? (
-          <video
-            className="absolute inset-0 w-full h-full object-cover parallax-bg opacity-20"
-            style={{ transform: `translateY(${scrollY * 0.1}px)` }}
-            autoPlay
-            loop
-            muted
-            playsInline
-            src={servicesCta.backgroundUrl}
-          />
-        ) : (
-          <div 
-            className="absolute inset-0 bg-cover bg-center parallax-bg opacity-20"
-            style={{
-              backgroundImage: `url('${servicesCta.backgroundUrl || 'https://images.unsplash.com/photo-1574267432553-4b4628081c31?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&h=1080'}')`,
-              transform: `translateY(${scrollY * 0.1}px)`,
-            }}
-          />
-        )}
+        {(() => {
+          const servicesCtaMedia = getBackgroundMedia(websiteSettings || [], "services_cta");
+          if (!servicesCtaMedia) return null;
+          
+          return servicesCtaMedia.type === "video" ? (
+            <video
+              className="absolute inset-0 w-full h-full object-cover parallax-bg opacity-20"
+              style={{ transform: `translateY(${scrollY * 0.1}px)` }}
+              autoPlay
+              loop
+              muted
+              playsInline
+              src={servicesCtaMedia.url}
+            />
+          ) : (
+            <div 
+              className="absolute inset-0 bg-cover bg-center parallax-bg opacity-20"
+              style={{
+                backgroundImage: `url('${servicesCtaMedia.url}')`,
+                transform: `translateY(${scrollY * 0.1}px)`,
+              }}
+            />
+          );
+        })()}
         <div className="relative z-10 max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
           <h2 className="text-4xl font-bold mb-6 hero-title">Ready to Bring Your Vision to Life?</h2>
           <p className="text-xl mb-8 hero-subtitle">

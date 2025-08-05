@@ -86,25 +86,30 @@ export default function About() {
 
       {/* Values Section */}
       <section className="relative py-20 bg-white dark:bg-black overflow-hidden">
-        {aboutValues.backgroundType === 'video' ? (
-          <video
-            className="absolute inset-0 w-full h-full object-cover parallax-bg opacity-10"
-            style={{ transform: `translateY(${scrollY * 0.3}px)` }}
-            autoPlay
-            loop
-            muted
-            playsInline
-            src={aboutValues.backgroundUrl}
-          />
-        ) : (
-          <div 
-            className="absolute inset-0 bg-cover bg-center parallax-bg opacity-10"
-            style={{
-              backgroundImage: `url('${aboutValues.backgroundUrl || 'https://images.unsplash.com/photo-1574267432553-4b4628081c31?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&h=1080'}')`,
-              transform: `translateY(${scrollY * 0.3}px)`,
-            }}
-          />
-        )}
+        {(() => {
+          const aboutValuesMedia = getBackgroundMedia(websiteSettings || [], "about_values");
+          if (!aboutValuesMedia) return null;
+          
+          return aboutValuesMedia.type === "video" ? (
+            <video
+              className="absolute inset-0 w-full h-full object-cover parallax-bg opacity-10"
+              style={{ transform: `translateY(${scrollY * 0.3}px)` }}
+              autoPlay
+              loop
+              muted
+              playsInline
+              src={aboutValuesMedia.url}
+            />
+          ) : (
+            <div 
+              className="absolute inset-0 bg-cover bg-center parallax-bg opacity-10"
+              style={{
+                backgroundImage: `url('${aboutValuesMedia.url}')`,
+                transform: `translateY(${scrollY * 0.3}px)`,
+              }}
+            />
+          );
+        })()}
         <div className="relative z-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
