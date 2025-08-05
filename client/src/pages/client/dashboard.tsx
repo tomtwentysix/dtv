@@ -997,7 +997,7 @@ export default function ClientDashboard() {
 
       {/* Unified Client Media Management Modal */}
       <Dialog open={!!showDetails} onOpenChange={() => setShowDetails(null)}>
-        <DialogContent className="max-w-7xl max-h-[90vh] flex flex-col p-0 gap-0 smooth-dialog">
+        <DialogContent className="max-w-7xl max-h-[90vh] flex flex-col p-0 gap-0 smooth-dialog overflow-hidden">
           <DialogHeader className="px-6 py-4 border-b flex-shrink-0">
             <DialogTitle className="text-xl font-semibold">
               {showDetails?.title}
@@ -1007,9 +1007,9 @@ export default function ClientDashboard() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="flex-1 flex flex-col min-h-0">
             {/* Video Player Section */}
-            <div className="flex-shrink-0 p-6 flex flex-col justify-center items-center bg-black/[0.039]">
+            <div className="flex-shrink-0 p-6 flex flex-col justify-center items-center bg-black/[0.039]"></div>
               {showDetails && (
                 <div className="w-full max-w-4xl">
                   {showDetails.type === "video" ? (
@@ -1181,16 +1181,16 @@ export default function ClientDashboard() {
             </div>
 
             {/* Tabs Section - Below Video */}
-            <div className="flex-1 border-t bg-black/[0.039] dark:bg-black/[0.039] flex flex-col">
-              <Tabs defaultValue="details" className="flex-1 flex flex-col">
-                <TabsList className="grid w-full grid-cols-3 rounded-none border-b">
+            <div className="flex-1 border-t bg-black/[0.039] dark:bg-black/[0.039] flex flex-col min-h-0">
+              <Tabs defaultValue="details" className="flex-1 flex flex-col min-h-0">
+                <TabsList className="grid w-full grid-cols-3 rounded-none border-b flex-shrink-0">
                   <TabsTrigger value="details" className="text-sm">Details</TabsTrigger>
                   <TabsTrigger value="feedback" className="text-sm">Feedback</TabsTrigger>
                   <TabsTrigger value="notes" className="text-sm">Timeline</TabsTrigger>
                 </TabsList>
 
                 {/* Details Tab */}
-                <TabsContent value="details" className="flex-1 p-6 overflow-y-auto">
+                <TabsContent value="details" className="flex-1 p-6 overflow-y-auto min-h-0">
                   {showDetails && (
                     <div className="max-w-4xl mx-auto">
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
@@ -1271,7 +1271,7 @@ export default function ClientDashboard() {
                 </TabsContent>
 
                 {/* Feedback Tab */}
-                <TabsContent value="feedback" className="flex-1 p-6 overflow-y-auto">
+                <TabsContent value="feedback" className="flex-1 p-6 overflow-y-auto min-h-0">
                   <div className="max-w-4xl mx-auto">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                       <div>
@@ -1379,7 +1379,7 @@ export default function ClientDashboard() {
 
 
                 {/* Timeline Notes Tab */}
-                <TabsContent value="notes" className="flex-1 p-6 overflow-y-auto">
+                <TabsContent value="notes" className="flex-1 p-6 overflow-y-auto min-h-0">
                   <div className="max-w-4xl mx-auto">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                       <div>
