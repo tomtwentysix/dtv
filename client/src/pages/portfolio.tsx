@@ -293,7 +293,7 @@ export default function Portfolio() {
 
       {/* Full-screen Video Player Modal */}
       <Dialog open={!!selectedVideo} onOpenChange={closeVideoModal}>
-        <DialogContent className="p-0 overflow-hidden bg-black/95 border-none w-[98vw] h-[98vh]" aria-describedby="video-player-description"></DialogContent>
+        <DialogContent className="p-0 overflow-hidden bg-black/95 border-none w-[98vw] h-[98vh]" aria-describedby="video-player-description">
           <DialogTitle className="sr-only">
             Video Player - {selectedVideo?.title}
           </DialogTitle>
@@ -301,7 +301,9 @@ export default function Portfolio() {
             Full-screen video player for {selectedVideo?.title}
           </div>
           
-          <div className="relative group w-full h-full">
+          <div className="relative group w-full h-full"></div>
+        </DialogContent>
+      </Dialog></old_str>
             {/* Media Content */}
             {selectedVideo && (
               selectedVideo.type === "image" ? (
@@ -496,8 +498,6 @@ export default function Portfolio() {
               </div>
             )}
           </div>
-        </DialogContent>
-      </Dialog>
       
       <Footer />
     </div>
