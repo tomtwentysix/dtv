@@ -18,32 +18,13 @@ ALTER DATABASE dt_visuals_dev SET log_duration = on;
 CREATE OR REPLACE FUNCTION populate_dev_test_data() RETURNS text AS $$
 DECLARE
     result_text text := '';
+    user_count integer;
     admin_user_id text;
     staff_user_id text;
-    editor_user_id text;
     admin_role_id text;
     staff_role_id text;
-    client_role_id text;
-    editor_role_id text;
-    marketing_role_id text;
     test_client_id text;
     test2_client_id text;
-    test_client_user_id text;
-    test2_client_user_id text;
-    media_video_id text;
-    media_photo_id text;
-    media_bts_id text;
-    media_portfolio_id text;
-    media_concept_id text;
-    users_added integer := 0;
-    roles_added integer := 0;
-    permissions_added integer := 0;
-    clients_added integer := 0;
-    client_users_added integer := 0;
-    media_added integer := 0;
-    website_settings_added integer := 0;
-    feedback_added integer := 0;
-    timeline_notes_added integer := 0;
 BEGIN
     -- Check if users table exists
     IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'users') THEN
@@ -52,58 +33,84 @@ BEGIN
         RETURN result_text;
     END IF;
 
-    result_text := 'Checking and populating development database with comprehensive test data...';
-    RAISE NOTICE '%', result_text;
+    -- Count existing users
+    SELECT COUNT(*) INTO user_count FROM users;
     
-    -- 1. INSERT USERS (check by username/email)
-    -- Admin user
-    SELECT id INTO admin_user_id FROM users WHERE username = 'admin' OR email = 'admin@dtvisuals.com' LIMIT 1;
-    IF admin_user_id IS NULL THEN
-        admin_user_id := gen_random_uuid()::text;
-        INSERT INTO users (id, username, email, password, forename, surname, display_name, is_active, created_at) 
-        VALUES (admin_user_id, 'admin', 'admin@dtvisuals.com', 'df10c71f317ded80d49fc8ebd89b928fdb6706e3bb45ea330da8a7caa009d98ebc3c57461844955f37b7dbb5651a00c42a0a924e7030550d4eb8bb2b1196878a.4e8dad95ff12fe8b727f303f8ac1a12f', 'Admin', 'User', 'Admin User', true, NOW());
-        users_added := users_added + 1;
-        RAISE NOTICE 'Created admin user with ID: %', admin_user_id;
-    ELSE
-        RAISE NOTICE 'Admin user already exists with ID: %', admin_user_id;
-    END IF;
+    IF user_count = 0 THEN
+        result_text := 'Populating development database with test data...';
+        RAISE NOTICE '%', result_text;
+        -- Create basic roles
+        SELECT id INTO admin_role_id FROM roles WHERE name = 'Admin' LIMIT 1;
+        IF admin_role_id IS NULL THEN
+            admin_role_id := gen_random_uuid()::text;
+            INSERT INTO roles (id, name, description) 
+            VALUES (admin_role_id, 'Admin', 'Full system administrator with all permissions');
+        END IF;
 
-    -- Staff user
-    SELECT id INTO staff_user_id FROM users WHERE username = 'staff' OR email = 'staff@dtvisuals.com' LIMIT 1;
-    IF staff_user_id IS NULL THEN
-        staff_user_id := gen_random_uuid()::text;
-        INSERT INTO users (id, username, email, password, forename, surname, display_name, is_active, created_at) 
-        VALUES (staff_user_id, 'staff', 'staff@dtvisuals.com', 'df10c71f317ded80d49fc8ebd89b928fdb6706e3bb45ea330da8a7caa009d98ebc3c57461844955f37b7dbb5651a00c42a0a924e7030550d4eb8bb2b1196878a.4e8dad95ff12fe8b727f303f8ac1a12f', 'Staff', 'Member', 'Staff Member', true, NOW());
-        users_added := users_added + 1;
-        RAISE NOTICE 'Created staff user with ID: %', staff_user_id;
-    ELSE
-        RAISE NOTICE 'Staff user already exists with ID: %', staff_user_id;
-    END IF;
+        SELECT id INTO staff_role_id FROM roles WHERE name = 'Staff' LIMIT 1;
+        IF staff_role_id IS NULL THEN
+            staff_role_id := gen_random_uuid()::text;
+            INSERT INTO roles (id, name, description) 
+            VALUES (staff_role_id, 'Staff', 'Staff member with limited administrative access');
+        END IF;
 
-    -- Editor user
-    SELECT id INTO editor_user_id FROM users WHERE username = 'editor' OR email = 'editor@dtvisuals.com' LIMIT 1;
-    IF editor_user_id IS NULL THEN
-        editor_user_id := gen_random_uuid()::text;
-        INSERT INTO users (id, username, email, password, forename, surname, display_name, is_active, created_at) 
-        VALUES (editor_user_id, 'editor', 'editor@dtvisuals.com', 'df10c71f317ded80d49fc8ebd89b928fdb6706e3bb45ea330da8a7caa009d98ebc3c57461844955f37b7dbb5651a00c42a0a924e7030550d4eb8bb2b1196878a.4e8dad95ff12fe8b727f303f8ac1a12f', 'Video', 'Editor', 'Video Editor', true, NOW());
-        users_added := users_added + 1;
-        RAISE NOTICE 'Created editor user with ID: %', editor_user_id;
-    ELSE
-        RAISE NOTICE 'Editor user already exists with ID: %', editor_user_id;
-    END IF;
+        -- Create basic users
+        SELECT id INTO admin_user_id FROM users WHERE username = 'admin' OR email = 'admin@dtvisuals.com' LIMIT 1;
+        IF admin_user_id IS NULL THEN
+            admin_user_id := gen_random_uuid()::text;
+            INSERT INTO users (id, username, email, password, forename, surname, display_name, is_active, created_at) 
+            VALUES (admin_user_id, 'admin', 'admin@dtvisuals.com', 'df10c71f317ded80d49fc8ebd89b928fdb6706e3bb45ea330da8a7caa009d98ebc3c57461844955f37b7dbb5651a00c42a0a924e7030550d4eb8bb2b1196878a.4e8dad95ff12fe8b727f303f8ac1a12f', 'Admin', 'User', 'Admin User', true, NOW());
+            
+            -- Assign admin role
+            INSERT INTO user_roles (user_id, role_id) VALUES (admin_user_id, admin_role_id) ON CONFLICT DO NOTHING;
+        END IF;
 
-    -- 2. INSERT ROLES (check by name)
-    -- Admin role
-    SELECT id INTO admin_role_id FROM roles WHERE name = 'Admin' LIMIT 1;
-    IF admin_role_id IS NULL THEN
-        admin_role_id := gen_random_uuid()::text;
-        INSERT INTO roles (id, name, description) 
-        VALUES (admin_role_id, 'Admin', 'Full system administrator with all permissions');
-        roles_added := roles_added + 1;
-        RAISE NOTICE 'Created Admin role with ID: %', admin_role_id;
+        SELECT id INTO staff_user_id FROM users WHERE username = 'staff' OR email = 'staff@dtvisuals.com' LIMIT 1;
+        IF staff_user_id IS NULL THEN
+            staff_user_id := gen_random_uuid()::text;
+            INSERT INTO users (id, username, email, password, forename, surname, display_name, is_active, created_at) 
+            VALUES (staff_user_id, 'staff', 'staff@dtvisuals.com', 'df10c71f317ded80d49fc8ebd89b928fdb6706e3bb45ea330da8a7caa009d98ebc3c57461844955f37b7dbb5651a00c42a0a924e7030550d4eb8bb2b1196878a.4e8dad95ff12fe8b727f303f8ac1a12f', 'Staff', 'Member', 'Staff Member', true, NOW());
+            
+            -- Assign staff role
+            INSERT INTO user_roles (user_id, role_id) VALUES (staff_user_id, staff_role_id) ON CONFLICT DO NOTHING;
+        END IF;
+
+        -- Create test clients
+        SELECT id INTO test_client_id FROM clients WHERE email = 'testclient@example.com' LIMIT 1;
+        IF test_client_id IS NULL THEN
+            test_client_id := gen_random_uuid()::text;
+            INSERT INTO clients (id, name, email, company, phone, notes, is_active, created_by, created_at, updated_at) 
+            VALUES (test_client_id, 'Test Client', 'testclient@example.com', 'Test Company', '555-0123', 'Development test client', true, admin_user_id, NOW(), NOW());
+            
+            -- Create client user account
+            INSERT INTO client_users (id, client_id, username, email, password, is_active, created_at) 
+            VALUES (gen_random_uuid()::text, test_client_id, 'testclient', 'testclient@example.com', '$2b$10$8K1p/a0dHTBS.L90wLAemOuMEDEh.Et6k0L4HkmnJ4/v4DQwE3OFO', true, NOW())
+            ON CONFLICT (email) DO NOTHING;
+        END IF;
+
+        SELECT id INTO test2_client_id FROM clients WHERE email = 'test2@client.com' LIMIT 1;
+        IF test2_client_id IS NULL THEN
+            test2_client_id := gen_random_uuid()::text;
+            INSERT INTO clients (id, name, email, company, phone, notes, is_active, created_by, created_at, updated_at) 
+            VALUES (test2_client_id, 'Test2 Client', 'test2@client.com', 'Another Test Company', '555-0124', 'Another development test client', true, admin_user_id, NOW(), NOW());
+            
+            -- Create client user account
+            INSERT INTO client_users (id, client_id, username, email, password, is_active, created_at) 
+            VALUES (gen_random_uuid()::text, test2_client_id, 'test2', 'test2@client.com', '892f317ed33045523735f967abaf2e2b:03f989540668641d9515b240ade6a25cec613d30307beb471051ce924f2442e69a717c526efaf4facf9b6f230689996ac01e074bf73ac070af8bf6e05abb1eab', true, NOW())
+            ON CONFLICT (email) DO NOTHING;
+        END IF;
+
+        result_text := 'SUCCESS: Development test data populated successfully! Added users, roles, and test clients.';
+        RAISE NOTICE '%', result_text;
+        
     ELSE
-        RAISE NOTICE 'Admin role already exists with ID: %', admin_role_id;
+        result_text := 'INFO: Users table already contains ' || user_count || ' users, skipping population.';
+        RAISE NOTICE '%', result_text;
     END IF;
+    
+    RETURN result_text;
+END;
+$$ LANGUAGE plpgsql;
 
     -- Staff role
     SELECT id INTO staff_role_id FROM roles WHERE name = 'Staff' LIMIT 1;

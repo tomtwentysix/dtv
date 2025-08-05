@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { initializeDatabase, getEnvironmentInfo } from "./init-database.js";
 
 const app = express();
 
@@ -54,6 +55,18 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Initialize database before starting the server
+  try {
+    const envInfo = getEnvironmentInfo();
+    console.log(`🌍 Environment detected: ${envInfo.environment}`);
+    console.log(`💾 Database: ${envInfo.databaseUrl?.substring(0, 50)}...`);
+    
+    await initializeDatabase();
+  } catch (error) {
+    console.error('❌ Failed to initialize database:', error);
+    console.error('Server will continue but some features may not work properly');
+  }
+
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
