@@ -20,6 +20,8 @@ Preferred communication style: Simple, everyday language.
 - **Database Migration**: Seamlessly migrated existing single logo settings to light mode logo for backward compatibility
 - **API Updates**: Updated branding settings endpoints to handle dual logo fields
 - **User Preference Integration**: Maintains user preference for theme-based blank backgrounds while adding logo flexibility
+- **Logo Sizing**: Updated navigation logo height to h-16 (twice the original size) for better visibility
+- **Footer Logo Strategy**: Footer always displays light mode logo for consistent branding across themes
 
 ### Multiplatform Deployment System & Website Settings Fix
 **Date**: January 5, 2025  

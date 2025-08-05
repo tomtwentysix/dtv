@@ -78,7 +78,7 @@ export function Navigation() {
                 <img 
                   src={brandingSettings.logoLightImage.url} 
                   alt={brandingSettings.logoLightImage.title || brandingSettings.companyName || "Logo"}
-                  className="h-8 w-auto mr-3 dark:hidden"
+                  className="h-16 w-auto mr-3 dark:hidden"
                 />
               )}
               {/* Dark mode logo */}
@@ -86,7 +86,7 @@ export function Navigation() {
                 <img 
                   src={brandingSettings.logoDarkImage.url} 
                   alt={brandingSettings.logoDarkImage.title || brandingSettings.companyName || "Logo"}
-                  className="h-8 w-auto mr-3 hidden dark:block"
+                  className="h-16 w-auto mr-3 hidden dark:block"
                 />
               )}
               {/* Fallback: show light logo in dark mode if no dark logo is set */}
@@ -94,7 +94,7 @@ export function Navigation() {
                 <img 
                   src={brandingSettings.logoLightImage.url} 
                   alt={brandingSettings.logoLightImage.title || brandingSettings.companyName || "Logo"}
-                  className="h-8 w-auto mr-3 hidden dark:block"
+                  className="h-16 w-auto mr-3 hidden dark:block"
                 />
               )}
               {brandingSettings?.showCompanyText && (

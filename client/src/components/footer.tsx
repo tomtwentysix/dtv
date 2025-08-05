@@ -20,7 +20,7 @@ export function Footer() {
           {/* Company Info */}
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
-              {/* Show logo if available, otherwise show gradient circle */}
+              {/* Always show light mode logo in footer if available, otherwise show gradient circle */}
               {brandingSettings?.logoLightImage ? (
                 <img 
                   src={brandingSettings.logoLightImage.url}
