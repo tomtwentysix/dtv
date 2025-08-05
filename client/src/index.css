@@ -402,6 +402,14 @@ video:not(.modal-video) {
 /* Modal videos should show full content */
 video.modal-video {
   object-fit: contain !important;
+  /* Maintain aspect ratio */
+  width: auto !important;
+  height: auto !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  /* Center the video */
+  display: block !important;
+  margin: 0 auto !important;
   /* Force normal video rendering without any filters */
   mix-blend-mode: normal !important;
   filter: none !important;

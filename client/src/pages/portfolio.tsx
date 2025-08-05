@@ -312,12 +312,18 @@ export default function Portfolio() {
             </Button>
 
             {/* Video container */}
-            <div className="flex-1 relative">
+            <div className="flex-1 relative flex items-center justify-center bg-black">
               {selectedVideo && (
                 <video
                   ref={modalVideoRef}
                   src={selectedVideo.url}
-                  className="w-full h-full object-contain"
+                  className="modal-video max-w-full max-h-full object-contain"
+                  style={{
+                    width: 'auto',
+                    height: 'auto',
+                    maxWidth: '100%',
+                    maxHeight: '100%'
+                  }}
                   onLoadedMetadata={() => {
                     if (modalVideoRef.current) {
                       setDuration(modalVideoRef.current.duration);
