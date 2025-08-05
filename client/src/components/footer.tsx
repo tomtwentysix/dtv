@@ -20,14 +20,32 @@ export function Footer() {
           {/* Company Info */}
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
-              {/* Always show light mode logo in footer if available, otherwise show gradient circle */}
-              {brandingSettings?.logoLightImage ? (
+              {/* Light mode logo */}
+              {brandingSettings?.logoLightImage && (
                 <img 
                   src={brandingSettings.logoLightImage.url}
                   alt={brandingSettings.logoLightImage.title || brandingSettings.companyName || "Logo"}
-                  className="w-8 h-8 object-contain"
+                  className="w-8 h-8 object-contain dark:hidden"
                 />
-              ) : (
+              )}
+              {/* Dark mode logo */}
+              {brandingSettings?.logoDarkImage && (
+                <img 
+                  src={brandingSettings.logoDarkImage.url}
+                  alt={brandingSettings.logoDarkImage.title || brandingSettings.companyName || "Logo"}
+                  className="w-8 h-8 object-contain hidden dark:block"
+                />
+              )}
+              {/* Fallback: show light logo in dark mode if no dark logo is set */}
+              {brandingSettings?.logoLightImage && !brandingSettings?.logoDarkImage && (
+                <img 
+                  src={brandingSettings.logoLightImage.url}
+                  alt={brandingSettings.logoLightImage.title || brandingSettings.companyName || "Logo"}
+                  className="w-8 h-8 object-contain hidden dark:block"
+                />
+              )}
+              {/* Gradient circle if no logos are available */}
+              {!brandingSettings?.logoLightImage && !brandingSettings?.logoDarkImage && (
                 <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-orange-500 rounded-full" />
               )}
               {/* Show company name if text display is enabled */}
