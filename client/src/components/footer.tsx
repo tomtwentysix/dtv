@@ -20,33 +20,21 @@ export function Footer() {
           {/* Company Info */}
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
-              {/* Light mode logo */}
-              {brandingSettings?.logoLightImage && (
-                <img 
-                  src={brandingSettings.logoLightImage.url}
-                  alt={brandingSettings.logoLightImage.title || brandingSettings.companyName || "Logo"}
-                  className="w-8 h-8 object-contain dark:hidden"
-                />
-              )}
-              {/* Dark mode logo */}
-              {brandingSettings?.logoDarkImage && (
+              {/* Always show dark mode logo if available, otherwise show light mode logo */}
+              {brandingSettings?.logoDarkImage ? (
                 <img 
                   src={brandingSettings.logoDarkImage.url}
                   alt={brandingSettings.logoDarkImage.title || brandingSettings.companyName || "Logo"}
-                  className="w-8 h-8 object-contain hidden dark:block"
+                  className="w-[75px] h-[75px] object-contain"
                 />
-              )}
-              {/* Fallback: show light logo in dark mode if no dark logo is set */}
-              {brandingSettings?.logoLightImage && !brandingSettings?.logoDarkImage && (
+              ) : brandingSettings?.logoLightImage ? (
                 <img 
                   src={brandingSettings.logoLightImage.url}
                   alt={brandingSettings.logoLightImage.title || brandingSettings.companyName || "Logo"}
-                  className="w-8 h-8 object-contain hidden dark:block"
+                  className="w-[75px] h-[75px] object-contain"
                 />
-              )}
-              {/* Gradient circle if no logos are available */}
-              {!brandingSettings?.logoLightImage && !brandingSettings?.logoDarkImage && (
-                <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-orange-500 rounded-full" />
+              ) : (
+                <div className="w-[75px] h-[75px] bg-gradient-to-br from-teal-500 to-orange-500 rounded-full" />
               )}
               {/* Show company name if text display is enabled */}
               {brandingSettings?.showCompanyText && (
@@ -54,8 +42,8 @@ export function Footer() {
                   {brandingSettings?.companyName || "dt.visuals"}
                 </span>
               )}
-              {/* Fallback: show company name if no logo and text is disabled */}
-              {!brandingSettings?.logoLightImage && !brandingSettings?.showCompanyText && (
+              {/* Fallback: show company name if no logos and text is disabled */}
+              {!brandingSettings?.logoDarkImage && !brandingSettings?.logoLightImage && !brandingSettings?.showCompanyText && (
                 <span className="text-xl font-bold">
                   {brandingSettings?.companyName || "dt.visuals"}
                 </span>

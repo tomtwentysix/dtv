@@ -22,7 +22,7 @@ Preferred communication style: Simple, everyday language.
 - **User Preference Integration**: Maintains user preference for theme-based blank backgrounds while adding logo flexibility
 - **Logo Sizing**: Set logo to exact 75x75 pixel dimensions for optimal text readability and balanced visual prominence
 - **Dynamic Navigation**: Navigation height adjusts to min-h-24 with py-3 padding to accommodate larger logos
-- **Footer Logo Strategy**: Footer displays theme-appropriate logos - light mode logo in light theme, dark mode logo in dark theme, with fallback logic
+- **Footer Logo Strategy**: Footer always displays dark mode logo (75x75px) when available, falls back to light mode logo, matching header size
 
 ### Multiplatform Deployment System & Website Settings Fix
 **Date**: January 5, 2025  
