@@ -73,11 +73,28 @@ export function Navigation() {
           {/* Logo */}
           <Link href="/">
             <div className="flex items-center cursor-pointer">
-              {brandingSettings?.logoImage && (
+              {/* Light mode logo */}
+              {brandingSettings?.logoLightImage && (
                 <img 
-                  src={brandingSettings.logoImage.url} 
-                  alt={brandingSettings.logoImage.title || brandingSettings.companyName || "Logo"}
-                  className="h-8 w-auto mr-3"
+                  src={brandingSettings.logoLightImage.url} 
+                  alt={brandingSettings.logoLightImage.title || brandingSettings.companyName || "Logo"}
+                  className="h-8 w-auto mr-3 dark:hidden"
+                />
+              )}
+              {/* Dark mode logo */}
+              {brandingSettings?.logoDarkImage && (
+                <img 
+                  src={brandingSettings.logoDarkImage.url} 
+                  alt={brandingSettings.logoDarkImage.title || brandingSettings.companyName || "Logo"}
+                  className="h-8 w-auto mr-3 hidden dark:block"
+                />
+              )}
+              {/* Fallback: show light logo in dark mode if no dark logo is set */}
+              {brandingSettings?.logoLightImage && !brandingSettings?.logoDarkImage && (
+                <img 
+                  src={brandingSettings.logoLightImage.url} 
+                  alt={brandingSettings.logoLightImage.title || brandingSettings.companyName || "Logo"}
+                  className="h-8 w-auto mr-3 hidden dark:block"
                 />
               )}
               {brandingSettings?.showCompanyText && (
@@ -85,7 +102,7 @@ export function Navigation() {
                   {brandingSettings?.companyName || "dt.visuals"}
                 </div>
               )}
-              {!brandingSettings?.logoImage && !brandingSettings?.showCompanyText && (
+              {!brandingSettings?.logoLightImage && !brandingSettings?.logoDarkImage && !brandingSettings?.showCompanyText && (
                 <div className="text-2xl font-bold nav-text-dynamic">
                   {brandingSettings?.companyName || "dt.visuals"}
                 </div>

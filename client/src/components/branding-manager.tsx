@@ -31,10 +31,12 @@ export function BrandingManager() {
   const [brandingForm, setBrandingForm] = useState({
     companyName: "",
     showCompanyText: true,
-    logoImageId: null as string | null,
+    logoLightImageId: null as string | null,
+    logoDarkImageId: null as string | null,
     faviconImageId: null as string | null,
   });
-  const [logoDialogOpen, setLogoDialogOpen] = useState(false);
+  const [logoLightDialogOpen, setLogoLightDialogOpen] = useState(false);
+  const [logoDarkDialogOpen, setLogoDarkDialogOpen] = useState(false);
   const [faviconDialogOpen, setFaviconDialogOpen] = useState(false);
 
   // Fetch all media for logo/favicon selection
@@ -48,7 +50,8 @@ export function BrandingManager() {
       setBrandingForm({
         companyName: brandingSettings.companyName || "dt.visuals",
         showCompanyText: brandingSettings.showCompanyText ?? true,
-        logoImageId: brandingSettings.logoImageId,
+        logoLightImageId: brandingSettings.logoLightImageId,
+        logoDarkImageId: brandingSettings.logoDarkImageId,
         faviconImageId: brandingSettings.faviconImageId,
       });
     }
@@ -120,32 +123,32 @@ export function BrandingManager() {
         </CardContent>
       </Card>
 
-      {/* Logo Card */}
+      {/* Light Mode Logo Card */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <ImageIcon className="h-5 w-5" />
-            Logo Image
+            Light Mode Logo
           </CardTitle>
           <p className="text-sm text-muted-foreground">
-            Upload and manage your company logo displayed in the navigation
+            Logo displayed when users are in light mode - should work well on light backgrounds
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
-          {brandingForm.logoImageId && getSelectedMedia(brandingForm.logoImageId) ? (
+          {brandingForm.logoLightImageId && getSelectedMedia(brandingForm.logoLightImageId) ? (
             <div className="flex items-center gap-4 p-4 border rounded-lg bg-muted/50">
               <img
-                src={getSelectedMedia(brandingForm.logoImageId)!.url}
-                alt="Company Logo"
+                src={getSelectedMedia(brandingForm.logoLightImageId)!.url}
+                alt="Light Mode Logo"
                 className="w-16 h-16 object-contain rounded"
               />
               <div className="flex-1">
-                <p className="font-medium">{getSelectedMedia(brandingForm.logoImageId)!.title}</p>
-                <p className="text-sm text-muted-foreground">Current logo</p>
+                <p className="font-medium">{getSelectedMedia(brandingForm.logoLightImageId)!.title}</p>
+                <p className="text-sm text-muted-foreground">Current light mode logo</p>
               </div>
               <Button
                 variant="outline"
-                onClick={() => setBrandingForm(prev => ({ ...prev, logoImageId: null }))}
+                onClick={() => setBrandingForm(prev => ({ ...prev, logoLightImageId: null }))}
                 disabled={updateBrandingMutation.isPending}
               >
                 Remove
@@ -154,18 +157,68 @@ export function BrandingManager() {
           ) : (
             <div className="p-8 border-2 border-dashed border-muted-foreground/25 rounded-lg text-center text-muted-foreground">
               <ImageIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
-              <p className="text-lg font-medium mb-1">No logo set</p>
-              <p className="text-sm">Click "Select Logo" to choose an image</p>
+              <p className="text-lg font-medium mb-1">No light mode logo set</p>
+              <p className="text-sm">Click "Select Light Logo" to choose an image</p>
             </div>
           )}
           
           <Button
-            onClick={() => setLogoDialogOpen(true)}
+            onClick={() => setLogoLightDialogOpen(true)}
             disabled={updateBrandingMutation.isPending}
             className="w-full"
           >
             <Plus className="h-4 w-4 mr-2" />
-            Select Logo
+            Select Light Logo
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Dark Mode Logo Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ImageIcon className="h-5 w-5" />
+            Dark Mode Logo
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Logo displayed when users are in dark mode - should work well on dark backgrounds
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {brandingForm.logoDarkImageId && getSelectedMedia(brandingForm.logoDarkImageId) ? (
+            <div className="flex items-center gap-4 p-4 border rounded-lg bg-muted/50">
+              <img
+                src={getSelectedMedia(brandingForm.logoDarkImageId)!.url}
+                alt="Dark Mode Logo"
+                className="w-16 h-16 object-contain rounded"
+              />
+              <div className="flex-1">
+                <p className="font-medium">{getSelectedMedia(brandingForm.logoDarkImageId)!.title}</p>
+                <p className="text-sm text-muted-foreground">Current dark mode logo</p>
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => setBrandingForm(prev => ({ ...prev, logoDarkImageId: null }))}
+                disabled={updateBrandingMutation.isPending}
+              >
+                Remove
+              </Button>
+            </div>
+          ) : (
+            <div className="p-8 border-2 border-dashed border-muted-foreground/25 rounded-lg text-center text-muted-foreground">
+              <ImageIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
+              <p className="text-lg font-medium mb-1">No dark mode logo set</p>
+              <p className="text-sm">Click "Select Dark Logo" to choose an image</p>
+            </div>
+          )}
+          
+          <Button
+            onClick={() => setLogoDarkDialogOpen(true)}
+            disabled={updateBrandingMutation.isPending}
+            className="w-full"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Select Dark Logo
           </Button>
         </CardContent>
       </Card>
@@ -240,11 +293,11 @@ export function BrandingManager() {
         )}
       </Button>
 
-      {/* Logo Selection Dialog */}
-      <Dialog open={logoDialogOpen} onOpenChange={setLogoDialogOpen}>
+      {/* Light Logo Selection Dialog */}
+      <Dialog open={logoLightDialogOpen} onOpenChange={setLogoLightDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle>Select Logo Image</DialogTitle>
+            <DialogTitle>Select Light Mode Logo</DialogTitle>
           </DialogHeader>
           <div className="flex-1 overflow-hidden">
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[60vh] overflow-y-auto p-1">
@@ -253,8 +306,40 @@ export function BrandingManager() {
                   key={media.id}
                   className="relative group cursor-pointer rounded-lg overflow-hidden border-2 border-transparent hover:border-primary transition-colors"
                   onClick={() => {
-                    setBrandingForm(prev => ({ ...prev, logoImageId: media.id }));
-                    setLogoDialogOpen(false);
+                    setBrandingForm(prev => ({ ...prev, logoLightImageId: media.id }));
+                    setLogoLightDialogOpen(false);
+                  }}
+                >
+                  <img
+                    src={media.url}
+                    alt={media.title}
+                    className="w-full h-32 object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <p className="text-white text-sm font-medium text-center px-2">{media.title}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dark Logo Selection Dialog */}
+      <Dialog open={logoDarkDialogOpen} onOpenChange={setLogoDarkDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Select Dark Mode Logo</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-hidden">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[60vh] overflow-y-auto p-1">
+              {allMedia.filter(media => media.type === 'image').map((media) => (
+                <div
+                  key={media.id}
+                  className="relative group cursor-pointer rounded-lg overflow-hidden border-2 border-transparent hover:border-primary transition-colors"
+                  onClick={() => {
+                    setBrandingForm(prev => ({ ...prev, logoDarkImageId: media.id }));
+                    setLogoDarkDialogOpen(false);
                   }}
                 >
                   <img

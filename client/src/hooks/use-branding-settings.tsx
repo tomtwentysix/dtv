@@ -5,9 +5,15 @@ export interface BrandingSettings {
   id?: string;
   companyName: string;
   showCompanyText: boolean;
-  logoImageId: string | null;
+  logoLightImageId: string | null;
+  logoDarkImageId: string | null;
   faviconImageId: string | null;
-  logoImage?: {
+  logoLightImage?: {
+    id: string;
+    url: string;
+    title: string;
+  } | null;
+  logoDarkImage?: {
     id: string;
     url: string;
     title: string;

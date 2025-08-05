@@ -8,6 +8,19 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (January 2025)
 
+### Dual Light/Dark Mode Logo System 
+**Date**: January 5, 2025  
+**Description**: Extended branding system to support separate logos for light and dark themes, enabling optimal logo visibility across all themes.
+
+**Key Changes**:
+- **Dual Logo Support**: Added separate logoLightImageId and logoDarkImageId columns to replace single logoImageId
+- **Theme-Aware Navigation**: Updated navigation component to automatically switch between light and dark logos based on current theme
+- **Smart Fallback Logic**: Light logo displays in dark mode if no dark logo is set, ensuring consistent branding
+- **Admin Interface Enhancement**: Extended branding management panel with separate selection dialogs for light and dark mode logos
+- **Database Migration**: Seamlessly migrated existing single logo settings to light mode logo for backward compatibility
+- **API Updates**: Updated branding settings endpoints to handle dual logo fields
+- **User Preference Integration**: Maintains user preference for theme-based blank backgrounds while adding logo flexibility
+
 ### Multiplatform Deployment System & Website Settings Fix
 **Date**: January 5, 2025  
 **Description**: Implemented robust multiplatform deployment that automatically detects and configures for both Replit Neon and Docker PostgreSQL environments, plus fixed website customization functionality.
