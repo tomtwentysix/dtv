@@ -69,7 +69,7 @@ export function Navigation() {
   return (
     <nav className="fixed top-0 w-full z-50 glass-nav bg-white/10 dark:bg-black/30 border-b border-white/20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between min-h-20 py-2">
           {/* Logo */}
           <Link href="/">
             <div className="flex items-center cursor-pointer">
@@ -78,7 +78,7 @@ export function Navigation() {
                 <img 
                   src={brandingSettings.logoLightImage.url} 
                   alt={brandingSettings.logoLightImage.title || brandingSettings.companyName || "Logo"}
-                  className="h-16 w-auto mr-3 dark:hidden"
+                  className="max-h-16 w-auto mr-3 dark:hidden py-1"
                 />
               )}
               {/* Dark mode logo */}
@@ -86,7 +86,7 @@ export function Navigation() {
                 <img 
                   src={brandingSettings.logoDarkImage.url} 
                   alt={brandingSettings.logoDarkImage.title || brandingSettings.companyName || "Logo"}
-                  className="h-16 w-auto mr-3 hidden dark:block"
+                  className="max-h-16 w-auto mr-3 hidden dark:block py-1"
                 />
               )}
               {/* Fallback: show light logo in dark mode if no dark logo is set */}
@@ -94,7 +94,7 @@ export function Navigation() {
                 <img 
                   src={brandingSettings.logoLightImage.url} 
                   alt={brandingSettings.logoLightImage.title || brandingSettings.companyName || "Logo"}
-                  className="h-16 w-auto mr-3 hidden dark:block"
+                  className="max-h-16 w-auto mr-3 hidden dark:block py-1"
                 />
               )}
               {brandingSettings?.showCompanyText && (
