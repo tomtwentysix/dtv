@@ -1,5 +1,6 @@
+
 -- Development Database Initialization Script
--- This script sets up the development database with current production data
+-- This script sets up the development database with comprehensive test data
 
 -- Enable necessary PostgreSQL extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -12,13 +13,14 @@ SET timezone = 'UTC';
 ALTER DATABASE dt_visuals_dev SET log_statement = 'all';
 ALTER DATABASE dt_visuals_dev SET log_duration = on;
 
--- Wait for Drizzle to create tables, then populate with current data
+-- Wait for Drizzle to create tables, then populate with comprehensive data
 -- This function will be called after tables are created
 CREATE OR REPLACE FUNCTION populate_dev_test_data() RETURNS text AS $$
 DECLARE
     result_text text := '';
     admin_user_id text;
     staff_user_id text;
+    editor_user_id text;
     admin_role_id text;
     staff_role_id text;
     client_role_id text;
@@ -26,11 +28,22 @@ DECLARE
     marketing_role_id text;
     test_client_id text;
     test2_client_id text;
+    test_client_user_id text;
+    test2_client_user_id text;
+    media_video_id text;
+    media_photo_id text;
+    media_bts_id text;
+    media_portfolio_id text;
+    media_concept_id text;
     users_added integer := 0;
     roles_added integer := 0;
     permissions_added integer := 0;
     clients_added integer := 0;
     client_users_added integer := 0;
+    media_added integer := 0;
+    website_settings_added integer := 0;
+    feedback_added integer := 0;
+    timeline_notes_added integer := 0;
 BEGIN
     -- Check if users table exists
     IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'users') THEN
@@ -39,7 +52,7 @@ BEGIN
         RETURN result_text;
     END IF;
 
-    result_text := 'Checking and populating development database with test data...';
+    result_text := 'Checking and populating development database with comprehensive test data...';
     RAISE NOTICE '%', result_text;
     
     -- 1. INSERT USERS (check by username/email)
@@ -60,11 +73,23 @@ BEGIN
     IF staff_user_id IS NULL THEN
         staff_user_id := gen_random_uuid()::text;
         INSERT INTO users (id, username, email, password, forename, surname, display_name, is_active, created_at) 
-        VALUES (staff_user_id, 'staff', 'staff@dtvisuals.com', '2ad353c46393615178d107953275709b50e9e625331870cc4b48281f23845a4ea36e35c84293acb2aaa6e5273499eab81251d05123b0183ff0a73b389874d5bd.ae4d67d25ca864b385d083e2b5235d54', 'Staff', 'Member', 'Staff Member', true, NOW());
+        VALUES (staff_user_id, 'staff', 'staff@dtvisuals.com', 'df10c71f317ded80d49fc8ebd89b928fdb6706e3bb45ea330da8a7caa009d98ebc3c57461844955f37b7dbb5651a00c42a0a924e7030550d4eb8bb2b1196878a.4e8dad95ff12fe8b727f303f8ac1a12f', 'Staff', 'Member', 'Staff Member', true, NOW());
         users_added := users_added + 1;
         RAISE NOTICE 'Created staff user with ID: %', staff_user_id;
     ELSE
         RAISE NOTICE 'Staff user already exists with ID: %', staff_user_id;
+    END IF;
+
+    -- Editor user
+    SELECT id INTO editor_user_id FROM users WHERE username = 'editor' OR email = 'editor@dtvisuals.com' LIMIT 1;
+    IF editor_user_id IS NULL THEN
+        editor_user_id := gen_random_uuid()::text;
+        INSERT INTO users (id, username, email, password, forename, surname, display_name, is_active, created_at) 
+        VALUES (editor_user_id, 'editor', 'editor@dtvisuals.com', 'df10c71f317ded80d49fc8ebd89b928fdb6706e3bb45ea330da8a7caa009d98ebc3c57461844955f37b7dbb5651a00c42a0a924e7030550d4eb8bb2b1196878a.4e8dad95ff12fe8b727f303f8ac1a12f', 'Video', 'Editor', 'Video Editor', true, NOW());
+        users_added := users_added + 1;
+        RAISE NOTICE 'Created editor user with ID: %', editor_user_id;
+    ELSE
+        RAISE NOTICE 'Editor user already exists with ID: %', editor_user_id;
     END IF;
 
     -- 2. INSERT ROLES (check by name)
@@ -72,7 +97,8 @@ BEGIN
     SELECT id INTO admin_role_id FROM roles WHERE name = 'Admin' LIMIT 1;
     IF admin_role_id IS NULL THEN
         admin_role_id := gen_random_uuid()::text;
-        INSERT INTO roles (id, name, description) VALUES (admin_role_id, 'Admin', 'Full access to all admin features');
+        INSERT INTO roles (id, name, description) 
+        VALUES (admin_role_id, 'Admin', 'Full system administrator with all permissions');
         roles_added := roles_added + 1;
         RAISE NOTICE 'Created Admin role with ID: %', admin_role_id;
     ELSE
@@ -83,7 +109,8 @@ BEGIN
     SELECT id INTO staff_role_id FROM roles WHERE name = 'Staff' LIMIT 1;
     IF staff_role_id IS NULL THEN
         staff_role_id := gen_random_uuid()::text;
-        INSERT INTO roles (id, name, description) VALUES (staff_role_id, 'Staff', 'Limited access based on assigned permissions');
+        INSERT INTO roles (id, name, description) 
+        VALUES (staff_role_id, 'Staff', 'Staff member with media and client management permissions');
         roles_added := roles_added + 1;
         RAISE NOTICE 'Created Staff role with ID: %', staff_role_id;
     ELSE
@@ -94,7 +121,8 @@ BEGIN
     SELECT id INTO client_role_id FROM roles WHERE name = 'Client' LIMIT 1;
     IF client_role_id IS NULL THEN
         client_role_id := gen_random_uuid()::text;
-        INSERT INTO roles (id, name, description) VALUES (client_role_id, 'Client', 'Login to view only their assigned media');
+        INSERT INTO roles (id, name, description) 
+        VALUES (client_role_id, 'Client', 'Client with view-only permissions for assigned media');
         roles_added := roles_added + 1;
         RAISE NOTICE 'Created Client role with ID: %', client_role_id;
     ELSE
@@ -105,7 +133,8 @@ BEGIN
     SELECT id INTO editor_role_id FROM roles WHERE name = 'Editor' LIMIT 1;
     IF editor_role_id IS NULL THEN
         editor_role_id := gen_random_uuid()::text;
-        INSERT INTO roles (id, name, description) VALUES (editor_role_id, 'Editor', 'Content editing permissions');
+        INSERT INTO roles (id, name, description) 
+        VALUES (editor_role_id, 'Editor', 'Video editor with media upload and editing permissions');
         roles_added := roles_added + 1;
         RAISE NOTICE 'Created Editor role with ID: %', editor_role_id;
     ELSE
@@ -116,200 +145,311 @@ BEGIN
     SELECT id INTO marketing_role_id FROM roles WHERE name = 'Marketing' LIMIT 1;
     IF marketing_role_id IS NULL THEN
         marketing_role_id := gen_random_uuid()::text;
-        INSERT INTO roles (id, name, description) VALUES (marketing_role_id, 'Marketing', 'Marketing team permissions');
+        INSERT INTO roles (id, name, description) 
+        VALUES (marketing_role_id, 'Marketing', 'Marketing team with website and portfolio management permissions');
         roles_added := roles_added + 1;
         RAISE NOTICE 'Created Marketing role with ID: %', marketing_role_id;
     ELSE
         RAISE NOTICE 'Marketing role already exists with ID: %', marketing_role_id;
     END IF;
 
-    -- 3. INSERT PERMISSIONS (check by name, use ON CONFLICT for safety)
-    INSERT INTO permissions (id, name, description) VALUES 
-    (gen_random_uuid()::text, 'upload:media', 'Can upload new media'),
-    (gen_random_uuid()::text, 'assign:media', 'Can assign media to clients'),
-    (gen_random_uuid()::text, 'delete:media', 'Can delete media'),
-    (gen_random_uuid()::text, 'view:clients', 'Can view client profiles'),
-    (gen_random_uuid()::text, 'edit:users', 'Can create/edit staff users'),
-    (gen_random_uuid()::text, 'edit:roles', 'Can create/edit roles and permissions'),
-    (gen_random_uuid()::text, 'view:analytics', 'Can view analytics and stats'),
-    (gen_random_uuid()::text, 'manage:system', 'Full system management access'),
-    (gen_random_uuid()::text, 'edit:website', 'Manage website customization settings'),
-    (gen_random_uuid()::text, 'edit:clients', 'Manage client accounts and information'),
-    (gen_random_uuid()::text, 'view:users', 'View system users'),
-    (gen_random_uuid()::text, 'view:media', 'Can view media in admin panel')
-    ON CONFLICT (name) DO NOTHING;
+    -- 3. INSERT PERMISSIONS (check by name)
+    INSERT INTO permissions (id, name, description) 
+    SELECT gen_random_uuid()::text, 'upload:media', 'Upload media files' 
+    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE name = 'upload:media');
     
+    INSERT INTO permissions (id, name, description) 
+    SELECT gen_random_uuid()::text, 'edit:media', 'Edit media metadata and assignments' 
+    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE name = 'edit:media');
+    
+    INSERT INTO permissions (id, name, description) 
+    SELECT gen_random_uuid()::text, 'delete:media', 'Delete media files' 
+    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE name = 'delete:media');
+    
+    INSERT INTO permissions (id, name, description) 
+    SELECT gen_random_uuid()::text, 'assign:media', 'Assign media to clients' 
+    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE name = 'assign:media');
+    
+    INSERT INTO permissions (id, name, description) 
+    SELECT gen_random_uuid()::text, 'view:media', 'View media files and metadata' 
+    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE name = 'view:media');
+    
+    INSERT INTO permissions (id, name, description) 
+    SELECT gen_random_uuid()::text, 'view:clients', 'View client information' 
+    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE name = 'view:clients');
+    
+    INSERT INTO permissions (id, name, description) 
+    SELECT gen_random_uuid()::text, 'edit:clients', 'Edit client information' 
+    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE name = 'edit:clients');
+    
+    INSERT INTO permissions (id, name, description) 
+    SELECT gen_random_uuid()::text, 'edit:users', 'Manage user accounts and permissions' 
+    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE name = 'edit:users');
+    
+    INSERT INTO permissions (id, name, description) 
+    SELECT gen_random_uuid()::text, 'edit:roles', 'Manage roles and permissions' 
+    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE name = 'edit:roles');
+    
+    INSERT INTO permissions (id, name, description) 
+    SELECT gen_random_uuid()::text, 'edit:website', 'Manage website settings and customization' 
+    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE name = 'edit:website');
+    
+    INSERT INTO permissions (id, name, description) 
+    SELECT gen_random_uuid()::text, 'view:analytics', 'View system analytics and reports' 
+    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE name = 'view:analytics');
+
+    INSERT INTO permissions (id, name, description) 
+    SELECT gen_random_uuid()::text, 'manage:feedback', 'Manage client feedback and timeline notes' 
+    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE name = 'manage:feedback');
+
     GET DIAGNOSTICS permissions_added = ROW_COUNT;
-    RAISE NOTICE 'Added % new permissions', permissions_added;
+    RAISE NOTICE 'Added % permissions', permissions_added;
 
-    -- 4. ASSIGN USER ROLES (check if assignment exists)
-    -- Admin user -> Admin role
-    IF NOT EXISTS (SELECT 1 FROM user_roles WHERE user_id = admin_user_id AND role_id = admin_role_id) THEN
-        INSERT INTO user_roles (user_id, role_id) VALUES (admin_user_id, admin_role_id);
-        RAISE NOTICE 'Assigned Admin role to admin user';
-    END IF;
+    -- 4. INSERT USER ROLES (check if relationship exists)
+    -- Admin user gets admin role
+    INSERT INTO user_roles (user_id, role_id) 
+    SELECT admin_user_id, admin_role_id 
+    WHERE NOT EXISTS (SELECT 1 FROM user_roles WHERE user_id = admin_user_id AND role_id = admin_role_id);
 
-    -- Staff user -> Staff role
-    IF NOT EXISTS (SELECT 1 FROM user_roles WHERE user_id = staff_user_id AND role_id = staff_role_id) THEN
-        INSERT INTO user_roles (user_id, role_id) VALUES (staff_user_id, staff_role_id);
-        RAISE NOTICE 'Assigned Staff role to staff user';
-    END IF;
+    -- Staff user gets staff role
+    INSERT INTO user_roles (user_id, role_id) 
+    SELECT staff_user_id, staff_role_id 
+    WHERE NOT EXISTS (SELECT 1 FROM user_roles WHERE user_id = staff_user_id AND role_id = staff_role_id);
 
-    -- 5. ASSIGN ROLE PERMISSIONS (check if assignment exists)
-    -- Admin gets all permissions
-    INSERT INTO role_permissions (role_id, permission_id)
-    SELECT admin_role_id, p.id FROM permissions p
-    WHERE NOT EXISTS (
-        SELECT 1 FROM role_permissions rp 
-        WHERE rp.role_id = admin_role_id AND rp.permission_id = p.id
-    );
+    -- Editor user gets editor role
+    INSERT INTO user_roles (user_id, role_id) 
+    SELECT editor_user_id, editor_role_id 
+    WHERE NOT EXISTS (SELECT 1 FROM user_roles WHERE user_id = editor_user_id AND role_id = editor_role_id);
 
-    -- Staff gets selected permissions
-    INSERT INTO role_permissions (role_id, permission_id)
-    SELECT staff_role_id, p.id FROM permissions p
-    WHERE p.name IN ('upload:media', 'assign:media', 'view:clients', 'edit:clients', 'view:media')
-    AND NOT EXISTS (
-        SELECT 1 FROM role_permissions rp 
-        WHERE rp.role_id = staff_role_id AND rp.permission_id = p.id
-    );
+    RAISE NOTICE 'Assigned roles to users';
+
+    -- 5. INSERT ROLE PERMISSIONS (check if relationship exists)
+    -- Admin role gets all permissions
+    INSERT INTO role_permissions (role_id, permission_id) 
+    SELECT admin_role_id, p.id FROM permissions p 
+    WHERE NOT EXISTS (SELECT 1 FROM role_permissions WHERE role_id = admin_role_id AND permission_id = p.id);
+
+    -- Staff role permissions
+    INSERT INTO role_permissions (role_id, permission_id) 
+    SELECT staff_role_id, p.id FROM permissions p WHERE p.name IN (
+        'upload:media', 'edit:media', 'assign:media', 'view:media', 'view:clients', 'edit:clients', 'manage:feedback'
+    ) AND NOT EXISTS (SELECT 1 FROM role_permissions WHERE role_id = staff_role_id AND permission_id = p.id);
+
+    -- Editor role permissions
+    INSERT INTO role_permissions (role_id, permission_id) 
+    SELECT editor_role_id, p.id FROM permissions p WHERE p.name IN (
+        'upload:media', 'edit:media', 'view:media', 'view:clients'
+    ) AND NOT EXISTS (SELECT 1 FROM role_permissions WHERE role_id = editor_role_id AND permission_id = p.id);
+
+    -- Marketing role permissions
+    INSERT INTO role_permissions (role_id, permission_id) 
+    SELECT marketing_role_id, p.id FROM permissions p WHERE p.name IN (
+        'view:media', 'edit:website', 'view:analytics', 'view:clients'
+    ) AND NOT EXISTS (SELECT 1 FROM role_permissions WHERE role_id = marketing_role_id AND permission_id = p.id);
+
+    -- Client role permissions
+    INSERT INTO role_permissions (role_id, permission_id) 
+    SELECT client_role_id, p.id FROM permissions p WHERE p.name IN ('view:media') 
+    AND NOT EXISTS (SELECT 1 FROM role_permissions WHERE role_id = client_role_id AND permission_id = p.id);
 
     RAISE NOTICE 'Assigned permissions to roles';
 
-    -- 6. INSERT CLIENTS (check by email)
-    -- Test Client
-    SELECT id INTO test_client_id FROM clients WHERE email = 'client@example.com' LIMIT 1;
+    -- 6. INSERT CLIENTS (check by name and email)
+    SELECT id INTO test_client_id FROM clients WHERE name = 'Acme Corporation' OR email = 'contact@acme.com' LIMIT 1;
     IF test_client_id IS NULL THEN
         test_client_id := gen_random_uuid()::text;
         INSERT INTO clients (id, name, email, company, phone, notes, is_active, created_by, created_at, updated_at) 
-        VALUES (test_client_id, 'Test Client', 'client@example.com', 'Test Client Company', '+1-555-0123', 'Legacy client migrated from old system', true, admin_user_id, NOW(), NOW());
+        VALUES (test_client_id, 'Acme Corporation', 'contact@acme.com', 'Acme Corporation', '+1-555-0123', 'Major corporate client focused on brand development and corporate communications.', true, admin_user_id, NOW(), NOW());
         clients_added := clients_added + 1;
-        RAISE NOTICE 'Created Test Client with ID: %', test_client_id;
+        RAISE NOTICE 'Created Acme Corporation client with ID: %', test_client_id;
     ELSE
-        RAISE NOTICE 'Test Client already exists with ID: %', test_client_id;
+        RAISE NOTICE 'Acme Corporation client already exists with ID: %', test_client_id;
     END IF;
 
-    -- Test2 Client
-    SELECT id INTO test2_client_id FROM clients WHERE email = 'test2@client.com' LIMIT 1;
+    SELECT id INTO test2_client_id FROM clients WHERE name = 'Creative Studios' OR email = 'hello@creativestudios.com' LIMIT 1;
     IF test2_client_id IS NULL THEN
         test2_client_id := gen_random_uuid()::text;
         INSERT INTO clients (id, name, email, company, phone, notes, is_active, created_by, created_at, updated_at) 
-        VALUES (test2_client_id, 'test2', 'test2@client.com', '', '', '', true, admin_user_id, NOW(), NOW());
+        VALUES (test2_client_id, 'Creative Studios', 'hello@creativestudios.com', 'Creative Studios LLC', '+1-555-0456', 'Creative agency specializing in artistic and experimental video content.', true, staff_user_id, NOW(), NOW());
         clients_added := clients_added + 1;
-        RAISE NOTICE 'Created test2 client with ID: %', test2_client_id;
+        RAISE NOTICE 'Created Creative Studios client with ID: %', test2_client_id;
     ELSE
-        RAISE NOTICE 'test2 client already exists with ID: %', test2_client_id;
+        RAISE NOTICE 'Creative Studios client already exists with ID: %', test2_client_id;
     END IF;
 
-    -- 7. INSERT CLIENT USERS (check by email/username)
-    -- Test client user
-    IF NOT EXISTS (SELECT 1 FROM client_users WHERE email = 'testclient@example.com' OR username = 'testclient') THEN
-        INSERT INTO client_users (id, client_id, username, email, password, is_active, created_at, last_login_at) 
-        VALUES (gen_random_uuid()::text, test_client_id, 'testclient', 'testclient@example.com', '$2b$10$8K1p/a0dHTBS.L90wLAemOuMEDEh.Et6k0L4HkmnJ4/v4DQwE3OFO', true, NOW(), NULL);
+    -- 7. INSERT CLIENT USERS (check by username/email)
+    SELECT id INTO test_client_user_id FROM client_users WHERE username = 'acme_client' OR email = 'client@acme.com' LIMIT 1;
+    IF test_client_user_id IS NULL THEN
+        test_client_user_id := gen_random_uuid()::text;
+        INSERT INTO client_users (id, client_id, username, email, password, is_active, created_at) 
+        VALUES (test_client_user_id, test_client_id, 'acme_client', 'client@acme.com', 'df10c71f317ded80d49fc8ebd89b928fdb6706e3bb45ea330da8a7caa009d98ebc3c57461844955f37b7dbb5651a00c42a0a924e7030550d4eb8bb2b1196878a.4e8dad95ff12fe8b727f303f8ac1a12f', true, NOW());
         client_users_added := client_users_added + 1;
-        RAISE NOTICE 'Created testclient user';
+        RAISE NOTICE 'Created Acme client user with ID: %', test_client_user_id;
     ELSE
-        RAISE NOTICE 'testclient user already exists';
+        RAISE NOTICE 'Acme client user already exists with ID: %', test_client_user_id;
     END IF;
 
-    -- Test2 client user
-    IF NOT EXISTS (SELECT 1 FROM client_users WHERE email = 'test2@client.com' OR username = 'test2') THEN
-        INSERT INTO client_users (id, client_id, username, email, password, is_active, created_at, last_login_at) 
-        VALUES (gen_random_uuid()::text, test2_client_id, 'test2', 'test2@client.com', '892f317ed33045523735f967abaf2e2b:03f989540668641d9515b240ade6a25cec613d30307beb471051ce924f2442e69a717c526efaf4facf9b6f230689996ac01e074bf73ac070af8bf6e05abb1eab', true, NOW(), NOW());
+    SELECT id INTO test2_client_user_id FROM client_users WHERE username = 'creative_client' OR email = 'client@creativestudios.com' LIMIT 1;
+    IF test2_client_user_id IS NULL THEN
+        test2_client_user_id := gen_random_uuid()::text;
+        INSERT INTO client_users (id, client_id, username, email, password, is_active, created_at) 
+        VALUES (test2_client_user_id, test2_client_id, 'creative_client', 'client@creativestudios.com', 'df10c71f317ded80d49fc8ebd89b928fdb6706e3bb45ea330da8a7caa009d98ebc3c57461844955f37b7dbb5651a00c42a0a924e7030550d4eb8bb2b1196878a.4e8dad95ff12fe8b727f303f8ac1a12f', true, NOW());
         client_users_added := client_users_added + 1;
-        RAISE NOTICE 'Created test2 client user';
+        RAISE NOTICE 'Created Creative Studios client user with ID: %', test2_client_user_id;
     ELSE
-        RAISE NOTICE 'test2 client user already exists';
+        RAISE NOTICE 'Creative Studios client user already exists with ID: %', test2_client_user_id;
     END IF;
+
+    -- 8. INSERT MEDIA (check by title and filename)
+    SELECT id INTO media_video_id FROM media WHERE title = 'Corporate Brand Video' OR filename = 'corporate_brand_2024.mp4' LIMIT 1;
+    IF media_video_id IS NULL THEN
+        media_video_id := gen_random_uuid()::text;
+        INSERT INTO media (id, title, type, url, poster_url, filename, file_size, mime_type, is_featured, show_in_portfolio, tags, project_stage, notes, client_id, uploaded_by, created_at) 
+        VALUES (media_video_id, 'Corporate Brand Video', 'video', '/uploads/corporate_brand_2024.mp4', '/uploads/corporate_brand_2024_poster.jpg', 'corporate_brand_2024.mp4', 52428800, 'video/mp4', true, true, ARRAY['corporate', 'branding', 'professional'], 'completed', 'High-end corporate brand video showcasing company values and mission.', test_client_id, admin_user_id, NOW());
+        media_added := media_added + 1;
+        RAISE NOTICE 'Created Corporate Brand Video with ID: %', media_video_id;
+    ELSE
+        RAISE NOTICE 'Corporate Brand Video already exists with ID: %', media_video_id;
+    END IF;
+
+    SELECT id INTO media_photo_id FROM media WHERE title = 'Product Photography Collection' OR filename = 'product_photos_2024.jpg' LIMIT 1;
+    IF media_photo_id IS NULL THEN
+        media_photo_id := gen_random_uuid()::text;
+        INSERT INTO media (id, title, type, url, poster_url, filename, file_size, mime_type, is_featured, show_in_portfolio, tags, project_stage, notes, client_id, uploaded_by, created_at) 
+        VALUES (media_photo_id, 'Product Photography Collection', 'image', '/uploads/product_photos_2024.jpg', NULL, 'product_photos_2024.jpg', 8388608, 'image/jpeg', true, true, ARRAY['product', 'photography', 'commercial'], 'delivered', 'Professional product photography for e-commerce and marketing materials.', test_client_id, staff_user_id, NOW());
+        media_added := media_added + 1;
+        RAISE NOTICE 'Created Product Photography Collection with ID: %', media_photo_id;
+    ELSE
+        RAISE NOTICE 'Product Photography Collection already exists with ID: %', media_photo_id;
+    END IF;
+
+    SELECT id INTO media_bts_id FROM media WHERE title = 'Behind the Scenes - Creative Project' OR filename = 'bts_creative_2024.mp4' LIMIT 1;
+    IF media_bts_id IS NULL THEN
+        media_bts_id := gen_random_uuid()::text;
+        INSERT INTO media (id, title, type, url, poster_url, filename, file_size, mime_type, is_featured, show_in_portfolio, tags, project_stage, notes, client_id, uploaded_by, created_at) 
+        VALUES (media_bts_id, 'Behind the Scenes - Creative Project', 'video', '/uploads/bts_creative_2024.mp4', '/uploads/bts_creative_2024_poster.jpg', 'bts_creative_2024.mp4', 31457280, 'video/mp4', false, false, ARRAY['behind-the-scenes', 'creative', 'internal'], 'post-production', 'Behind the scenes footage from creative studio project.', test2_client_id, editor_user_id, NOW());
+        media_added := media_added + 1;
+        RAISE NOTICE 'Created Behind the Scenes video with ID: %', media_bts_id;
+    ELSE
+        RAISE NOTICE 'Behind the Scenes video already exists with ID: %', media_bts_id;
+    END IF;
+
+    SELECT id INTO media_portfolio_id FROM media WHERE title = 'Portfolio Showcase Reel' OR filename = 'portfolio_reel_2024.mp4' LIMIT 1;
+    IF media_portfolio_id IS NULL THEN
+        media_portfolio_id := gen_random_uuid()::text;
+        INSERT INTO media (id, title, type, url, poster_url, filename, file_size, mime_type, is_featured, show_in_portfolio, tags, project_stage, notes, client_id, uploaded_by, created_at) 
+        VALUES (media_portfolio_id, 'Portfolio Showcase Reel', 'video', '/uploads/portfolio_reel_2024.mp4', '/uploads/portfolio_reel_2024_poster.jpg', 'portfolio_reel_2024.mp4', 73728000, 'video/mp4', true, true, ARRAY['portfolio', 'showcase', 'demo'], 'completed', 'Company portfolio showcase reel featuring best work from 2024.', NULL, admin_user_id, NOW());
+        media_added := media_added + 1;
+        RAISE NOTICE 'Created Portfolio Showcase Reel with ID: %', media_portfolio_id;
+    ELSE
+        RAISE NOTICE 'Portfolio Showcase Reel already exists with ID: %', media_portfolio_id;
+    END IF;
+
+    SELECT id INTO media_concept_id FROM media WHERE title = 'Concept Art Collection' OR filename = 'concept_art_2024.jpg' LIMIT 1;
+    IF media_concept_id IS NULL THEN
+        media_concept_id := gen_random_uuid()::text;
+        INSERT INTO media (id, title, type, url, poster_url, filename, file_size, mime_type, is_featured, show_in_portfolio, tags, project_stage, notes, client_id, uploaded_by, created_at) 
+        VALUES (media_concept_id, 'Concept Art Collection', 'image', '/uploads/concept_art_2024.jpg', NULL, 'concept_art_2024.jpg', 12582912, 'image/jpeg', false, true, ARRAY['concept', 'art', 'creative'], 'concept', 'Initial concept art and design mockups for upcoming project.', test2_client_id, editor_user_id, NOW());
+        media_added := media_added + 1;
+        RAISE NOTICE 'Created Concept Art Collection with ID: %', media_concept_id;
+    ELSE
+        RAISE NOTICE 'Concept Art Collection already exists with ID: %', media_concept_id;
+    END IF;
+
+    -- 9. INSERT MEDIA_CLIENTS relationships (check if relationship exists)
+    INSERT INTO media_clients (id, media_id, client_id) 
+    SELECT gen_random_uuid()::text, media_video_id, test_client_id 
+    WHERE NOT EXISTS (SELECT 1 FROM media_clients WHERE media_id = media_video_id AND client_id = test_client_id);
+
+    INSERT INTO media_clients (id, media_id, client_id) 
+    SELECT gen_random_uuid()::text, media_photo_id, test_client_id 
+    WHERE NOT EXISTS (SELECT 1 FROM media_clients WHERE media_id = media_photo_id AND client_id = test_client_id);
+
+    INSERT INTO media_clients (id, media_id, client_id) 
+    SELECT gen_random_uuid()::text, media_bts_id, test2_client_id 
+    WHERE NOT EXISTS (SELECT 1 FROM media_clients WHERE media_id = media_bts_id AND client_id = test2_client_id);
+
+    INSERT INTO media_clients (id, media_id, client_id) 
+    SELECT gen_random_uuid()::text, media_concept_id, test2_client_id 
+    WHERE NOT EXISTS (SELECT 1 FROM media_clients WHERE media_id = media_concept_id AND client_id = test2_client_id);
+
+    RAISE NOTICE 'Created media-client relationships';
+
+    -- 10. INSERT WEBSITE_SETTINGS (check by section)
+    INSERT INTO website_settings (id, section, background_image_id, background_video_id, contact_email, contact_phone, contact_address, updated_by, updated_at) 
+    SELECT gen_random_uuid()::text, 'hero', NULL, media_portfolio_id, NULL, NULL, NULL, admin_user_id, NOW() 
+    WHERE NOT EXISTS (SELECT 1 FROM website_settings WHERE section = 'hero');
+
+    INSERT INTO website_settings (id, section, background_image_id, background_video_id, contact_email, contact_phone, contact_address, updated_by, updated_at) 
+    SELECT gen_random_uuid()::text, 'featured_work', media_photo_id, NULL, NULL, NULL, NULL, admin_user_id, NOW() 
+    WHERE NOT EXISTS (SELECT 1 FROM website_settings WHERE section = 'featured_work');
+
+    INSERT INTO website_settings (id, section, background_image_id, background_video_id, contact_email, contact_phone, contact_address, updated_by, updated_at) 
+    SELECT gen_random_uuid()::text, 'contact_info', NULL, NULL, 'hello@dtvisuals.com', '+1-555-DT-VISUAL', '123 Creative Street, Studio City, CA 90210', admin_user_id, NOW() 
+    WHERE NOT EXISTS (SELECT 1 FROM website_settings WHERE section = 'contact_info');
+
+    INSERT INTO website_settings (id, section, background_image_id, background_video_id, contact_email, contact_phone, contact_address, updated_by, updated_at) 
+    SELECT gen_random_uuid()::text, 'portfolio_header', NULL, media_video_id, NULL, NULL, NULL, admin_user_id, NOW() 
+    WHERE NOT EXISTS (SELECT 1 FROM website_settings WHERE section = 'portfolio_header');
+
+    INSERT INTO website_settings (id, section, background_image_id, background_video_id, contact_email, contact_phone, contact_address, updated_by, updated_at) 
+    SELECT gen_random_uuid()::text, 'services', media_concept_id, NULL, NULL, NULL, NULL, admin_user_id, NOW() 
+    WHERE NOT EXISTS (SELECT 1 FROM website_settings WHERE section = 'services');
+
+    GET DIAGNOSTICS website_settings_added = ROW_COUNT;
+    RAISE NOTICE 'Added % website settings', website_settings_added;
+
+    -- 11. INSERT MEDIA_FEEDBACK (check for existing feedback by media and client user)
+    INSERT INTO media_feedback (id, media_id, client_user_id, feedback_text, rating, created_at) 
+    SELECT gen_random_uuid()::text, media_video_id, test_client_user_id, 'Excellent work! The video perfectly captures our brand essence. We love the cinematic quality and professional presentation.', 5, NOW() 
+    WHERE NOT EXISTS (SELECT 1 FROM media_feedback WHERE media_id = media_video_id AND client_user_id = test_client_user_id);
+
+    INSERT INTO media_feedback (id, media_id, client_user_id, feedback_text, rating, created_at) 
+    SELECT gen_random_uuid()::text, media_photo_id, test_client_user_id, 'The product photography is stunning. Great lighting and composition. These will work perfectly for our e-commerce site.', 5, NOW() 
+    WHERE NOT EXISTS (SELECT 1 FROM media_feedback WHERE media_id = media_photo_id AND client_user_id = test_client_user_id);
+
+    INSERT INTO media_feedback (id, media_id, client_user_id, feedback_text, rating, created_at) 
+    SELECT gen_random_uuid()::text, media_concept_id, test2_client_user_id, 'Love the creative direction shown in these concepts. Can we explore more variations on the third design?', 4, NOW() 
+    WHERE NOT EXISTS (SELECT 1 FROM media_feedback WHERE media_id = media_concept_id AND client_user_id = test2_client_user_id);
+
+    GET DIAGNOSTICS feedback_added = ROW_COUNT;
+    RAISE NOTICE 'Added % media feedback entries', feedback_added;
+
+    -- 12. INSERT MEDIA_TIMELINE_NOTES (check for existing notes by media, client user, and timestamp)
+    INSERT INTO media_timeline_notes (id, media_id, client_user_id, timestamp_seconds, note_text, created_at) 
+    SELECT gen_random_uuid()::text, media_video_id, test_client_user_id, 15, 'Love the opening sequence with the logo animation!', NOW() 
+    WHERE NOT EXISTS (SELECT 1 FROM media_timeline_notes WHERE media_id = media_video_id AND client_user_id = test_client_user_id AND timestamp_seconds = 15);
+
+    INSERT INTO media_timeline_notes (id, media_id, client_user_id, timestamp_seconds, note_text, created_at) 
+    SELECT gen_random_uuid()::text, media_video_id, test_client_user_id, 42, 'This transition is perfect - very smooth and professional.', NOW() 
+    WHERE NOT EXISTS (SELECT 1 FROM media_timeline_notes WHERE media_id = media_video_id AND client_user_id = test_client_user_id AND timestamp_seconds = 42);
+
+    INSERT INTO media_timeline_notes (id, media_id, client_user_id, timestamp_seconds, note_text, created_at) 
+    SELECT gen_random_uuid()::text, media_video_id, test_client_user_id, 78, 'Can we make the text here slightly larger for better readability?', NOW() 
+    WHERE NOT EXISTS (SELECT 1 FROM media_timeline_notes WHERE media_id = media_video_id AND client_user_id = test_client_user_id AND timestamp_seconds = 78);
+
+    INSERT INTO media_timeline_notes (id, media_id, client_user_id, timestamp_seconds, note_text, created_at) 
+    SELECT gen_random_uuid()::text, media_bts_id, test2_client_user_id, 23, 'Great behind-the-scenes content! This shows the process really well.', NOW() 
+    WHERE NOT EXISTS (SELECT 1 FROM media_timeline_notes WHERE media_id = media_bts_id AND client_user_id = test2_client_user_id AND timestamp_seconds = 23);
+
+    INSERT INTO media_timeline_notes (id, media_id, client_user_id, timestamp_seconds, note_text, created_at) 
+    SELECT gen_random_uuid()::text, media_bts_id, test2_client_user_id, 67, 'The lighting setup discussion here is very insightful.', NOW() 
+    WHERE NOT EXISTS (SELECT 1 FROM media_timeline_notes WHERE media_id = media_bts_id AND client_user_id = test2_client_user_id AND timestamp_seconds = 67);
+
+    GET DIAGNOSTICS timeline_notes_added = ROW_COUNT;
+    RAISE NOTICE 'Added % timeline notes', timeline_notes_added;
 
     -- Generate summary
-    result_text := 'SUCCESS: Development test data check completed! ';
+    result_text := 'SUCCESS: Development comprehensive data population completed! ';
     result_text := result_text || 'Added: ' || users_added || ' users, ';
     result_text := result_text || roles_added || ' roles, ';
     result_text := result_text || permissions_added || ' permissions, ';
     result_text := result_text || clients_added || ' clients, ';
-    result_text := result_text || client_users_added || ' client users.';
-    
-    RAISE NOTICE '%', result_text;
-    RETURN result_text;
-END;
-$$ LANGUAGE plpgsql;
-
--- Create a function to display development accounts
-CREATE OR REPLACE FUNCTION show_dev_accounts() RETURNS text AS $$
-DECLARE
-    account_info text := '';
-    user_count integer;
-    client_count integer;
-BEGIN
-    SELECT COUNT(*) INTO user_count FROM users;
-    SELECT COUNT(*) INTO client_count FROM clients;
-
-    account_info := E'\n=== DEVELOPMENT ACCOUNT INFORMATION ===\n';
-    account_info := account_info || E'Database Status: ' || user_count || ' users, ' || client_count || E' clients\n\n';
-    account_info := account_info || E'Admin/Staff Portal (Main System):\n';
-    account_info := account_info || E'  Admin: admin@dtvisuals.com / admin123\n';
-    account_info := account_info || E'  Staff: staff@dtvisuals.com / staff123\n\n';
-    account_info := account_info || E'Client Portal (Separate System):\n';
-    account_info := account_info || E'  Test Client: testclient@example.com / client123\n';
-    account_info := account_info || E'  Test2: test2@client.com / client123\n\n';
-    account_info := account_info || E'Access URLs:\n';
-    account_info := account_info || E'  Main App: http://localhost:3000\n';
-    account_info := account_info || E'  Client Login: http://localhost:3000/client/login\n';
-    
-    RAISE NOTICE '%', account_info;
-    RETURN account_info;
-END;
-$$ LANGUAGE plpgsql;
-
--- Critical verification function that ensures admin user exists
-CREATE OR REPLACE FUNCTION ensure_admin_user_exists() RETURNS text AS $$
-DECLARE
-    admin_count integer;
-    admin_role_count integer;
-    result_text text := '';
-BEGIN
-    -- Check if admin user exists
-    SELECT COUNT(*) INTO admin_count FROM users WHERE username = 'admin' OR email = 'admin@dtvisuals.com';
-    
-    -- Check if admin role exists
-    SELECT COUNT(*) INTO admin_role_count FROM roles WHERE name = 'Admin';
-    
-    IF admin_count = 0 THEN
-        result_text := 'CRITICAL: No admin user found. Creating emergency admin user...';
-        RAISE NOTICE '%', result_text;
-        
-        -- Ensure admin role exists
-        IF admin_role_count = 0 THEN
-            INSERT INTO roles (id, name, description) VALUES 
-            ('emergency-admin-role', 'Admin', 'Emergency admin role with full access');
-            
-            -- Add essential permissions if they don't exist
-            INSERT INTO permissions (id, name, description) VALUES 
-            ('emergency-perm-1', 'manage:system', 'Full system management access'),
-            ('emergency-perm-2', 'edit:users', 'Can create/edit staff users'),
-            ('emergency-perm-3', 'edit:roles', 'Can create/edit roles and permissions')
-            ON CONFLICT (name) DO NOTHING;
-            
-            -- Assign permissions to emergency admin role
-            INSERT INTO role_permissions (role_id, permission_id) VALUES 
-            ('emergency-admin-role', 'emergency-perm-1'),
-            ('emergency-admin-role', 'emergency-perm-2'),
-            ('emergency-admin-role', 'emergency-perm-3');
-        END IF;
-        
-        -- Create emergency admin user (password: admin123)
-        INSERT INTO users (id, username, email, password, forename, surname, display_name, is_active, created_at) VALUES 
-        ('emergency-admin-id', 'admin', 'admin@dtvisuals.com', 'df10c71f317ded80d49fc8ebd89b928fdb6706e3bb45ea330da8a7caa009d98ebc3c57461844955f37b7dbb5651a00c42a0a924e7030550d4eb8bb2b1196878a.4e8dad95ff12fe8b727f303f8ac1a12f', 'Admin', 'User', 'Admin User', true, NOW());
-        
-        -- Assign admin role
-        INSERT INTO user_roles (user_id, role_id) VALUES 
-        ('emergency-admin-id', COALESCE((SELECT id FROM roles WHERE name = 'Admin' LIMIT 1), 'emergency-admin-role'));
-        
-        result_text := 'SUCCESS: Emergency admin user created. Login: admin@dtvisuals.com / admin123';
-        
-    ELSE
-        result_text := 'VERIFIED: Admin user exists (' || admin_count || ' admin users found)';
-    END IF;
+    result_text := result_text || client_users_added || ' client users, ';
+    result_text := result_text || media_added || ' media items, ';
+    result_text := result_text || website_settings_added || ' website settings, ';
+    result_text := result_text || feedback_added || ' feedback entries, ';
+    result_text := result_text || timeline_notes_added || ' timeline notes.';
     
     RAISE NOTICE '%', result_text;
     RETURN result_text;
@@ -327,9 +467,11 @@ DECLARE
     client_user_count integer;
     user_role_count integer;
     role_permission_count integer;
-    admin_count integer;
     media_count integer;
+    media_clients_count integer;
     website_settings_count integer;
+    feedback_count integer;
+    timeline_notes_count integer;
 BEGIN
     -- Count all tables
     SELECT COUNT(*) INTO user_count FROM users WHERE EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'users');
@@ -339,49 +481,75 @@ BEGIN
     SELECT COUNT(*) INTO client_user_count FROM client_users WHERE EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'client_users');
     SELECT COUNT(*) INTO user_role_count FROM user_roles WHERE EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'user_roles');
     SELECT COUNT(*) INTO role_permission_count FROM role_permissions WHERE EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'role_permissions');
-    
-    -- Count media if table exists
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'media') THEN
-        SELECT COUNT(*) INTO media_count FROM media;
-    ELSE
-        media_count := 0;
-    END IF;
-    
-    -- Count website settings if table exists
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'website_settings') THEN
-        SELECT COUNT(*) INTO website_settings_count FROM website_settings;
-    ELSE
-        website_settings_count := 0;
-    END IF;
-    
-    -- Count admin users
-    admin_count := 0;
-    IF user_count > 0 AND role_count > 0 AND user_role_count > 0 THEN
-        SELECT COUNT(*) INTO admin_count FROM users u 
-        JOIN user_roles ur ON u.id = ur.user_id 
-        JOIN roles r ON ur.role_id = r.id 
-        WHERE r.name = 'Admin';
-    END IF;
-    
-    verification_result := 'Database verification:';
-    verification_result := verification_result || E'\n  Users: ' || user_count;
-    verification_result := verification_result || E'\n  Admin Users: ' || admin_count;
-    verification_result := verification_result || E'\n  Roles: ' || role_count;
-    verification_result := verification_result || E'\n  Permissions: ' || permission_count;
-    verification_result := verification_result || E'\n  User-Role Assignments: ' || user_role_count;
-    verification_result := verification_result || E'\n  Role-Permission Assignments: ' || role_permission_count;
-    verification_result := verification_result || E'\n  Clients: ' || client_count;
-    verification_result := verification_result || E'\n  Client Users: ' || client_user_count;
-    verification_result := verification_result || E'\n  Media: ' || media_count;
-    verification_result := verification_result || E'\n  Website Settings: ' || website_settings_count;
-    
-    IF admin_count = 0 THEN
-        verification_result := verification_result || E'\n  STATUS: ❌ CRITICAL - NO ADMIN USER FOUND!';
-    ELSE
-        verification_result := verification_result || E'\n  STATUS: ✅ READY - Admin user exists';
-    END IF;
-    
+    SELECT COUNT(*) INTO media_count FROM media WHERE EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'media');
+    SELECT COUNT(*) INTO media_clients_count FROM media_clients WHERE EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'media_clients');
+    SELECT COUNT(*) INTO website_settings_count FROM website_settings WHERE EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'website_settings');
+    SELECT COUNT(*) INTO feedback_count FROM media_feedback WHERE EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'media_feedback');
+    SELECT COUNT(*) INTO timeline_notes_count FROM media_timeline_notes WHERE EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'media_timeline_notes');
+
+    verification_result := E'\n=== DEVELOPMENT DATABASE VERIFICATION ===\n';
+    verification_result := verification_result || E'Users: ' || user_count || E'\n';
+    verification_result := verification_result || E'Roles: ' || role_count || E'\n';
+    verification_result := verification_result || E'Permissions: ' || permission_count || E'\n';
+    verification_result := verification_result || E'Clients: ' || client_count || E'\n';
+    verification_result := verification_result || E'Client Users: ' || client_user_count || E'\n';
+    verification_result := verification_result || E'User-Role Assignments: ' || user_role_count || E'\n';
+    verification_result := verification_result || E'Role-Permission Assignments: ' || role_permission_count || E'\n';
+    verification_result := verification_result || E'Media Items: ' || media_count || E'\n';
+    verification_result := verification_result || E'Media-Client Relationships: ' || media_clients_count || E'\n';
+    verification_result := verification_result || E'Website Settings: ' || website_settings_count || E'\n';
+    verification_result := verification_result || E'Media Feedback: ' || feedback_count || E'\n';
+    verification_result := verification_result || E'Timeline Notes: ' || timeline_notes_count || E'\n';
+
     RAISE NOTICE '%', verification_result;
     RETURN verification_result;
 END;
 $$ LANGUAGE plpgsql;
+
+-- Create a function to display development accounts
+CREATE OR REPLACE FUNCTION show_dev_accounts() RETURNS text AS $$
+DECLARE
+    account_info text := '';
+    user_count integer;
+    client_count integer;
+    media_count integer;
+BEGIN
+    SELECT COUNT(*) INTO user_count FROM users;
+    SELECT COUNT(*) INTO client_count FROM clients;
+    SELECT COUNT(*) INTO media_count FROM media;
+
+    account_info := E'\n=== DEVELOPMENT ACCOUNT INFORMATION ===\n';
+    account_info := account_info || E'Total Users: ' || user_count || E'\n';
+    account_info := account_info || E'Total Clients: ' || client_count || E'\n';
+    account_info := account_info || E'Total Media Items: ' || media_count || E'\n\n';
+    
+    account_info := account_info || E'Admin/Staff Accounts (for /auth login):\n';
+    account_info := account_info || E'  Admin: admin@dtvisuals.com / admin123\n';
+    account_info := account_info || E'  Staff: staff@dtvisuals.com / staff123\n';
+    account_info := account_info || E'  Editor: editor@dtvisuals.com / editor123\n\n';
+    
+    account_info := account_info || E'Client Portal Accounts (for /client/login):\n';
+    account_info := account_info || E'  Acme Corp: acme_client / client123 (client@acme.com)\n';
+    account_info := account_info || E'  Creative Studios: creative_client / client123 (client@creativestudios.com)\n\n';
+    
+    account_info := account_info || E'System Features:\n';
+    account_info := account_info || E'  - Complete RBAC system with 5 roles and 12 permissions\n';
+    account_info := account_info || E'  - Dual authentication (Admin/Staff + Client portals)\n';
+    account_info := account_info || E'  - 5 sample media items with client assignments\n';
+    account_info := account_info || E'  - Website customization settings\n';
+    account_info := account_info || E'  - Client feedback and timeline notes system\n';
+    account_info := account_info || E'  - Media-client relationship management\n\n';
+    
+    account_info := account_info || E'All passwords are: admin123 / staff123 / editor123 / client123\n';
+
+    RAISE NOTICE '%', account_info;
+    RETURN account_info;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Log successful initialization
+DO $$
+BEGIN
+    RAISE NOTICE 'Development database initialization script loaded successfully.';
+    RAISE NOTICE 'Call populate_dev_test_data() after table creation to populate with comprehensive test data.';
+END $$;
