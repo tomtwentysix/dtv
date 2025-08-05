@@ -293,154 +293,161 @@ export default function Portfolio() {
 
       {/* Full-screen Video Player Modal */}
       <Dialog open={!!selectedVideo} onOpenChange={closeVideoModal}>
-        <DialogContent className="max-w-6xl w-full h-[90vh] p-0 overflow-hidden bg-black" aria-describedby="video-player-description">
-          <div className="relative h-full flex flex-col">
-            <DialogTitle className="sr-only">
-              Video Player - {selectedVideo?.title}
-            </DialogTitle>
-            <div id="video-player-description" className="sr-only">
-              Full-screen video player for {selectedVideo?.title}
-            </div>
-            {/* Close button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={closeVideoModal}
-              className="absolute top-4 right-4 z-20 text-white hover:bg-white/20"
-            >
-              <X className="h-4 w-4" />
-            </Button>
+        <DialogContent className="max-w-7xl w-full h-[95vh] p-0 overflow-hidden bg-black/95" aria-describedby="video-player-description">
+          <DialogTitle className="sr-only">
+            Video Player - {selectedVideo?.title}
+          </DialogTitle>
+          <div id="video-player-description" className="sr-only">
+            Full-screen video player for {selectedVideo?.title}
+          </div>
+          
+          <div className="relative w-full h-full group">
+            {/* Video */}
+            {selectedVideo && (
+              <video
+                ref={modalVideoRef}
+                src={selectedVideo.url}
+                className="w-full h-full object-contain bg-black"
+                style={{
+                  filter: 'none',
+                  mixBlendMode: 'normal',
+                  opacity: 1
+                }}
+                onLoadedMetadata={() => {
+                  if (modalVideoRef.current) {
+                    setDuration(modalVideoRef.current.duration);
+                    modalVideoRef.current.volume = volume;
+                    modalVideoRef.current.muted = isMuted;
+                  }
+                }}
+                onTimeUpdate={() => {
+                  if (modalVideoRef.current) {
+                    setCurrentTime(modalVideoRef.current.currentTime);
+                  }
+                }}
+                onPlay={() => setIsPlaying(true)}
+                onPause={() => setIsPlaying(false)}
+                onEnded={() => setIsPlaying(false)}
+                onClick={togglePlay}
+              />
+            )}
 
-            {/* Video container */}
-            <div className="flex-1 relative flex items-center justify-center bg-black">
-              {selectedVideo && (
-                <video
-                  ref={modalVideoRef}
-                  src={selectedVideo.url}
-                  className="modal-video max-w-full max-h-full object-contain"
-                  style={{
-                    width: 'auto',
-                    height: 'auto',
-                    maxWidth: '100%',
-                    maxHeight: '100%'
-                  }}
-                  onLoadedMetadata={() => {
-                    if (modalVideoRef.current) {
-                      setDuration(modalVideoRef.current.duration);
-                      modalVideoRef.current.volume = volume;
-                      modalVideoRef.current.muted = isMuted;
-                    }
-                  }}
-                  onTimeUpdate={() => {
-                    if (modalVideoRef.current) {
-                      setCurrentTime(modalVideoRef.current.currentTime);
-                    }
-                  }}
-                  onPlay={() => setIsPlaying(true)}
-                  onPause={() => setIsPlaying(false)}
-                  onEnded={() => setIsPlaying(false)}
-                />
-              )}
-            </div>
+            {/* Floating Controls - Show on hover */}
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none group-hover:pointer-events-auto">
+              
+              {/* Close button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={closeVideoModal}
+                className="absolute top-4 right-4 z-30 text-white bg-black/50 hover:bg-black/70 rounded-full w-10 h-10 pointer-events-auto"
+              >
+                <X className="h-5 w-5" />
+              </Button>
 
-            {/* Video controls */}
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-6">
-              <div className="space-y-4">
-                {/* Progress bar */}
-                <div className="space-y-2">
-                  <Slider
-                    value={[currentTime]}
-                    max={duration}
-                    step={0.1}
-                    onValueChange={handleSeek}
-                    className="w-full"
-                  />
-                  <div className="flex justify-between text-sm text-gray-300">
-                    <span>{formatTime(currentTime)}</span>
-                    <span>{formatTime(duration)}</span>
+              {/* Video title overlay */}
+              <div className="absolute top-4 left-4 z-20 pointer-events-auto">
+                <div className="bg-black/70 rounded-lg px-4 py-2 backdrop-blur-sm">
+                  <h3 className="text-white font-semibold text-lg">{selectedVideo?.title}</h3>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {selectedVideo?.tags?.map((tag: string) => (
+                      <span key={tag} className="text-xs bg-white/20 text-white px-2 py-1 rounded">
+                        {tag}
+                      </span>
+                    ))}
                   </div>
                 </div>
+              </div>
 
-                {/* Control buttons */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    {/* Skip backward */}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={skipBackward}
-                      className="text-white hover:bg-white/20"
-                    >
-                      <SkipBack className="h-5 w-5" />
-                    </Button>
+              {/* Center play/pause button */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-auto">
+                <Button
+                  variant="ghost"
+                  size="lg"
+                  onClick={togglePlay}
+                  className="text-white bg-black/50 hover:bg-black/70 rounded-full w-20 h-20 backdrop-blur-sm transition-all duration-200"
+                >
+                  {isPlaying ? (
+                    <Pause className="h-10 w-10" />
+                  ) : (
+                    <Play className="h-10 w-10 ml-1" />
+                  )}
+                </Button>
+              </div>
 
-                    {/* Play/Pause */}
-                    <Button
-                      variant="ghost"
-                      size="lg"
-                      onClick={togglePlay}
-                      className="text-white hover:bg-white/20"
-                    >
-                      {isPlaying ? (
-                        <Pause className="h-8 w-8" />
-                      ) : (
-                        <Play className="h-8 w-8" />
-                      )}
-                    </Button>
+              {/* Bottom controls bar */}
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent p-4 pointer-events-auto">
+                <div className="space-y-3">
+                  {/* Progress bar */}
+                  <div className="space-y-2">
+                    <Slider
+                      value={[currentTime]}
+                      max={duration}
+                      step={0.1}
+                      onValueChange={handleSeek}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-sm text-gray-300">
+                      <span>{formatTime(currentTime)}</span>
+                      <span>{formatTime(duration)}</span>
+                    </div>
+                  </div>
 
-                    {/* Skip forward */}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={skipForward}
-                      className="text-white hover:bg-white/20"
-                    >
-                      <SkipForward className="h-5 w-5" />
-                    </Button>
-
-                    {/* Volume control */}
-                    <div className="flex items-center space-x-2">
+                  {/* Control buttons */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      {/* Skip backward */}
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={toggleMute}
-                        className="text-white hover:bg-white/20"
+                        onClick={skipBackward}
+                        className="text-white hover:bg-white/20 rounded-full w-10 h-10"
                       >
-                        {isMuted ? (
-                          <VolumeX className="h-5 w-5" />
-                        ) : (
-                          <Volume2 className="h-5 w-5" />
-                        )}
+                        <SkipBack className="h-5 w-5" />
                       </Button>
-                      <div className="w-24">
-                        <Slider
-                          value={[isMuted ? 0 : volume]}
-                          max={1}
-                          step={0.01}
-                          onValueChange={handleVolumeChange}
-                          disabled={isMuted}
-                        />
-                      </div>
-                    </div>
-                  </div>
 
-                  {/* Video info and fullscreen */}
-                  <div className="flex items-center space-x-4">
-                    <div className="text-right">
-                      <h3 className="text-white font-semibold">{selectedVideo?.title}</h3>
-                      <div className="flex flex-wrap gap-1 justify-end">
-                        {selectedVideo?.tags?.map((tag: string) => (
-                          <span key={tag} className="text-xs bg-white/20 text-white px-2 py-1 rounded">
-                            {tag}
-                          </span>
-                        ))}
+                      {/* Skip forward */}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={skipForward}
+                        className="text-white hover:bg-white/20 rounded-full w-10 h-10"
+                      >
+                        <SkipForward className="h-5 w-5" />
+                      </Button>
+
+                      {/* Volume control */}
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={toggleMute}
+                          className="text-white hover:bg-white/20 rounded-full w-10 h-10"
+                        >
+                          {isMuted ? (
+                            <VolumeX className="h-5 w-5" />
+                          ) : (
+                            <Volume2 className="h-5 w-5" />
+                          )}
+                        </Button>
+                        <div className="w-20">
+                          <Slider
+                            value={[isMuted ? 0 : volume]}
+                            max={1}
+                            step={0.01}
+                            onValueChange={handleVolumeChange}
+                            disabled={isMuted}
+                          />
+                        </div>
                       </div>
                     </div>
+
+                    {/* Fullscreen button */}
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={requestFullscreen}
-                      className="text-white hover:bg-white/20"
+                      className="text-white hover:bg-white/20 rounded-full w-10 h-10"
                     >
                       <Maximize className="h-5 w-5" />
                     </Button>

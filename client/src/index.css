@@ -399,33 +399,19 @@ video:not(.modal-video) {
   object-fit: cover;
 }
 
-/* Modal videos should show full content */
+/* Modal videos should show full content with clean rendering */
 video.modal-video {
   object-fit: contain !important;
-  /* Maintain aspect ratio */
-  width: auto !important;
-  height: auto !important;
-  max-width: 100% !important;
-  max-height: 100% !important;
-  /* Center the video */
+  width: 100% !important;
+  height: 100% !important;
   display: block !important;
-  margin: 0 auto !important;
-  /* Force normal video rendering without any filters */
-  mix-blend-mode: normal !important;
+  background: transparent !important;
+  /* Ensure clean video rendering */
   filter: none !important;
-  opacity: 1 !important;
-  /* Prevent any parent filters from affecting the video */
-  isolation: isolate !important;
-  /* Force hardware acceleration and proper rendering */
-  transform: translateZ(0) !important;
-  will-change: auto !important;
-  /* Ensure proper color space */
-  color-scheme: normal !important;
-  /* Override any inherited brightness/contrast */
   -webkit-filter: none !important;
-  /* Force video above any overlays */
-  z-index: 9999 !important;
-  position: relative !important;
+  mix-blend-mode: normal !important;
+  opacity: 1 !important;
+  isolation: isolate !important;
 }
 
 /* Ensure no dialog overlays cover the modal video */
