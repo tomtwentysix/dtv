@@ -56,7 +56,7 @@ export default function ClientDashboard() {
   const { clientUser, isAuthenticated, isAuthLoading, logout } = useClientAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  
+
   // All state hooks must be at the top, before any early returns
   const [selectedVideo, setSelectedVideo] = useState<any>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -139,7 +139,7 @@ export default function ClientDashboard() {
       setNewNoteText("");
     },
   });
-  
+
   // All useEffect hooks must be here before any early returns
   useEffect(() => {
     if (!isAuthLoading && !isAuthenticated) {
@@ -1041,7 +1041,7 @@ export default function ClientDashboard() {
                             box-shadow: none !important;
                             margin: 0 auto !important;
                           `;
-                          
+
                           // Dynamic video sizing function
                           const applyDynamicSizing = () => {
                             // Get video dimensions once loaded
@@ -1050,21 +1050,21 @@ export default function ClientDashboard() {
                               const containerWidth = ref.parentElement?.clientWidth || 600;
                               const maxHeight = window.innerWidth <= 768 ? 300 : 500;
                               const minHeight = window.innerWidth <= 768 ? 200 : 250;
-                              
+
                               // Calculate optimal width based on aspect ratio and height constraints
                               const optimalWidth = Math.min(containerWidth, aspectRatio * maxHeight);
                               const calculatedHeight = optimalWidth / aspectRatio;
-                              
+
                               if (calculatedHeight >= minHeight && calculatedHeight <= maxHeight) {
                                 ref.style.width = `${optimalWidth}px !important`;
                                 ref.style.height = `${calculatedHeight}px !important`;
                               }
                             }
                           };
-                          
+
                           // Apply sizing when metadata loads
                           ref.addEventListener('loadedmetadata', applyDynamicSizing);
-                          
+
                           // Responsive sizing for screen changes
                           const mediaQuery = window.matchMedia('(max-width: 768px)');
                           const updateVideoSize = () => {
@@ -1079,11 +1079,11 @@ export default function ClientDashboard() {
                           };
                           updateVideoSize();
                           mediaQuery.addEventListener('change', updateVideoSize);
-                          
+
                           // Handle window resize
                           const handleResize = () => applyDynamicSizing();
                           window.addEventListener('resize', handleResize);
-                          
+
                           // Use ResizeObserver for container size changes
                           if (window.ResizeObserver && ref.parentElement) {
                             const resizeObserver = new ResizeObserver(() => {
@@ -1140,27 +1140,27 @@ export default function ClientDashboard() {
                             box-shadow: none !important;
                             margin: 0 auto !important;
                           `;
-                          
+
                           // Get video dimensions and calculate optimal width
                           if (video.videoWidth && video.videoHeight) {
                             const aspectRatio = video.videoWidth / video.videoHeight;
                             const containerWidth = video.parentElement?.clientWidth || 600;
                             const maxHeight = window.innerWidth <= 768 ? 300 : 500;
                             const minHeight = window.innerWidth <= 768 ? 200 : 250;
-                            
+
                             // Calculate width based on aspect ratio and height constraints
                             const optimalWidth = Math.min(containerWidth, aspectRatio * maxHeight);
                             const calculatedHeight = optimalWidth / aspectRatio;
-                            
+
                             if (calculatedHeight >= minHeight && calculatedHeight <= maxHeight) {
                               video.style.width = `${optimalWidth}px !important`;
                               video.style.height = `${calculatedHeight}px !important`;
                             }
                           }
                         };
-                        
+
                         applyVideoSizing();
-                        
+
                         // Mobile responsive adjustments
                         const mediaQuery = window.matchMedia('(max-width: 768px)');
                         if (mediaQuery.matches) {
