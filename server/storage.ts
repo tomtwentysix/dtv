@@ -699,7 +699,34 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(brandingSettings)
       .limit(1);
-    return settings || undefined;
+    
+    if (!settings) return undefined;
+
+    // Fetch related media separately
+    const [logoLightImage, logoDarkImage, faviconImage] = await Promise.all([
+      settings.logoLightImageId ? this.getMedia(settings.logoLightImageId) : null,
+      settings.logoDarkImageId ? this.getMedia(settings.logoDarkImageId) : null,
+      settings.faviconImageId ? this.getMedia(settings.faviconImageId) : null,
+    ]);
+    
+    return {
+      ...settings,
+      logoLightImage: logoLightImage ? {
+        id: logoLightImage.id,
+        url: logoLightImage.url,
+        title: logoLightImage.title,
+      } : null,
+      logoDarkImage: logoDarkImage ? {
+        id: logoDarkImage.id,
+        url: logoDarkImage.url,
+        title: logoDarkImage.title,
+      } : null,
+      faviconImage: faviconImage ? {
+        id: faviconImage.id,
+        url: faviconImage.url,
+        title: faviconImage.title,
+      } : null,
+    } as BrandingSettings;
   }
 
   async updateBrandingSettings(updates: Partial<InsertBrandingSettings>): Promise<BrandingSettings> {

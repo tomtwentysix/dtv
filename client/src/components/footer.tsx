@@ -2,14 +2,16 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useQuery } from "@tanstack/react-query";
+import { useBrandingSettings } from "@/hooks/use-branding-settings";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
   
-  // Fetch contact information
+  // Fetch contact information and branding settings
   const { data: contactInfo } = useQuery({
     queryKey: ['/api/contact-info'],
   });
+  const { data: brandingSettings } = useBrandingSettings();
 
   return (
     <footer className="bg-black text-white py-16">
@@ -18,8 +20,28 @@ export function Footer() {
           {/* Company Info */}
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-orange-500 rounded-full" />
-              <span className="text-xl font-bold">dt.visuals</span>
+              {/* Show logo if available, otherwise show gradient circle */}
+              {brandingSettings?.logoLightImage ? (
+                <img 
+                  src={brandingSettings.logoLightImage.url}
+                  alt={brandingSettings.logoLightImage.title || brandingSettings.companyName || "Logo"}
+                  className="w-8 h-8 object-contain"
+                />
+              ) : (
+                <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-orange-500 rounded-full" />
+              )}
+              {/* Show company name if text display is enabled */}
+              {brandingSettings?.showCompanyText && (
+                <span className="text-xl font-bold">
+                  {brandingSettings?.companyName || "dt.visuals"}
+                </span>
+              )}
+              {/* Fallback: show company name if no logo and text is disabled */}
+              {!brandingSettings?.logoLightImage && !brandingSettings?.showCompanyText && (
+                <span className="text-xl font-bold">
+                  {brandingSettings?.companyName || "dt.visuals"}
+                </span>
+              )}
             </div>
             <p className="text-gray-400 text-sm leading-relaxed">
               Creating cinematic experiences through professional media production, 
@@ -53,9 +75,9 @@ export function Footer() {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-white">Contact</h3>
             <ul className="space-y-2 text-sm text-gray-400">
-              <li>{contactInfo?.contactEmail || 'hello@dt-visuals.com'}</li>
-              <li>{contactInfo?.contactPhone || '+1 (555) 123-4567'}</li>
-              <li>{contactInfo?.contactAddress || 'Los Angeles, CA'}</li>
+              <li>{(contactInfo as any)?.contactEmail || 'hello@dt-visuals.com'}</li>
+              <li>{(contactInfo as any)?.contactPhone || '+1 (555) 123-4567'}</li>
+              <li>{(contactInfo as any)?.contactAddress || 'Los Angeles, CA'}</li>
             </ul>
           </div>
         </div>
@@ -64,7 +86,7 @@ export function Footer() {
         
         <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
           <div className="text-sm text-gray-400">
-            © {currentYear} dt.visuals. All rights reserved.
+            © {currentYear} {brandingSettings?.companyName || "dt.visuals"}. All rights reserved.
           </div>
           <div className="flex space-x-6 text-sm text-gray-400">
             <span className="hover:text-teal-400 transition-colors cursor-pointer">Privacy Policy</span>
