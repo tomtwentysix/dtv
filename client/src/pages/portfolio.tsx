@@ -134,7 +134,7 @@ export default function Portfolio() {
   return (
     <div className="min-h-screen">
       <Navigation />
-      
+
       {/* Header */}
       <section className="relative pt-24 pb-12 h-96 flex items-center justify-center overflow-hidden">
         {portfolioHeader.backgroundType === 'video' ? (
@@ -251,7 +251,7 @@ export default function Portfolio() {
                         poster={item.posterUrl || undefined}
                       />
                     )}
-                    
+
                     {/* Overlay with play icon for videos */}
                     {item.type === "video" && (
                       <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -260,7 +260,7 @@ export default function Portfolio() {
                         </div>
                       </div>
                     )}
-                    
+
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                       <div className="absolute bottom-4 left-4 right-4">
                         <h3 className="text-white text-xl font-bold mb-2">{item.title}</h3>
@@ -293,14 +293,14 @@ export default function Portfolio() {
 
       {/* Full-screen Video Player Modal */}
       <Dialog open={!!selectedVideo} onOpenChange={closeVideoModal}>
-        <DialogContent className="p-0 overflow-hidden bg-black/95 border-none max-h-[95vh] w-90 h-auto" aria-describedby="video-player-description">
+        <DialogContent className="p-0 overflow-hidden bg-black/95 border-none w-[80vw] max-w-none max-h-[95vh] h-auto" aria-describedby="video-player-description">
           <DialogTitle className="sr-only">
             Video Player - {selectedVideo?.title}
           </DialogTitle>
           <div id="video-player-description" className="sr-only">
             Full-screen video player for {selectedVideo?.title}
           </div>
-          
+
           <div className="relative group w-full h-full flex items-center justify-center">
             {/* Media Content */}
             {selectedVideo && (
@@ -355,7 +355,7 @@ export default function Portfolio() {
             {/* Floating Controls - Show on hover (only for videos) */}
             {selectedVideo?.type === "video" && (
               <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none group-hover:pointer-events-auto">
-              
+
               {/* Close button */}
               <Button
                 variant="ghost"
@@ -498,7 +498,7 @@ export default function Portfolio() {
           </div>
         </DialogContent>
       </Dialog>
-      
+
       <Footer />
     </div>
   );
