@@ -1009,7 +1009,7 @@ export default function ClientDashboard() {
 
           <div className="flex-1 flex flex-col min-h-0">
             {/* Video Player Section */}
-            <div className="flex-shrink-0 p-6 flex flex-col justify-center items-center bg-black/[0.039]"></div>
+            <div className="flex-shrink-0 p-6 flex flex-col justify-center items-center bg-black/[0.039]">
               {showDetails && (
                 <div className="w-full max-w-4xl">
                   {showDetails.type === "video" ? (
