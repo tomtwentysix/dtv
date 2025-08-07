@@ -56,6 +56,9 @@ jobs:
           # Navigate to deployment directory
           cd /opt/dt-visuals
           
+          # Login to GitHub Container Registry
+          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          
           # Pull latest images
           docker pull ghcr.io/${{ github.repository_owner }}/dt-visuals:prod-latest
           docker pull ghcr.io/${{ github.repository_owner }}/dt-visuals:dev-latest

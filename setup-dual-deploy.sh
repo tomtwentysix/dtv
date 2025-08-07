@@ -53,6 +53,25 @@ openssl req -x509 -nodes -days 1 -newkey rsa:2048 \
     -out ssl/fullchain.pem \
     -subj "/C=US/ST=State/L=City/O=Organization/CN=dtvisuals.com"
 
+# Set up GitHub Container Registry authentication
+print_info "Setting up GitHub authentication..."
+if [ -z "$GITHUB_TOKEN" ]; then
+    print_warning "GITHUB_TOKEN environment variable not set"
+    echo "For private repos, you need a GitHub Personal Access Token"
+    echo "1. Go to GitHub Settings → Developer settings → Personal access tokens"
+    echo "2. Create token with 'read:packages' scope"
+    echo "3. Set: export GITHUB_TOKEN=your_token"
+    echo ""
+    read -p "Do you want to continue without authentication? (y/n): " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        exit 1
+    fi
+else
+    print_info "Logging into GitHub Container Registry..."
+    echo $GITHUB_TOKEN | docker login ghcr.io -u $(whoami) --password-stdin
+fi
+
 # Start services
 print_info "Starting services..."
 docker-compose up -d nginx app-prod app-dev
