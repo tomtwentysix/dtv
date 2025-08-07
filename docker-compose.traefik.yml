@@ -1,0 +1,187 @@
+version: '3.8'
+
+services:
+  traefik:
+    image: traefik:v3.0
+    container_name: traefik
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"  # Traefik dashboard - remove in production
+    environment:
+      - CF_API_EMAIL=${CF_API_EMAIL:-}
+      - CF_DNS_API_TOKEN=${CF_DNS_API_TOKEN:-}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik-data:/data
+      - ./traefik.yml:/etc/traefik/traefik.yml:ro
+    networks:
+      - traefik
+    labels:
+      # Dashboard configuration
+      - traefik.enable=true
+      - traefik.http.routers.traefik.rule=Host(`traefik.${TRAEFIK_DOMAIN:-dtvisuals.com}`)
+      - traefik.http.routers.traefik.entrypoints=websecure
+      - traefik.http.routers.traefik.tls.certresolver=letsencrypt
+      - traefik.http.routers.traefik.service=api@internal
+      # Dashboard auth (optional)
+      - traefik.http.routers.traefik.middlewares=traefik-auth
+      - traefik.http.middlewares.traefik-auth.basicauth.users=${TRAEFIK_USERS:-admin:$$2y$$10$$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi}
+
+  # Production App
+  app-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+      target: production
+    container_name: dt-visuals-prod
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:${PROD_POSTGRES_PASSWORD:-prodpassword}@postgres-prod:5432/${PROD_POSTGRES_DB:-dt_visuals_prod}
+      - SESSION_SECRET=${PROD_SESSION_SECRET:-prod-session-secret-key-change-this}
+      - PORT=5000
+      - HOST=0.0.0.0
+      - ENABLE_TIMELINE=true
+      - VIDEO_UPLOAD_LIMIT=100MB
+      - TIMELINE_NOTES_MAX_LENGTH=5000
+    volumes:
+      - uploads-prod:/app/uploads
+    depends_on:
+      postgres-prod:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - traefik
+      - dt-visuals-prod
+    labels:
+      - traefik.enable=true
+      # Production domain routing
+      - traefik.http.routers.app-prod.rule=Host(`dtvisuals.com`) || Host(`www.dtvisuals.com`)
+      - traefik.http.routers.app-prod.entrypoints=websecure
+      - traefik.http.routers.app-prod.tls.certresolver=letsencrypt
+      - traefik.http.services.app-prod.loadbalancer.server.port=5000
+      # WWW to non-WWW redirect
+      - traefik.http.middlewares.www-redirect.redirectregex.regex=^https://www\.dtvisuals\.com/(.*)
+      - traefik.http.middlewares.www-redirect.redirectregex.replacement=https://dtvisuals.com/$${1}
+      - traefik.http.middlewares.www-redirect.redirectregex.permanent=true
+      - traefik.http.routers.app-prod-www.rule=Host(`www.dtvisuals.com`)
+      - traefik.http.routers.app-prod-www.entrypoints=websecure
+      - traefik.http.routers.app-prod-www.tls.certresolver=letsencrypt
+      - traefik.http.routers.app-prod-www.middlewares=www-redirect
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:5000/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Development App
+  app-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: dt-visuals-dev
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://postgres:${DEV_POSTGRES_PASSWORD:-devpassword}@postgres-dev:5432/${DEV_POSTGRES_DB:-dt_visuals_dev}
+      - SESSION_SECRET=${DEV_SESSION_SECRET:-dev-session-secret-key}
+      - PORT=5000
+      - HOST=0.0.0.0
+      - ENABLE_TIMELINE=true
+      - VIDEO_UPLOAD_LIMIT=50MB
+      - TIMELINE_NOTES_MAX_LENGTH=3000
+    volumes:
+      - uploads-dev:/app/uploads
+      - .:/app  # Live reload for development
+      - /app/node_modules  # Prevent overriding node_modules
+    depends_on:
+      postgres-dev:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - traefik
+      - dt-visuals-dev
+    labels:
+      - traefik.enable=true
+      # Development domain routing
+      - traefik.http.routers.app-dev.rule=Host(`dev.dtvisuals.com`)
+      - traefik.http.routers.app-dev.entrypoints=websecure
+      - traefik.http.routers.app-dev.tls.certresolver=letsencrypt
+      - traefik.http.services.app-dev.loadbalancer.server.port=5000
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:5000/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Production Database
+  postgres-prod:
+    image: postgres:15-alpine
+    container_name: dt-visuals-postgres-prod
+    environment:
+      - POSTGRES_DB=${PROD_POSTGRES_DB:-dt_visuals_prod}
+      - POSTGRES_USER=${PROD_POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${PROD_POSTGRES_PASSWORD:-prodpassword}
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+    volumes:
+      - postgres-prod-data:/var/lib/postgresql/data
+      - ./docker/postgres/init-prod.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    restart: unless-stopped
+    networks:
+      - dt-visuals-prod
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PROD_POSTGRES_USER:-postgres} -d ${PROD_POSTGRES_DB:-dt_visuals_prod}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # Development Database
+  postgres-dev:
+    image: postgres:15-alpine
+    container_name: dt-visuals-postgres-dev
+    environment:
+      - POSTGRES_DB=${DEV_POSTGRES_DB:-dt_visuals_dev}
+      - POSTGRES_USER=${DEV_POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${DEV_POSTGRES_PASSWORD:-devpassword}
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+    volumes:
+      - postgres-dev-data:/var/lib/postgresql/data
+      - ./docker/postgres/init-dev.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    ports:
+      - "5433:5432"  # Different port for dev to avoid conflicts
+    restart: unless-stopped
+    networks:
+      - dt-visuals-dev
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DEV_POSTGRES_USER:-postgres} -d ${DEV_POSTGRES_DB:-dt_visuals_dev}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  postgres-prod-data:
+    driver: local
+    name: dt-visuals-postgres-prod-data
+  postgres-dev-data:
+    driver: local
+    name: dt-visuals-postgres-dev-data
+  uploads-prod:
+    driver: local
+    name: dt-visuals-uploads-prod
+  uploads-dev:
+    driver: local
+    name: dt-visuals-uploads-dev
+
+networks:
+  traefik:
+    external: true
+  dt-visuals-prod:
+    driver: bridge
+    name: dt-visuals-prod-network
+  dt-visuals-dev:
+    driver: bridge
+    name: dt-visuals-dev-network
