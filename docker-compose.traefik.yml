@@ -5,18 +5,31 @@ services:
     image: traefik:v3.0
     container_name: traefik
     restart: unless-stopped
+    command:
+      - --api.dashboard=true
+      - --api.debug=true
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --entrypoints.web.http.redirections.entrypoint.permanent=true
+      - --entrypoints.websecure.address=:443
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --certificatesresolvers.letsencrypt.acme.tlschallenge=true
+      - --certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL}
+      - --certificatesresolvers.letsencrypt.acme.storage=/data/acme.json
+      - --log.level=DEBUG
+      - --accesslog=true
     ports:
       - "80:80"
       - "443:443"
       - "8080:8080"  # Traefik dashboard - remove in production
     environment:
-      - ACME_EMAIL=${ACME_EMAIL}
       - CF_API_EMAIL=${CF_API_EMAIL:-}
       - CF_DNS_API_TOKEN=${CF_DNS_API_TOKEN:-}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./traefik-data:/data
-      - ./traefik.yml:/etc/traefik/traefik.yml:ro
     networks:
       - traefik
     labels:
