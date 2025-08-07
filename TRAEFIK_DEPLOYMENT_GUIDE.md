@@ -180,6 +180,226 @@ To run both (default):
 docker-compose -f docker-compose.traefik.yml up -d
 ```
 
+## Pushing Updates
+
+This section covers how to deploy code updates to your running Traefik deployment.
+
+### Quick Update (Recommended)
+
+For most updates, use this streamlined process:
+
+```bash
+# 1. Pull latest code
+git pull origin main
+
+# 2. Rebuild and update containers
+docker-compose -f docker-compose.traefik.yml up -d --build
+
+# 3. Verify deployment
+docker-compose -f docker-compose.traefik.yml ps
+```
+
+### Environment-Specific Updates
+
+#### Update Production Only
+
+```bash
+# Rebuild and update only production
+docker-compose -f docker-compose.traefik.yml up -d --build app-prod
+
+# Check production health
+curl -f https://dtvisuals.com/api/health || echo "Health check failed"
+```
+
+#### Update Development Only
+
+```bash
+# Rebuild and update only development
+docker-compose -f docker-compose.traefik.yml up -d --build app-dev
+
+# Check development health
+curl -f https://dev.dtvisuals.com/api/health || echo "Health check failed"
+```
+
+### Zero-Downtime Deployment Strategy
+
+For critical production updates with minimal downtime:
+
+```bash
+# 1. Update development first to test
+docker-compose -f docker-compose.traefik.yml up -d --build app-dev
+
+# 2. Test development environment
+curl -f https://dev.dtvisuals.com/api/health
+# Run additional tests...
+
+# 3. Scale production (if supported by your setup)
+docker-compose -f docker-compose.traefik.yml up -d --scale app-prod=2
+
+# 4. Update production
+docker-compose -f docker-compose.traefik.yml up -d --build app-prod
+
+# 5. Scale back to single instance
+docker-compose -f docker-compose.traefik.yml up -d --scale app-prod=1
+```
+
+### Database Migrations
+
+When your update includes database changes:
+
+```bash
+# 1. Backup databases before update
+docker exec dt-visuals-postgres-prod pg_dump -U postgres dt_visuals_prod > backup-pre-update-$(date +%Y%m%d-%H%M%S).sql
+docker exec dt-visuals-postgres-dev pg_dump -U postgres dt_visuals_dev > backup-dev-pre-update-$(date +%Y%m%d-%H%M%S).sql
+
+# 2. Update development first
+docker-compose -f docker-compose.traefik.yml up -d --build app-dev
+
+# 3. Test development thoroughly
+# Run your tests, check functionality
+
+# 4. Update production
+docker-compose -f docker-compose.traefik.yml up -d --build app-prod
+```
+
+### Rollback Procedures
+
+If an update causes issues, you can rollback:
+
+#### Quick Rollback
+
+```bash
+# 1. Checkout previous working commit
+git log --oneline -10  # Find the previous working commit
+git checkout <previous-commit-hash>
+
+# 2. Rebuild and deploy
+docker-compose -f docker-compose.traefik.yml up -d --build
+
+# 3. Verify rollback
+curl -f https://dtvisuals.com/api/health
+```
+
+#### Database Rollback
+
+If database changes need to be reverted:
+
+```bash
+# 1. Stop applications
+docker-compose -f docker-compose.traefik.yml stop app-prod app-dev
+
+# 2. Restore database from backup
+docker exec -i dt-visuals-postgres-prod psql -U postgres dt_visuals_prod < backup-pre-update-YYYYMMDD-HHMMSS.sql
+
+# 3. Rollback code and restart
+git checkout <previous-commit-hash>
+docker-compose -f docker-compose.traefik.yml up -d --build
+```
+
+### Update Verification
+
+After any update, verify the deployment:
+
+```bash
+# Check container status
+docker-compose -f docker-compose.traefik.yml ps
+
+# Check health endpoints
+curl -f https://dtvisuals.com/api/health
+curl -f https://dev.dtvisuals.com/api/health
+
+# Check application logs
+docker-compose -f docker-compose.traefik.yml logs --tail=50 app-prod
+docker-compose -f docker-compose.traefik.yml logs --tail=50 app-dev
+
+# Verify SSL certificates are still valid
+echo | openssl s_client -connect dtvisuals.com:443 -servername dtvisuals.com 2>/dev/null | openssl x509 -noout -dates
+```
+
+### Best Practices for Updates
+
+1. **Always test on development first**:
+   ```bash
+   # Deploy to dev first
+   docker-compose -f docker-compose.traefik.yml up -d --build app-dev
+   # Test thoroughly before production
+   ```
+
+2. **Use staged deployments**:
+   - Development → Staging → Production
+   - Test each environment before moving to the next
+
+3. **Backup before major updates**:
+   ```bash
+   # Create timestamped backups
+   docker exec dt-visuals-postgres-prod pg_dump -U postgres dt_visuals_prod > backup-$(date +%Y%m%d-%H%M%S).sql
+   ```
+
+4. **Monitor after updates**:
+   ```bash
+   # Watch logs for errors
+   docker-compose -f docker-compose.traefik.yml logs -f app-prod
+   
+   # Check resource usage
+   docker stats --no-stream
+   ```
+
+5. **Keep images clean**:
+   ```bash
+   # Remove old/unused images
+   docker image prune -f
+   
+   # Clean up build cache
+   docker builder prune -f
+   ```
+
+### Automated Updates (Advanced)
+
+For automated deployments, you can create a script:
+
+```bash
+#!/bin/bash
+# update-script.sh
+
+set -e
+
+echo "🚀 Starting automated update..."
+
+# Pull latest code
+git pull origin main
+
+# Backup database
+docker exec dt-visuals-postgres-prod pg_dump -U postgres dt_visuals_prod > backup-auto-$(date +%Y%m%d-%H%M%S).sql
+
+# Update development first
+echo "📦 Updating development..."
+docker-compose -f docker-compose.traefik.yml up -d --build app-dev
+
+# Wait for health check
+sleep 30
+if curl -f https://dev.dtvisuals.com/api/health; then
+    echo "✅ Development update successful"
+    
+    # Update production
+    echo "📦 Updating production..."
+    docker-compose -f docker-compose.traefik.yml up -d --build app-prod
+    
+    # Verify production
+    sleep 30
+    if curl -f https://dtvisuals.com/api/health; then
+        echo "✅ Production update successful"
+    else
+        echo "❌ Production update failed - consider rollback"
+        exit 1
+    fi
+else
+    echo "❌ Development update failed - stopping"
+    exit 1
+fi
+
+echo "🎉 Update completed successfully!"
+```
+
 ## Database Access
 
 ### Production Database
