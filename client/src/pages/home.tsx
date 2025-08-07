@@ -43,23 +43,33 @@ export default function Home() {
       lets_connect: connectRef,
     };
 
+    // Calculate initial section offsets
+    const calculateSectionOffsets = () => {
+      const offsets: Record<string, number> = {};
+      Object.entries(refs).forEach(([section, ref]) => {
+        if (ref.current) {
+          offsets[section] = ref.current.offsetTop;
+        }
+      });
+      setSectionOffsets(offsets);
+    };
+
+    // Calculate offsets on mount and resize
+    calculateSectionOffsets();
+    window.addEventListener('resize', calculateSectionOffsets);
+
     const observer = new IntersectionObserver(
       (entries) => {
         const newVisibleSections: Record<string, boolean> = {};
-        const newSectionOffsets: Record<string, number> = {};
         
         entries.forEach((entry) => {
           const sectionName = entry.target.getAttribute('data-section');
           if (sectionName) {
             newVisibleSections[sectionName] = entry.isIntersecting;
-            if (entry.isIntersecting) {
-              newSectionOffsets[sectionName] = entry.boundingClientRect.top + window.scrollY;
-            }
           }
         });
         
         setVisibleSections(prev => ({ ...prev, ...newVisibleSections }));
-        setSectionOffsets(prev => ({ ...prev, ...newSectionOffsets }));
       },
       { threshold: 0.1, rootMargin: '0px 0px -10% 0px' }
     );
@@ -72,6 +82,7 @@ export default function Home() {
     });
 
     return () => {
+      window.removeEventListener('resize', calculateSectionOffsets);
       Object.values(refs).forEach(ref => {
         if (ref.current) observer.unobserve(ref.current);
       });
@@ -79,12 +90,20 @@ export default function Home() {
   }, []);
 
   const getParallaxTransform = (sectionName: string, intensity: number = 0.5) => {
-    if (!visibleSections[sectionName] || !sectionOffsets[sectionName]) {
+    if (!sectionOffsets[sectionName]) {
       return 'translateY(0px)';
     }
-    const sectionScroll = Math.max(0, scrollY - sectionOffsets[sectionName]);
-    const maxMovement = window.innerHeight * 0.25; // Limit movement to 25% of viewport height
-    const movement = Math.min(sectionScroll * intensity, maxMovement);
+    
+    const sectionTop = sectionOffsets[sectionName];
+    const scrollProgress = scrollY - sectionTop;
+    
+    // Only apply parallax when the section is in the viewport area
+    if (scrollProgress < -window.innerHeight || scrollProgress > window.innerHeight * 2) {
+      return 'translateY(0px)';
+    }
+    
+    const maxMovement = window.innerHeight * 0.3; // Allow more movement
+    const movement = Math.max(-maxMovement, Math.min(scrollProgress * intensity, maxMovement));
     return `translateY(${movement}px)`;
   };
 
