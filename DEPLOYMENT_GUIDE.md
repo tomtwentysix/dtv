@@ -43,11 +43,36 @@ docker-compose --version
 
 ### Set Up GitHub Authentication (For Private Repos)
 
-If your repository is private, run the authentication setup:
+If your repository is private, you have several options:
 
+**Option 1: Clone Repository (Recommended)**
 ```bash
-# Download and run authentication script
-wget https://raw.githubusercontent.com/YOUR_USERNAME/dt-visuals/main/auth-setup.sh
+# Clone your private repository
+git clone https://github.com/YOUR_USERNAME/dt-visuals.git
+cd dt-visuals
+
+# Run authentication script
+chmod +x auth-setup.sh
+./auth-setup.sh
+```
+
+**Option 2: Manual File Copy**
+- Download `auth-setup.sh` from your GitHub repository web interface
+- Upload to your server via SCP/SFTP
+- Make executable: `chmod +x auth-setup.sh`
+- Run: `./auth-setup.sh`
+
+**Option 3: GitHub CLI**
+```bash
+# Install GitHub CLI
+curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list
+sudo apt update && sudo apt install gh
+
+# Authenticate and download
+gh auth login
+gh repo clone YOUR_USERNAME/dt-visuals
+cd dt-visuals
 chmod +x auth-setup.sh
 ./auth-setup.sh
 ```
@@ -90,13 +115,40 @@ cat ~/.ssh/id_rsa
 
 ### Download Deployment Files
 
-SSH into your server and run:
+SSH into your server and choose the appropriate method:
 
+**For Public Repositories:**
 ```bash
 # Download and run setup script
 wget https://raw.githubusercontent.com/YOUR_USERNAME/dt-visuals/main/setup-dual-deploy.sh
 chmod +x setup-dual-deploy.sh
 ./setup-dual-deploy.sh
+```
+
+**For Private Repositories:**
+```bash
+# Clone repository (if not already done)
+git clone https://github.com/YOUR_USERNAME/dt-visuals.git
+cd dt-visuals
+
+# Run setup script
+chmod +x setup-dual-deploy.sh
+./setup-dual-deploy.sh
+```
+
+**Alternative: Manual Setup**
+If you prefer not to clone the entire repository:
+
+```bash
+# Create deployment directory
+sudo mkdir -p /opt/dt-visuals
+sudo chown $USER:$USER /opt/dt-visuals
+cd /opt/dt-visuals
+
+# Manually copy these files from your repository:
+# - docker-compose.dual.yml → docker-compose.yml
+# - nginx.conf
+# - .env.dual → .env
 ```
 
 ### Configure Environment
