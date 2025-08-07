@@ -684,9 +684,9 @@ export default function AdminRoles() {
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
           >
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="relative">
               {/* Roles - Drop Zones */}
-              <div className="space-y-4">
+              <div className="lg:pr-96 space-y-4">
                 <h2 className="text-2xl font-bold flex items-center mb-4">
                   <Shield className="mr-2 h-6 w-6" />
                   Roles
@@ -722,13 +722,48 @@ export default function AdminRoles() {
                 )}
               </div>
 
-              {/* Permissions - Draggable Items */}
-              <div className="space-y-4">
+              {/* Permissions - Fixed Position Panel */}
+              <div className="hidden lg:block fixed top-24 right-8 w-80 h-[calc(100vh-120px)] bg-white dark:bg-gray-900 border rounded-lg shadow-lg">
+                <div className="p-4 border-b">
+                  <h2 className="text-xl font-bold flex items-center">
+                    <Key className="mr-2 h-5 w-5" />
+                    Available Permissions
+                  </h2>
+                </div>
+                <div className="h-[calc(100%-80px)] overflow-y-auto p-4">
+                  {permissionsLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin" />
+                    </div>
+                  ) : (permissions as any)?.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Key className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                        No permissions found
+                      </h3>
+                      <p className="text-gray-500 dark:text-gray-400">
+                        Create your first permission to get started.
+                      </p>
+                    </div>
+                  ) : (
+                    <SortableContext items={availablePermissions.map((p: any) => p.id)} strategy={verticalListSortingStrategy}>
+                      <div className="space-y-3">
+                        {availablePermissions.map((permission: any) => (
+                          <DraggablePermission key={permission.id} permission={permission} />
+                        ))}
+                      </div>
+                    </SortableContext>
+                  )}
+                </div>
+              </div>
+
+              {/* Mobile Permissions - Show below roles on small screens */}
+              <div className="lg:hidden mt-8 space-y-4">
                 <h2 className="text-2xl font-bold flex items-center mb-4">
                   <Key className="mr-2 h-6 w-6" />
                   Available Permissions
                 </h2>
-                <div className="h-[calc(100vh-300px)] overflow-y-auto border rounded-lg bg-white dark:bg-gray-900 p-4">
+                <div className="border rounded-lg bg-white dark:bg-gray-900 p-4">
                   {permissionsLoading ? (
                     <div className="flex items-center justify-center py-8">
                       <Loader2 className="h-6 w-6 animate-spin" />
