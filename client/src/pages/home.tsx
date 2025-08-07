@@ -318,51 +318,50 @@ export default function Home() {
                 {featuredMedia.map((media: any) => (
                   <Card 
                     key={media.id} 
-                    className="group overflow-hidden glass-card hover:shadow-lg transition-all duration-300 cursor-pointer"
+                    className="group cursor-pointer overflow-hidden glass-card"
                     onClick={() => openVideoModal(media)}
                   >
-                    <div className="relative aspect-video overflow-hidden">
-                      {media.type === 'video' ? (
-                        <video
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    <div className="relative">
+                      {media.type === "image" ? (
+                        <img 
+                          src={media.url} 
+                          alt={media.title}
+                          className="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110"
+                        />
+                      ) : (
+                        <video 
                           src={media.url}
+                          className="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110"
                           muted
-                          controls={false}
+                          loop
+                          playsInline
                           preload="metadata"
                           poster={media.url + '#t=1'}
                         />
-                      ) : (
-                        <img
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          src={media.url}
-                          alt={media.title}
-                        />
                       )}
-                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                      
-                      {/* Play icon overlay for videos */}
-                      {media.type === 'video' && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+
+                      {/* Overlay with play icon for videos */}
+                      {media.type === "video" && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                           <div className="bg-white/90 rounded-full p-4">
                             <Play className="h-8 w-8 text-black" />
                           </div>
                         </div>
                       )}
-                    </div>
-                    {media.tags && media.tags.length > 0 && (
-                      <CardContent className="p-6">
-                        <div className="flex flex-wrap gap-2">
-                          {media.tags.map((tag: string, index: number) => (
-                            <span
-                              key={index}
-                              className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-800 rounded-full text-gray-600 dark:text-gray-400"
-                            >
-                              {tag}
-                            </span>
-                          ))}
+
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <div className="absolute bottom-4 left-4 right-4">
+                          <h3 className="text-white text-xl font-bold mb-2">{media.title}</h3>
+                          <div className="flex flex-wrap gap-1">
+                            {media.tags?.map((tag: string) => (
+                              <span key={tag} className="text-xs bg-primary/20 text-primary-foreground px-2 py-1 rounded">
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
                         </div>
-                      </CardContent>
-                    )}
+                      </div>
+                    </div>
                   </Card>
                 ))}
               </div>
