@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { getBackgroundMedia, useWebsiteSettings } from "@/lib/background-utils";
 
 export default function Home() {
@@ -15,6 +15,16 @@ export default function Home() {
 
   const { data: websiteSettings } = useWebsiteSettings();
   const [scrollY, setScrollY] = useState(0);
+  const [visibleSections, setVisibleSections] = useState<Record<string, boolean>>({});
+  const [sectionOffsets, setSectionOffsets] = useState<Record<string, number>>({});
+  
+  const heroRef = useRef<HTMLElement>(null);
+  const whatWeDoRef = useRef<HTMLElement>(null);
+  const whoWeWorkWithRef = useRef<HTMLElement>(null);
+  const howWeWorkRef = useRef<HTMLElement>(null);
+  const retainerRef = useRef<HTMLElement>(null);
+  const workedWithRef = useRef<HTMLElement>(null);
+  const connectRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
@@ -22,12 +32,66 @@ export default function Home() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  useEffect(() => {
+    const refs = {
+      hero: heroRef,
+      what_we_do: whatWeDoRef,
+      who_we_work_with: whoWeWorkWithRef,
+      how_we_work: howWeWorkRef,
+      retainer_partnerships: retainerRef,
+      who_weve_worked_with: workedWithRef,
+      lets_connect: connectRef,
+    };
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const newVisibleSections: Record<string, boolean> = {};
+        const newSectionOffsets: Record<string, number> = {};
+        
+        entries.forEach((entry) => {
+          const sectionName = entry.target.getAttribute('data-section');
+          if (sectionName) {
+            newVisibleSections[sectionName] = entry.isIntersecting;
+            if (entry.isIntersecting) {
+              newSectionOffsets[sectionName] = entry.boundingClientRect.top + window.scrollY;
+            }
+          }
+        });
+        
+        setVisibleSections(prev => ({ ...prev, ...newVisibleSections }));
+        setSectionOffsets(prev => ({ ...prev, ...newSectionOffsets }));
+      },
+      { threshold: 0.1, rootMargin: '0px 0px -10% 0px' }
+    );
+
+    Object.entries(refs).forEach(([section, ref]) => {
+      if (ref.current) {
+        ref.current.setAttribute('data-section', section);
+        observer.observe(ref.current);
+      }
+    });
+
+    return () => {
+      Object.values(refs).forEach(ref => {
+        if (ref.current) observer.unobserve(ref.current);
+      });
+    };
+  }, []);
+
+  const getParallaxTransform = (sectionName: string, intensity: number = 0.5) => {
+    if (!visibleSections[sectionName] || !sectionOffsets[sectionName]) {
+      return 'translateY(0px)';
+    }
+    const sectionScroll = scrollY - sectionOffsets[sectionName];
+    return `translateY(${sectionScroll * intensity}px)`;
+  };
+
   return (
     <div className="min-h-screen">
       <Navigation />
       
       {/* Hero Section */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden bg-white dark:bg-black">
+      <section ref={heroRef} className="relative h-screen flex items-center justify-center overflow-hidden bg-white dark:bg-black">
         {(() => {
           const heroMedia = getBackgroundMedia(websiteSettings || [], "hero");
           if (!heroMedia) return null;
@@ -36,7 +100,7 @@ export default function Home() {
             <video
               className="absolute inset-0 w-full h-full object-cover parallax-bg"
               style={{
-                transform: `translateY(${scrollY * 0.5}px)`,
+                transform: getParallaxTransform('hero', 0.5),
               }}
               src={heroMedia.url}
               autoPlay
@@ -51,7 +115,7 @@ export default function Home() {
               className="absolute inset-0 bg-cover bg-center parallax-bg"
               style={{
                 backgroundImage: `url('${heroMedia.url}')`,
-                transform: `translateY(${scrollY * 0.5}px)`,
+                transform: getParallaxTransform('hero', 0.5),
               }}
             />
           );
@@ -80,7 +144,7 @@ export default function Home() {
       </section>
 
       {/* What We Do Section */}
-      <section className="relative py-20 bg-white dark:bg-black overflow-hidden">
+      <section ref={whatWeDoRef} className="relative py-20 bg-white dark:bg-black overflow-hidden">
         {(() => {
           const whatWeDoMedia = getBackgroundMedia(websiteSettings || [], "what_we_do");
           if (!whatWeDoMedia) return null;
@@ -89,7 +153,7 @@ export default function Home() {
             <video
               className="absolute inset-0 w-full h-full object-cover parallax-bg opacity-20"
               style={{
-                transform: `translateY(${scrollY * 0.3}px)`,
+                transform: getParallaxTransform('what_we_do', 0.3),
               }}
               src={whatWeDoMedia.url}
               autoPlay
@@ -104,7 +168,7 @@ export default function Home() {
               className="absolute inset-0 bg-cover bg-center parallax-bg opacity-20"
               style={{
                 backgroundImage: `url('${whatWeDoMedia.url}')`,
-                transform: `translateY(${scrollY * 0.3}px)`,
+                transform: getParallaxTransform('what_we_do', 0.3),
               }}
             />
           );
@@ -137,7 +201,7 @@ export default function Home() {
       </section>
 
       {/* Who We Work With Section */}
-      <section className="relative py-20 bg-gray-50 dark:bg-gray-900 overflow-hidden">
+      <section ref={whoWeWorkWithRef} className="relative py-20 bg-gray-50 dark:bg-gray-900 overflow-hidden">
         {(() => {
           const whoWeWorkWithMedia = getBackgroundMedia(websiteSettings || [], "who_we_work_with");
           if (!whoWeWorkWithMedia) return null;
@@ -146,7 +210,7 @@ export default function Home() {
             <video
               className="absolute inset-0 w-full h-full object-cover parallax-bg opacity-10"
               style={{
-                transform: `translateY(${scrollY * 0.2}px)`,
+                transform: getParallaxTransform('who_we_work_with', 0.2),
               }}
               src={whoWeWorkWithMedia.url}
               autoPlay
@@ -161,7 +225,7 @@ export default function Home() {
               className="absolute inset-0 bg-cover bg-center parallax-bg opacity-10"
               style={{
                 backgroundImage: `url('${whoWeWorkWithMedia.url}')`,
-                transform: `translateY(${scrollY * 0.2}px)`,
+                transform: getParallaxTransform('who_we_work_with', 0.2),
               }}
             />
           );
@@ -191,7 +255,7 @@ export default function Home() {
       </section>
 
       {/* How We Work Section */}
-      <section className="relative py-20 bg-white dark:bg-black overflow-hidden">
+      <section ref={howWeWorkRef} className="relative py-20 bg-white dark:bg-black overflow-hidden">
         {(() => {
           const howWeWorkMedia = getBackgroundMedia(websiteSettings || [], "how_we_work");
           if (!howWeWorkMedia) return null;
@@ -200,7 +264,7 @@ export default function Home() {
             <video
               className="absolute inset-0 w-full h-full object-cover parallax-bg opacity-10"
               style={{
-                transform: `translateY(${scrollY * 0.2}px)`,
+                transform: getParallaxTransform('how_we_work', 0.2),
               }}
               src={howWeWorkMedia.url}
               autoPlay
@@ -215,7 +279,7 @@ export default function Home() {
               className="absolute inset-0 bg-cover bg-center parallax-bg opacity-10"
               style={{
                 backgroundImage: `url('${howWeWorkMedia.url}')`,
-                transform: `translateY(${scrollY * 0.2}px)`,
+                transform: getParallaxTransform('how_we_work', 0.2),
               }}
             />
           );
@@ -266,7 +330,7 @@ export default function Home() {
       </section>
 
       {/* Retainer Partnerships Section */}
-      <section className="relative py-20 bg-gray-50 dark:bg-gray-900 overflow-hidden">
+      <section ref={retainerRef} className="relative py-20 bg-gray-50 dark:bg-gray-900 overflow-hidden">
         {(() => {
           const retainerMedia = getBackgroundMedia(websiteSettings || [], "retainer_partnerships");
           if (!retainerMedia) return null;
@@ -275,7 +339,7 @@ export default function Home() {
             <video
               className="absolute inset-0 w-full h-full object-cover parallax-bg opacity-10"
               style={{
-                transform: `translateY(${scrollY * 0.2}px)`,
+                transform: getParallaxTransform('retainer_partnerships', 0.2),
               }}
               src={retainerMedia.url}
               autoPlay
@@ -290,7 +354,7 @@ export default function Home() {
               className="absolute inset-0 bg-cover bg-center parallax-bg opacity-10"
               style={{
                 backgroundImage: `url('${retainerMedia.url}')`,
-                transform: `translateY(${scrollY * 0.2}px)`,
+                transform: getParallaxTransform('retainer_partnerships', 0.2),
               }}
             />
           );
@@ -332,7 +396,7 @@ export default function Home() {
       </section>
 
       {/* Who We've Worked With Section */}
-      <section className="relative py-20 bg-white dark:bg-black overflow-hidden">
+      <section ref={workedWithRef} className="relative py-20 bg-white dark:bg-black overflow-hidden">
         {(() => {
           const workedWithMedia = getBackgroundMedia(websiteSettings || [], "who_weve_worked_with");
           if (!workedWithMedia) return null;
@@ -341,7 +405,7 @@ export default function Home() {
             <video
               className="absolute inset-0 w-full h-full object-cover parallax-bg opacity-10"
               style={{
-                transform: `translateY(${scrollY * 0.2}px)`,
+                transform: getParallaxTransform('who_weve_worked_with', 0.2),
               }}
               src={workedWithMedia.url}
               autoPlay
@@ -356,7 +420,7 @@ export default function Home() {
               className="absolute inset-0 bg-cover bg-center parallax-bg opacity-10"
               style={{
                 backgroundImage: `url('${workedWithMedia.url}')`,
-                transform: `translateY(${scrollY * 0.2}px)`,
+                transform: getParallaxTransform('who_weve_worked_with', 0.2),
               }}
             />
           );
@@ -388,7 +452,7 @@ export default function Home() {
       </section>
 
       {/* Let's Connect Section */}
-      <section className="relative py-20 bg-gray-50 dark:bg-gray-900 overflow-hidden">
+      <section ref={connectRef} className="relative py-20 bg-gray-50 dark:bg-gray-900 overflow-hidden">
         {(() => {
           const connectMedia = getBackgroundMedia(websiteSettings || [], "lets_connect");
           if (!connectMedia) return null;
@@ -397,7 +461,7 @@ export default function Home() {
             <video
               className="absolute inset-0 w-full h-full object-cover parallax-bg opacity-10"
               style={{
-                transform: `translateY(${scrollY * 0.2}px)`,
+                transform: getParallaxTransform('lets_connect', 0.2),
               }}
               src={connectMedia.url}
               autoPlay
@@ -412,7 +476,7 @@ export default function Home() {
               className="absolute inset-0 bg-cover bg-center parallax-bg opacity-10"
               style={{
                 backgroundImage: `url('${connectMedia.url}')`,
-                transform: `translateY(${scrollY * 0.2}px)`,
+                transform: getParallaxTransform('lets_connect', 0.2),
               }}
             />
           );
