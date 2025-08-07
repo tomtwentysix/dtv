@@ -336,7 +336,13 @@ export default function Home() {
                           loop
                           playsInline
                           preload="metadata"
-                          poster={media.url + '#t=1'}
+                          onLoadedMetadata={(e) => {
+                            // Set video to show a frame at 2 seconds for thumbnail if no poster
+                            if (!media.posterUrl) {
+                              e.currentTarget.currentTime = 2;
+                            }
+                          }}
+                          poster={media.posterUrl || undefined}
                         />
                       )}
 
