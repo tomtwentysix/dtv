@@ -82,16 +82,16 @@ export default function Home() {
       {/* What We Do Section */}
       <section className="relative py-20 bg-white dark:bg-black overflow-hidden">
         {(() => {
-          const featuredMedia = getBackgroundMedia(websiteSettings || [], "featured_work");
-          if (!featuredMedia) return null;
+          const whatWeDoMedia = getBackgroundMedia(websiteSettings || [], "what_we_do");
+          if (!whatWeDoMedia) return null;
           
-          return featuredMedia?.type === "video" ? (
+          return whatWeDoMedia?.type === "video" ? (
             <video
               className="absolute inset-0 w-full h-full object-cover parallax-bg opacity-20"
               style={{
                 transform: `translateY(${scrollY * 0.3}px)`,
               }}
-              src={featuredMedia.url}
+              src={whatWeDoMedia.url}
               autoPlay
               muted
               loop
@@ -103,7 +103,7 @@ export default function Home() {
             <div 
               className="absolute inset-0 bg-cover bg-center parallax-bg opacity-20"
               style={{
-                backgroundImage: `url('${featuredMedia.url}')`,
+                backgroundImage: `url('${whatWeDoMedia.url}')`,
                 transform: `translateY(${scrollY * 0.3}px)`,
               }}
             />
@@ -138,6 +138,34 @@ export default function Home() {
 
       {/* Who We Work With Section */}
       <section className="relative py-20 bg-gray-50 dark:bg-gray-900 overflow-hidden">
+        {(() => {
+          const whoWeWorkWithMedia = getBackgroundMedia(websiteSettings || [], "who_we_work_with");
+          if (!whoWeWorkWithMedia) return null;
+          
+          return whoWeWorkWithMedia?.type === "video" ? (
+            <video
+              className="absolute inset-0 w-full h-full object-cover parallax-bg opacity-10"
+              style={{
+                transform: `translateY(${scrollY * 0.2}px)`,
+              }}
+              src={whoWeWorkWithMedia.url}
+              autoPlay
+              muted
+              loop
+              playsInline
+              disablePictureInPicture
+              controls={false}
+            />
+          ) : (
+            <div 
+              className="absolute inset-0 bg-cover bg-center parallax-bg opacity-10"
+              style={{
+                backgroundImage: `url('${whoWeWorkWithMedia.url}')`,
+                transform: `translateY(${scrollY * 0.2}px)`,
+              }}
+            />
+          );
+        })()}
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-5xl font-bold mb-6">Who We Work With</h2>
@@ -164,6 +192,34 @@ export default function Home() {
 
       {/* How We Work Section */}
       <section className="relative py-20 bg-white dark:bg-black overflow-hidden">
+        {(() => {
+          const howWeWorkMedia = getBackgroundMedia(websiteSettings || [], "how_we_work");
+          if (!howWeWorkMedia) return null;
+          
+          return howWeWorkMedia?.type === "video" ? (
+            <video
+              className="absolute inset-0 w-full h-full object-cover parallax-bg opacity-10"
+              style={{
+                transform: `translateY(${scrollY * 0.2}px)`,
+              }}
+              src={howWeWorkMedia.url}
+              autoPlay
+              muted
+              loop
+              playsInline
+              disablePictureInPicture
+              controls={false}
+            />
+          ) : (
+            <div 
+              className="absolute inset-0 bg-cover bg-center parallax-bg opacity-10"
+              style={{
+                backgroundImage: `url('${howWeWorkMedia.url}')`,
+                transform: `translateY(${scrollY * 0.2}px)`,
+              }}
+            />
+          );
+        })()}
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-5xl font-bold mb-6">How We Work</h2>
@@ -211,6 +267,34 @@ export default function Home() {
 
       {/* Retainer Partnerships Section */}
       <section className="relative py-20 bg-gray-50 dark:bg-gray-900 overflow-hidden">
+        {(() => {
+          const retainerMedia = getBackgroundMedia(websiteSettings || [], "retainer_partnerships");
+          if (!retainerMedia) return null;
+          
+          return retainerMedia?.type === "video" ? (
+            <video
+              className="absolute inset-0 w-full h-full object-cover parallax-bg opacity-10"
+              style={{
+                transform: `translateY(${scrollY * 0.2}px)`,
+              }}
+              src={retainerMedia.url}
+              autoPlay
+              muted
+              loop
+              playsInline
+              disablePictureInPicture
+              controls={false}
+            />
+          ) : (
+            <div 
+              className="absolute inset-0 bg-cover bg-center parallax-bg opacity-10"
+              style={{
+                backgroundImage: `url('${retainerMedia.url}')`,
+                transform: `translateY(${scrollY * 0.2}px)`,
+              }}
+            />
+          );
+        })()}
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-5xl font-bold mb-6">Retainer Partnerships</h2>
@@ -249,6 +333,34 @@ export default function Home() {
 
       {/* Who We've Worked With Section */}
       <section className="relative py-20 bg-white dark:bg-black overflow-hidden">
+        {(() => {
+          const workedWithMedia = getBackgroundMedia(websiteSettings || [], "who_weve_worked_with");
+          if (!workedWithMedia) return null;
+          
+          return workedWithMedia?.type === "video" ? (
+            <video
+              className="absolute inset-0 w-full h-full object-cover parallax-bg opacity-10"
+              style={{
+                transform: `translateY(${scrollY * 0.2}px)`,
+              }}
+              src={workedWithMedia.url}
+              autoPlay
+              muted
+              loop
+              playsInline
+              disablePictureInPicture
+              controls={false}
+            />
+          ) : (
+            <div 
+              className="absolute inset-0 bg-cover bg-center parallax-bg opacity-10"
+              style={{
+                backgroundImage: `url('${workedWithMedia.url}')`,
+                transform: `translateY(${scrollY * 0.2}px)`,
+              }}
+            />
+          );
+        })()}
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-5xl font-bold mb-6">Who We've Worked With</h2>
@@ -277,6 +389,34 @@ export default function Home() {
 
       {/* Let's Connect Section */}
       <section className="relative py-20 bg-gray-50 dark:bg-gray-900 overflow-hidden">
+        {(() => {
+          const connectMedia = getBackgroundMedia(websiteSettings || [], "lets_connect");
+          if (!connectMedia) return null;
+          
+          return connectMedia?.type === "video" ? (
+            <video
+              className="absolute inset-0 w-full h-full object-cover parallax-bg opacity-10"
+              style={{
+                transform: `translateY(${scrollY * 0.2}px)`,
+              }}
+              src={connectMedia.url}
+              autoPlay
+              muted
+              loop
+              playsInline
+              disablePictureInPicture
+              controls={false}
+            />
+          ) : (
+            <div 
+              className="absolute inset-0 bg-cover bg-center parallax-bg opacity-10"
+              style={{
+                backgroundImage: `url('${connectMedia.url}')`,
+                transform: `translateY(${scrollY * 0.2}px)`,
+              }}
+            />
+          );
+        })()}
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h2 className="text-5xl font-bold mb-6">Let's Connect</h2>

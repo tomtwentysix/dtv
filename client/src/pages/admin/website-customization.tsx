@@ -37,7 +37,7 @@ type MediaType = {
 
 type WebsiteSettingsType = {
   id: string;
-  section: 'hero' | 'featured_work' | 'services' | 'portfolio_header' | 'portfolio_gallery' | 'about_header' | 'about_values' | 'services_header' | 'services_section' | 'services_cta';
+  section: 'hero' | 'what_we_do' | 'who_we_work_with' | 'how_we_work' | 'retainer_partnerships' | 'who_weve_worked_with' | 'lets_connect' | 'portfolio_header' | 'portfolio_gallery' | 'about_header' | 'about_values' | 'services_header' | 'services_section' | 'services_cta';
   backgroundImageId: string | null;
   backgroundVideoId: string | null;
   backgroundImage?: MediaType;
@@ -246,8 +246,12 @@ export default function WebsiteCustomization() {
   const getSectionTitle = (section: string) => {
     switch (section) {
       case 'hero': return 'Homepage Hero Section';
-      case 'featured_work': return 'Homepage Featured Work Section';
-      case 'services': return 'Homepage Services Section';
+      case 'what_we_do': return 'Homepage What We Do Section';
+      case 'who_we_work_with': return 'Homepage Who We Work With Section';
+      case 'how_we_work': return 'Homepage How We Work Section';
+      case 'retainer_partnerships': return 'Homepage Retainer Partnerships Section';
+      case 'who_weve_worked_with': return 'Homepage Who We\'ve Worked With Section';
+      case 'lets_connect': return 'Homepage Let\'s Connect Section';
       case 'portfolio_header': return 'Portfolio Page Header';
       case 'portfolio_gallery': return 'Portfolio Gallery Section';
       case 'about_header': return 'About Page Header';
@@ -262,8 +266,12 @@ export default function WebsiteCustomization() {
   const getSectionDescription = (section: string) => {
     switch (section) {
       case 'hero': return 'Main banner background displayed at the top of the homepage';
-      case 'featured_work': return 'Background image for the featured work showcase section on homepage';
-      case 'services': return 'Background image for the services overview section on homepage';
+      case 'what_we_do': return 'Background for the "What We Do" section showcasing your services';
+      case 'who_we_work_with': return 'Background for the "Who We Work With" client types section';
+      case 'how_we_work': return 'Background for the "How We Work" process overview section';
+      case 'retainer_partnerships': return 'Background for the "Retainer Partnerships" ongoing services section';
+      case 'who_weve_worked_with': return 'Background for the "Who We\'ve Worked With" client showcase section';
+      case 'lets_connect': return 'Background for the "Let\'s Connect" call-to-action section';
       case 'portfolio_header': return 'Header banner background for the portfolio page';
       case 'portfolio_gallery': return 'Background for the portfolio gallery section';
       case 'about_header': return 'Header banner background for the about page';
@@ -276,7 +284,7 @@ export default function WebsiteCustomization() {
   };
 
   const getPageGroup = (section: string) => {
-    if (section.startsWith('hero') || section === 'featured_work' || section === 'services') return 'Homepage';
+    if (section.startsWith('hero') || section === 'what_we_do' || section === 'who_we_work_with' || section === 'how_we_work' || section === 'retainer_partnerships' || section === 'who_weve_worked_with' || section === 'lets_connect') return 'Homepage';
     if (section.startsWith('portfolio_')) return 'Portfolio Page';
     if (section.startsWith('about_')) return 'About Page';
     if (section.startsWith('services_')) return 'Services Page';
@@ -298,7 +306,7 @@ export default function WebsiteCustomization() {
 
   // Group sections by page
   const pageGroups = {
-    'Homepage': ['hero', 'featured_work', 'services'],
+    'Homepage': ['hero', 'what_we_do', 'who_we_work_with', 'how_we_work', 'retainer_partnerships', 'who_weve_worked_with', 'lets_connect'],
     'Portfolio': ['portfolio_header', 'portfolio_gallery'],
     'About': ['about_header', 'about_values'],
     'Services': ['services_header', 'services_section', 'services_cta']
