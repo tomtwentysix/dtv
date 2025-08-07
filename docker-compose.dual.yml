@@ -25,7 +25,7 @@ services:
     restart: unless-stopped
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=${PROD_DATABASE_URL}
+      - DATABASE_URL=postgresql://dtvisuals:${PROD_DB_PASSWORD}@db-prod:5432/dt_visuals_prod
       - SESSION_SECRET=${PROD_SESSION_SECRET}
       - PORT=5000
       - HOST=0.0.0.0
@@ -33,6 +33,8 @@ services:
       - uploads-prod:/app/uploads
     networks:
       - dt-visuals-network
+    depends_on:
+      - db-prod
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:5000/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
       interval: 30s
@@ -46,7 +48,7 @@ services:
     restart: unless-stopped
     environment:
       - NODE_ENV=development
-      - DATABASE_URL=${DEV_DATABASE_URL}
+      - DATABASE_URL=postgresql://dtvisuals:${DEV_DB_PASSWORD}@db-dev:5432/dt_visuals_dev
       - SESSION_SECRET=${DEV_SESSION_SECRET}
       - PORT=5000
       - HOST=0.0.0.0
@@ -54,8 +56,48 @@ services:
       - uploads-dev:/app/uploads
     networks:
       - dt-visuals-network
+    depends_on:
+      - db-dev
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:5000/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Production Database
+  db-prod:
+    image: postgres:15-alpine
+    container_name: dt-visuals-db-prod
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=dt_visuals_prod
+      - POSTGRES_USER=dtvisuals
+      - POSTGRES_PASSWORD=${PROD_DB_PASSWORD}
+    volumes:
+      - db-prod-data:/var/lib/postgresql/data
+    networks:
+      - dt-visuals-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dtvisuals -d dt_visuals_prod"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Development Database
+  db-dev:
+    image: postgres:15-alpine
+    container_name: dt-visuals-db-dev
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=dt_visuals_dev
+      - POSTGRES_USER=dtvisuals
+      - POSTGRES_PASSWORD=${DEV_DB_PASSWORD}
+    volumes:
+      - db-dev-data:/var/lib/postgresql/data
+    networks:
+      - dt-visuals-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dtvisuals -d dt_visuals_dev"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -78,6 +120,12 @@ volumes:
   uploads-dev:
     driver: local
     name: dt-visuals-uploads-dev
+  db-prod-data:
+    driver: local
+    name: dt-visuals-db-prod
+  db-dev-data:
+    driver: local
+    name: dt-visuals-db-dev
   certbot-www:
     driver: local
   certbot-conf:

@@ -31,8 +31,13 @@ cp /path/to/your/repo/.env.dual ./.env
 print_warning "Please edit .env file with your configuration:"
 echo "  - GITHUB_REPOSITORY_OWNER"
 echo "  - ACME_EMAIL"
-echo "  - Database URLs"
+echo "  - PROD_DB_PASSWORD (secure password for production database)"
+echo "  - DEV_DB_PASSWORD (secure password for development database)"
 echo "  - Session secrets"
+echo ""
+print_info "Databases are automatically deployed as PostgreSQL containers"
+echo "  - Production: postgresql://dtvisuals:password@db-prod:5432/dt_visuals_prod"
+echo "  - Development: postgresql://dtvisuals:password@db-dev:5432/dt_visuals_dev"
 echo ""
 
 read -p "Have you configured the .env file? (y/n): " -n 1 -r
