@@ -98,8 +98,10 @@ export default function Home() {
           
           return heroMedia?.type === "video" ? (
             <video
-              className="absolute inset-0 w-full h-full object-cover parallax-bg"
+              className="absolute inset-0 w-full object-cover parallax-bg"
               style={{
+                height: '120%',
+                top: '-10%',
                 transform: getParallaxTransform('hero', 0.5),
               }}
               src={heroMedia.url}
@@ -112,9 +114,13 @@ export default function Home() {
             />
           ) : (
             <div 
-              className="absolute inset-0 bg-cover bg-center parallax-bg"
+              className="absolute bg-cover bg-center parallax-bg"
               style={{
                 backgroundImage: `url('${heroMedia.url}')`,
+                width: '100%',
+                height: '120%',
+                top: '-10%',
+                left: '0',
                 transform: getParallaxTransform('hero', 0.5),
               }}
             />
@@ -151,8 +157,10 @@ export default function Home() {
           
           return whatWeDoMedia?.type === "video" ? (
             <video
-              className="absolute inset-0 w-full h-full object-cover parallax-bg opacity-20"
+              className="absolute inset-0 w-full object-cover parallax-bg opacity-20"
               style={{
+                height: '130%',
+                top: '-15%',
                 transform: getParallaxTransform('what_we_do', 0.3),
               }}
               src={whatWeDoMedia.url}
@@ -165,9 +173,13 @@ export default function Home() {
             />
           ) : (
             <div 
-              className="absolute inset-0 bg-cover bg-center parallax-bg opacity-20"
+              className="absolute bg-cover bg-center parallax-bg opacity-20"
               style={{
                 backgroundImage: `url('${whatWeDoMedia.url}')`,
+                width: '100%',
+                height: '130%',
+                top: '-15%',
+                left: '0',
                 transform: getParallaxTransform('what_we_do', 0.3),
               }}
             />
@@ -208,8 +220,10 @@ export default function Home() {
           
           return whoWeWorkWithMedia?.type === "video" ? (
             <video
-              className="absolute inset-0 w-full h-full object-cover parallax-bg opacity-10"
+              className="absolute inset-0 w-full object-cover parallax-bg opacity-10"
               style={{
+                height: '125%',
+                top: '-12.5%',
                 transform: getParallaxTransform('who_we_work_with', 0.2),
               }}
               src={whoWeWorkWithMedia.url}
@@ -222,9 +236,13 @@ export default function Home() {
             />
           ) : (
             <div 
-              className="absolute inset-0 bg-cover bg-center parallax-bg opacity-10"
+              className="absolute bg-cover bg-center parallax-bg opacity-10"
               style={{
                 backgroundImage: `url('${whoWeWorkWithMedia.url}')`,
+                width: '100%',
+                height: '125%',
+                top: '-12.5%',
+                left: '0',
                 transform: getParallaxTransform('who_we_work_with', 0.2),
               }}
             />
@@ -262,8 +280,10 @@ export default function Home() {
           
           return howWeWorkMedia?.type === "video" ? (
             <video
-              className="absolute inset-0 w-full h-full object-cover parallax-bg opacity-10"
+              className="absolute inset-0 w-full object-cover parallax-bg opacity-10"
               style={{
+                height: '125%',
+                top: '-12.5%',
                 transform: getParallaxTransform('how_we_work', 0.2),
               }}
               src={howWeWorkMedia.url}
@@ -276,9 +296,13 @@ export default function Home() {
             />
           ) : (
             <div 
-              className="absolute inset-0 bg-cover bg-center parallax-bg opacity-10"
+              className="absolute bg-cover bg-center parallax-bg opacity-10"
               style={{
                 backgroundImage: `url('${howWeWorkMedia.url}')`,
+                width: '100%',
+                height: '125%',
+                top: '-12.5%',
+                left: '0',
                 transform: getParallaxTransform('how_we_work', 0.2),
               }}
             />
@@ -337,8 +361,10 @@ export default function Home() {
           
           return retainerMedia?.type === "video" ? (
             <video
-              className="absolute inset-0 w-full h-full object-cover parallax-bg opacity-10"
+              className="absolute inset-0 w-full object-cover parallax-bg opacity-10"
               style={{
+                height: '125%',
+                top: '-12.5%',
                 transform: getParallaxTransform('retainer_partnerships', 0.2),
               }}
               src={retainerMedia.url}
@@ -351,9 +377,13 @@ export default function Home() {
             />
           ) : (
             <div 
-              className="absolute inset-0 bg-cover bg-center parallax-bg opacity-10"
+              className="absolute bg-cover bg-center parallax-bg opacity-10"
               style={{
                 backgroundImage: `url('${retainerMedia.url}')`,
+                width: '100%',
+                height: '125%',
+                top: '-12.5%',
+                left: '0',
                 transform: getParallaxTransform('retainer_partnerships', 0.2),
               }}
             />
@@ -403,8 +433,10 @@ export default function Home() {
           
           return workedWithMedia?.type === "video" ? (
             <video
-              className="absolute inset-0 w-full h-full object-cover parallax-bg opacity-10"
+              className="absolute inset-0 w-full object-cover parallax-bg opacity-10"
               style={{
+                height: '125%',
+                top: '-12.5%',
                 transform: getParallaxTransform('who_weve_worked_with', 0.2),
               }}
               src={workedWithMedia.url}
@@ -417,9 +449,13 @@ export default function Home() {
             />
           ) : (
             <div 
-              className="absolute inset-0 bg-cover bg-center parallax-bg opacity-10"
+              className="absolute bg-cover bg-center parallax-bg opacity-10"
               style={{
                 backgroundImage: `url('${workedWithMedia.url}')`,
+                width: '100%',
+                height: '125%',
+                top: '-12.5%',
+                left: '0',
                 transform: getParallaxTransform('who_weve_worked_with', 0.2),
               }}
             />
@@ -459,8 +495,10 @@ export default function Home() {
           
           return connectMedia?.type === "video" ? (
             <video
-              className="absolute inset-0 w-full h-full object-cover parallax-bg opacity-10"
+              className="absolute inset-0 w-full object-cover parallax-bg opacity-10"
               style={{
+                height: '125%',
+                top: '-12.5%',
                 transform: getParallaxTransform('lets_connect', 0.2),
               }}
               src={connectMedia.url}
@@ -473,9 +511,13 @@ export default function Home() {
             />
           ) : (
             <div 
-              className="absolute inset-0 bg-cover bg-center parallax-bg opacity-10"
+              className="absolute bg-cover bg-center parallax-bg opacity-10"
               style={{
                 backgroundImage: `url('${connectMedia.url}')`,
+                width: '100%',
+                height: '125%',
+                top: '-12.5%',
+                left: '0',
                 transform: getParallaxTransform('lets_connect', 0.2),
               }}
             />
