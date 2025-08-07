@@ -24,9 +24,35 @@ cd /opt/dt-visuals
 
 # Copy configuration files
 print_info "Setting up configuration files..."
-cp /path/to/your/repo/docker-compose.dual.yml ./docker-compose.yml
-cp /path/to/your/repo/nginx.conf ./nginx.conf
-cp /path/to/your/repo/.env.dual ./.env
+
+# Function to safely copy files with backup
+safe_copy() {
+    local source=$1
+    local dest=$2
+    local dest_name=$(basename $dest)
+    
+    if [ -f "$dest" ]; then
+        print_warning "$dest_name already exists"
+        read -p "Backup existing file and overwrite? (y/n): " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            mv "$dest" "$dest.backup.$(date +%Y%m%d_%H%M%S)"
+            print_info "Backed up existing $dest_name"
+            cp "$source" "$dest"
+            print_success "Updated $dest_name"
+        else
+            print_info "Keeping existing $dest_name"
+        fi
+    else
+        cp "$source" "$dest"
+        print_success "Created $dest_name"
+    fi
+}
+
+# Copy files safely
+safe_copy /path/to/your/repo/docker-compose.dual.yml ./docker-compose.yml
+safe_copy /path/to/your/repo/nginx.conf ./nginx.conf
+safe_copy /path/to/your/repo/.env.dual ./.env
 
 print_warning "Please edit .env file with your configuration:"
 echo "  - GITHUB_REPOSITORY_OWNER"
