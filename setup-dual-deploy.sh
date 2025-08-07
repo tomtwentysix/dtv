@@ -16,6 +16,19 @@ print_info() { echo -e "${BLUE}[INFO]${NC} $1"; }
 print_success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
 print_warning() { echo -e "${YELLOW}[WARNING]${NC} $1"; }
 
+# Repository path configuration
+REPO_PATH="$(pwd)"
+if [ ! -f "$REPO_PATH/docker-compose.dual.yml" ]; then
+    print_warning "docker-compose.dual.yml not found in current directory"
+    read -p "Enter path to your dtv repository: " REPO_PATH
+    if [ ! -f "$REPO_PATH/docker-compose.dual.yml" ]; then
+        print_warning "docker-compose.dual.yml not found in $REPO_PATH"
+        echo "Please ensure you're running this from the dtv repository or provide the correct path"
+        exit 1
+    fi
+fi
+print_info "Using repository path: $REPO_PATH"
+
 # Create deployment directory
 print_info "Creating deployment directory..."
 sudo mkdir -p /opt/dt-visuals
@@ -50,9 +63,9 @@ safe_copy() {
 }
 
 # Copy files safely
-safe_copy /path/to/your/repo/docker-compose.dual.yml ./docker-compose.yml
-safe_copy /path/to/your/repo/nginx.conf ./nginx.conf
-safe_copy /path/to/your/repo/.env.dual ./.env
+safe_copy "$REPO_PATH/docker-compose.dual.yml" ./docker-compose.yml
+safe_copy "$REPO_PATH/nginx.conf" ./nginx.conf
+safe_copy "$REPO_PATH/.env.dual" ./.env
 
 print_warning "Please edit .env file with your configuration:"
 echo "  - GITHUB_REPOSITORY_OWNER"
