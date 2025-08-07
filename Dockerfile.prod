@@ -39,17 +39,17 @@ RUN npm ci --omit=dev && \
     npm cache clean --force && \
     rm -rf /tmp/*
 
-# Copy built application from builder stage
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/shared ./shared
+# Copy built application from builder stage with proper ownership
+COPY --from=builder --chown=dtvisuals:nodejs /app/dist ./dist
+COPY --from=builder --chown=dtvisuals:nodejs /app/shared ./shared
 
 # Copy any other necessary files
-COPY --from=builder /app/migrations ./migrations
+COPY --from=builder --chown=dtvisuals:nodejs /app/migrations ./migrations
 
-# Create necessary directories with proper permissions
+# Create uploads directory with proper ownership (only what we need)
 RUN mkdir -p uploads && \
-    chown -R dtvisuals:nodejs /app && \
-    chmod -R 755 /app
+    chown dtvisuals:nodejs uploads && \
+    chmod 755 uploads
 
 # Change to non-root user
 USER dtvisuals

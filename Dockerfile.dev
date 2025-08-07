@@ -27,13 +27,13 @@ COPY tsconfig.json ./
 # Install all dependencies (including dev dependencies)
 RUN npm ci --include=dev && npm cache clean --force
 
-# Copy source code
-COPY . .
+# Copy source code with proper ownership
+COPY --chown=dtvisuals:nodejs . .
 
-# Create necessary directories with proper permissions
+# Create necessary directories with specific permissions (avoid recursive on entire /app)
 RUN mkdir -p uploads node_modules/.vite && \
-    chown -R dtvisuals:nodejs /app && \
-    chmod -R 755 /app
+    chown dtvisuals:nodejs uploads node_modules/.vite && \
+    chmod 755 uploads node_modules/.vite
 
 # Change to non-root user
 USER dtvisuals
