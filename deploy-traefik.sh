@@ -38,16 +38,63 @@ if [[ $EUID -eq 0 ]]; then
    exit 1
 fi
 
-# Check if Docker is installed
-if ! command -v docker &> /dev/null; then
-    print_error "Docker is not installed. Please install Docker first."
-    exit 1
+# Check if Docker is installed with multiple detection methods
+print_status "Checking Docker installation..."
+DOCKER_FOUND=false
+
+# Method 1: command -v
+if command -v docker &> /dev/null; then
+    DOCKER_FOUND=true
+# Method 2: which command
+elif which docker &> /dev/null; then
+    DOCKER_FOUND=true
+# Method 3: direct path check
+elif [ -x "/usr/bin/docker" ] || [ -x "/usr/local/bin/docker" ] || [ -x "/snap/bin/docker" ]; then
+    DOCKER_FOUND=true
+# Method 4: try to run docker version
+elif docker --version &> /dev/null; then
+    DOCKER_FOUND=true
 fi
 
-# Check if Docker Compose is installed
-if ! command -v docker-compose &> /dev/null; then
-    print_error "Docker Compose is not installed. Please install Docker Compose first."
+if [ "$DOCKER_FOUND" = false ]; then
+    print_error "Docker is not installed or not accessible. Please install Docker first."
+    print_error "Debug info:"
+    echo "  PATH: $PATH"
+    echo "  User: $(whoami)"
+    echo "  Shell: $SHELL"
     exit 1
+else
+    print_success "Docker found: $(docker --version 2>/dev/null || echo 'Docker is available')"
+fi
+
+# Check if Docker Compose is installed with multiple detection methods
+print_status "Checking Docker Compose installation..."
+COMPOSE_FOUND=false
+
+# Method 1: docker-compose command
+if command -v docker-compose &> /dev/null; then
+    COMPOSE_FOUND=true
+    COMPOSE_CMD="docker-compose"
+# Method 2: docker compose plugin
+elif docker compose version &> /dev/null; then
+    COMPOSE_FOUND=true
+    COMPOSE_CMD="docker compose"
+# Method 3: which docker-compose
+elif which docker-compose &> /dev/null; then
+    COMPOSE_FOUND=true
+    COMPOSE_CMD="docker-compose"
+fi
+
+if [ "$COMPOSE_FOUND" = false ]; then
+    print_error "Docker Compose is not installed. Please install Docker Compose first."
+    print_error "You can install it with: sudo apt-get install docker-compose-plugin"
+    exit 1
+else
+    if [ "$COMPOSE_CMD" = "docker-compose" ]; then
+        print_success "Docker Compose found: $(docker-compose --version 2>/dev/null || echo 'Docker Compose is available')"
+    else
+        print_success "Docker Compose plugin found: $(docker compose version 2>/dev/null || echo 'Docker Compose plugin is available')"
+    fi
 fi
 
 print_status "Checking environment configuration..."
@@ -94,12 +141,12 @@ docker-compose -f docker-compose.prod.yml down 2>/dev/null || true
 print_status "Building application images..."
 
 # Build the application
-docker-compose -f docker-compose.traefik.yml build
+$COMPOSE_CMD -f docker-compose.traefik.yml build
 
 print_status "Starting Traefik and services..."
 
 # Start services
-docker-compose -f docker-compose.traefik.yml up -d
+$COMPOSE_CMD -f docker-compose.traefik.yml up -d
 
 print_status "Waiting for services to start..."
 
@@ -107,11 +154,11 @@ print_status "Waiting for services to start..."
 sleep 30
 
 # Check if services are running
-if docker-compose -f docker-compose.traefik.yml ps | grep -q "Up"; then
+if $COMPOSE_CMD -f docker-compose.traefik.yml ps | grep -q "Up"; then
     print_success "Services started successfully!"
     echo ""
     print_status "Service Status:"
-    docker-compose -f docker-compose.traefik.yml ps
+    $COMPOSE_CMD -f docker-compose.traefik.yml ps
     echo ""
     print_success "Deployment complete!"
     echo ""
@@ -121,9 +168,9 @@ if docker-compose -f docker-compose.traefik.yml ps | grep -q "Up"; then
     echo "  📊 Traefik Dashboard: https://traefik.dtvisuals.com"
     echo ""
     print_warning "Note: SSL certificates may take a few minutes to be issued by Let's Encrypt"
-    print_warning "Check logs with: docker-compose -f docker-compose.traefik.yml logs traefik"
+    print_warning "Check logs with: $COMPOSE_CMD -f docker-compose.traefik.yml logs traefik"
 else
     print_error "Some services failed to start. Check logs with:"
-    echo "docker-compose -f docker-compose.traefik.yml logs"
+    echo "$COMPOSE_CMD -f docker-compose.traefik.yml logs"
     exit 1
 fi
