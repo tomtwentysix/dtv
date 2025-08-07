@@ -241,6 +241,7 @@ export default function Home() {
                           muted
                           controls={false}
                           preload="metadata"
+                          poster={media.url + '#t=1'}
                         />
                       ) : (
                         <img
@@ -251,8 +252,8 @@ export default function Home() {
                       )}
                       <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     </div>
-                    <CardContent className="p-6">
-                      {media.tags && media.tags.length > 0 && (
+                    {media.tags && media.tags.length > 0 && (
+                      <CardContent className="p-6">
                         <div className="flex flex-wrap gap-2">
                           {media.tags.map((tag: string, index: number) => (
                             <span
@@ -263,8 +264,8 @@ export default function Home() {
                             </span>
                           ))}
                         </div>
-                      )}
-                    </CardContent>
+                      </CardContent>
+                    )}
                   </Card>
                 ))}
               </div>
