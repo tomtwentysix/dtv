@@ -325,9 +325,9 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-4xl mx-auto text-center">
             <p className="text-xl text-gray-600 dark:text-gray-400 mb-8">Our clients are:</p>
-            <ul className="text-lg text-gray-600 dark:text-gray-400 space-y-4 mb-8">
+            <ul className="text-lg text-gray-600 dark:text-gray-400 space-y-4 mb-8 list-none">
               <li>• Creative agencies & brand leaders</li>
               <li>• Luxury event producers & performers</li>
               <li>• Musicians, labels & visual artists</li>
@@ -385,7 +385,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-4xl mx-auto text-center">
             <p className="text-xl text-gray-600 dark:text-gray-400 mb-8">
               Every project is different but our process is always rooted in:
             </p>
@@ -415,7 +415,7 @@ export default function Home() {
                 </p>
               </Card>
             </div>
-            <p className="text-xl text-gray-600 dark:text-gray-400 text-center">
+            <p className="text-xl text-gray-600 dark:text-gray-400">
               We move fast, think ahead, and deliver with polish.
             </p>
           </div>
@@ -466,7 +466,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-4xl mx-auto text-center">
             <p className="text-xl text-gray-600 dark:text-gray-400 mb-8">
               For agencies, brands, and performers who need ongoing, high quality video: we offer monthly retainers built around your needs.
             </p>
@@ -482,7 +482,7 @@ export default function Home() {
               </ul>
             </Card>
 
-            <div className="text-center">
+            <div>
               <p className="text-xl text-gray-600 dark:text-gray-400 mb-4">
                 The best stories are told over time, not just once.
               </p>
@@ -538,18 +538,18 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-4xl mx-auto text-center">
             <p className="text-xl text-gray-600 dark:text-gray-400 mb-8">
               We've had the privilege of collaborating with leading teams and performers, including:
             </p>
             
-            <div className="text-center mb-8">
+            <div className="mb-8">
               <p className="text-lg font-semibold text-gray-800 dark:text-gray-200">
                 The Function Band · Denfield Advertising Agency · Cosmic Violet Events · Molto Music Group · Beat Play Live · C2C · Crystal Productions
               </p>
             </div>
 
-            <p className="text-lg text-gray-600 dark:text-gray-400 text-center">
+            <p className="text-lg text-gray-600 dark:text-gray-400">
               From fast turnaround campaigns to high end celebrations and content that lives far beyond the event, we bring the same energy, care, and cinematic quality to everything we do.
             </p>
           </div>
