@@ -26,7 +26,8 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  closestCorners
+  closestCorners,
+  useDroppable
 } from '@dnd-kit/core';
 import {
   SortableContext,
@@ -83,13 +84,18 @@ function DraggablePermission({ permission }: { permission: any }) {
 }
 
 // Drop zone for roles
-function RoleDropZone({ role, permissions, onDrop, onRemove }: { role: any; permissions: any[]; onDrop: (permissionId: string, roleId: string) => void; onRemove: (roleId: string, permissionId: string) => void }) {
-  const [isOver, setIsOver] = useState(false);
+function RoleDropZone({ role, permissions, onDrop, onRemove, onEdit, onDelete }: { role: any; permissions: any[]; onDrop: (permissionId: string, roleId: string) => void; onRemove: (roleId: string, permissionId: string) => void; onEdit?: (roleId: string) => void; onDelete?: (roleId: string) => void }) {
   const isClientRole = role.name === 'Client';
   const isReadOnly = isClientRole;
+  
+  const { isOver, setNodeRef } = useDroppable({
+    id: role.id,
+    disabled: isReadOnly,
+  });
 
   return (
     <div 
+      ref={setNodeRef}
       className={`border-2 border-dashed rounded-lg p-4 transition-all ${
         isReadOnly 
           ? 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 opacity-60' 
@@ -97,27 +103,6 @@ function RoleDropZone({ role, permissions, onDrop, onRemove }: { role: any; perm
             ? 'border-accent bg-accent/5' 
             : 'border-gray-300 dark:border-gray-600'
       }`}
-      onDragOver={(e) => {
-        if (!isReadOnly) {
-          e.preventDefault();
-          setIsOver(true);
-        }
-      }}
-      onDragLeave={() => {
-        if (!isReadOnly) {
-          setIsOver(false);
-        }
-      }}
-      onDrop={(e) => {
-        if (!isReadOnly) {
-          e.preventDefault();
-          setIsOver(false);
-          const permissionId = e.dataTransfer.getData('text/plain');
-          if (permissionId) {
-            onDrop(permissionId, role.id);
-          }
-        }
-      }}
     >
       <div className="flex items-center justify-between mb-2">
         <h4 className="font-semibold flex items-center">
@@ -130,10 +115,20 @@ function RoleDropZone({ role, permissions, onDrop, onRemove }: { role: any; perm
           )}
         </h4>
         <div className="flex space-x-2">
-          <Button variant="ghost" size="sm" disabled={isReadOnly}>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            disabled={isReadOnly}
+            onClick={() => !isReadOnly && onEdit && onEdit(role.id)}
+          >
             <Edit className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="sm" disabled={isReadOnly}>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            disabled={isReadOnly}
+            onClick={() => !isReadOnly && onDelete && onDelete(role.id)}
+          >
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
@@ -186,6 +181,8 @@ export default function AdminRoles() {
   const { toast } = useToast();
   const [isCreateRoleDialogOpen, setIsCreateRoleDialogOpen] = useState(false);
   const [isCreatePermissionDialogOpen, setIsCreatePermissionDialogOpen] = useState(false);
+  const [isEditRoleDialogOpen, setIsEditRoleDialogOpen] = useState(false);
+  const [editingRole, setEditingRole] = useState<any>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [showInstructions, setShowInstructions] = useState(true);
   
@@ -267,6 +264,14 @@ export default function AdminRoles() {
     },
   });
 
+  const editRoleForm = useForm<CreateRoleFormData>({
+    resolver: zodResolver(insertRoleSchema),
+    defaultValues: {
+      name: "",
+      description: "",
+    },
+  });
+
   const deleteRoleMutation = useMutation({
     mutationFn: async (roleId: string) => {
       await apiRequest("DELETE", `/api/roles/${roleId}`);
@@ -281,6 +286,30 @@ export default function AdminRoles() {
     onError: (error: Error) => {
       toast({
         title: "Failed to delete role",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const editRoleMutation = useMutation({
+    mutationFn: async ({ roleId, data }: { roleId: string; data: CreateRoleFormData }) => {
+      const res = await apiRequest("PUT", `/api/roles/${roleId}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/roles"] });
+      toast({
+        title: "Role updated",
+        description: "Role has been successfully updated.",
+      });
+      setIsEditRoleDialogOpen(false);
+      setEditingRole(null);
+      editRoleForm.reset();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to update role",
         description: error.message,
         variant: "destructive",
       });
@@ -333,6 +362,24 @@ export default function AdminRoles() {
 
   const onCreatePermission = (data: CreatePermissionFormData) => {
     createPermissionMutation.mutate(data);
+  };
+
+  const onEditRole = (data: CreateRoleFormData) => {
+    if (editingRole) {
+      editRoleMutation.mutate({ roleId: editingRole.id, data });
+    }
+  };
+
+  const handleEditRole = (roleId: string) => {
+    const role = (roles as any)?.find((r: any) => r.id === roleId);
+    if (role) {
+      setEditingRole(role);
+      editRoleForm.reset({
+        name: role.name,
+        description: role.description || "",
+      });
+      setIsEditRoleDialogOpen(true);
+    }
   };
 
   const handleDeleteRole = (roleId: string) => {
@@ -530,6 +577,74 @@ export default function AdminRoles() {
                   </form>
                 </DialogContent>
               </Dialog>
+
+              {/* Edit Role Dialog */}
+              <Dialog open={isEditRoleDialogOpen} onOpenChange={setIsEditRoleDialogOpen}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Edit Role</DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={editRoleForm.handleSubmit(onEditRole)} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-role-name">Role Name</Label>
+                      <Input
+                        id="edit-role-name"
+                        {...editRoleForm.register("name")}
+                        placeholder="Enter role name"
+                        className={editRoleForm.formState.errors.name ? "border-destructive" : ""}
+                      />
+                      {editRoleForm.formState.errors.name && (
+                        <p className="text-sm text-destructive">
+                          {editRoleForm.formState.errors.name.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-role-description">Description</Label>
+                      <Textarea
+                        id="edit-role-description"
+                        {...editRoleForm.register("description")}
+                        placeholder="Describe this role"
+                        className={editRoleForm.formState.errors.description ? "border-destructive" : ""}
+                      />
+                      {editRoleForm.formState.errors.description && (
+                        <p className="text-sm text-destructive">
+                          {editRoleForm.formState.errors.description.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex justify-end space-x-2 pt-4">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setIsEditRoleDialogOpen(false);
+                          setEditingRole(null);
+                          editRoleForm.reset();
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="submit"
+                        className="btn-primary"
+                        disabled={editRoleMutation.isPending}
+                      >
+                        {editRoleMutation.isPending ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Updating...
+                          </>
+                        ) : (
+                          "Update Role"
+                        )}
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
 
@@ -591,7 +706,7 @@ export default function AdminRoles() {
                     </p>
                   </div>
                 ) : (
-                  <SortableContext items={(roles as any)?.map((role: any) => role.id) || []} strategy={verticalListSortingStrategy}>
+                  <div className="space-y-4">
                     {(roles as any)?.map((role: any) => (
                       <RoleDropZone
                         key={role.id}
@@ -599,9 +714,11 @@ export default function AdminRoles() {
                         permissions={availablePermissions}
                         onDrop={handleAssignPermission}
                         onRemove={handleRemovePermission}
+                        onEdit={handleEditRole}
+                        onDelete={handleDeleteRole}
                       />
                     ))}
-                  </SortableContext>
+                  </div>
                 )}
               </div>
 
