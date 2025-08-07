@@ -9,7 +9,7 @@ import { useEffect, useState, useRef } from "react";
 import { getBackgroundMedia, useWebsiteSettings } from "@/lib/background-utils";
 
 export default function Home() {
-  const { data: featuredMedia, isLoading } = useQuery({
+  const { data: featuredMedia, isLoading } = useQuery<any[]>({
     queryKey: ["/api/media/featured"],
   });
 
@@ -223,12 +223,60 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="text-center mt-12">
-            <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-8">
-              <p className="text-lg text-gray-600 dark:text-gray-400">
-                Insert showreel embed to view
-              </p>
-            </div>
+          {/* Featured Work */}
+          <div className="mt-16">
+            <h3 className="text-3xl font-bold text-center mb-12">Featured Work</h3>
+            {isLoading ? (
+              <div className="flex items-center justify-center min-h-[200px]">
+                <Loader2 className="h-8 w-8 animate-spin" />
+              </div>
+            ) : featuredMedia && featuredMedia.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {featuredMedia.map((media: any) => (
+                  <Card key={media.id} className="group overflow-hidden glass-card hover:shadow-lg transition-all duration-300">
+                    <div className="relative aspect-video overflow-hidden">
+                      {media.type === 'video' ? (
+                        <video
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          src={media.url}
+                          muted
+                          controls={false}
+                          preload="metadata"
+                        />
+                      ) : (
+                        <img
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          src={media.url}
+                          alt={media.title}
+                        />
+                      )}
+                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    </div>
+                    <CardContent className="p-6">
+                      <h4 className="text-lg font-semibold mb-2 group-hover:text-primary transition-colors">
+                        {media.title}
+                      </h4>
+                      {media.tags && media.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {media.tags.map((tag: string, index: number) => (
+                            <span
+                              key={index}
+                              className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-800 rounded-full text-gray-600 dark:text-gray-400"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-gray-600 dark:text-gray-400">No featured work available at the moment.</p>
+              </div>
+            )}
           </div>
         </div>
       </section>
