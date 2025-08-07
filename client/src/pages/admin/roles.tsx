@@ -728,29 +728,31 @@ export default function AdminRoles() {
                   <Key className="mr-2 h-6 w-6" />
                   Available Permissions
                 </h2>
-                {permissionsLoading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-6 w-6 animate-spin" />
-                  </div>
-                ) : (permissions as any)?.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Key className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-                      No permissions found
-                    </h3>
-                    <p className="text-gray-500 dark:text-gray-400">
-                      Create your first permission to get started.
-                    </p>
-                  </div>
-                ) : (
-                  <SortableContext items={availablePermissions.map((p: any) => p.id)} strategy={verticalListSortingStrategy}>
-                    <div className="space-y-3">
-                      {availablePermissions.map((permission: any) => (
-                        <DraggablePermission key={permission.id} permission={permission} />
-                      ))}
+                <div className="h-[calc(100vh-300px)] overflow-y-auto border rounded-lg bg-white dark:bg-gray-900 p-4">
+                  {permissionsLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin" />
                     </div>
-                  </SortableContext>
-                )}
+                  ) : (permissions as any)?.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Key className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                        No permissions found
+                      </h3>
+                      <p className="text-gray-500 dark:text-gray-400">
+                        Create your first permission to get started.
+                      </p>
+                    </div>
+                  ) : (
+                    <SortableContext items={availablePermissions.map((p: any) => p.id)} strategy={verticalListSortingStrategy}>
+                      <div className="space-y-3">
+                        {availablePermissions.map((permission: any) => (
+                          <DraggablePermission key={permission.id} permission={permission} />
+                        ))}
+                      </div>
+                    </SortableContext>
+                  )}
+                </div>
               </div>
             </div>
 
