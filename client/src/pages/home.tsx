@@ -235,13 +235,13 @@ export default function Home() {
           <div className="absolute inset-0 hero-video-overlay" />
         )}
         
-        <div className="relative z-10 text-center max-w-4xl mx-auto px-4 animate-fade-in">
-          <h1 className="text-6xl md:text-8xl font-black mb-6 leading-tight">
+        <div className="relative z-10 text-center max-w-4xl mx-auto px-4 animate-fade-in hero-content">
+          <h1 className="font-black mb-6 leading-tight">
             <span className="hero-title">Cinematic Video.</span>
             <span className="block hero-accent">Creative Direction.</span>
             <span className="block hero-accent">Strategic Delivery.</span>
           </h1>
-          <p className="text-xl md:text-2xl mb-8 hero-subtitle max-w-2xl mx-auto">
+          <p className="mb-8 hero-subtitle max-w-2xl mx-auto">
             We're a video production team creating bold story driven content for brands, agencies, artists and events.
           </p>
           <div className="flex justify-center">
