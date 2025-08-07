@@ -14,9 +14,10 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertClientSchema, type Client, type InsertClient } from "@shared/schema";
-import { Plus, Edit2, Trash2, Mail, Phone, Building, Users, Search, Filter, X } from "lucide-react";
+import { Plus, Edit2, Trash2, Mail, Phone, Building, Users, Search, Filter, X, Key, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type ClientFormData = {
   name: string;
@@ -48,6 +49,7 @@ export default function ClientsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [companyFilter, setCompanyFilter] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
+  const [resetPassword, setResetPassword] = useState(false);
   const { toast } = useToast();
 
   const { data: clients = [], isLoading } = useQuery<Client[]>({
@@ -128,10 +130,26 @@ export default function ClientsPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
       setIsDialogOpen(false);
       setEditingClient(null);
+      setResetPassword(false);
       toast({ title: "Client updated successfully" });
     },
     onError: () => {
       toast({ title: "Failed to update client", variant: "destructive" });
+    },
+  });
+
+  const resetPasswordMutation = useMutation({
+    mutationFn: ({ id, password }: { id: string; password: string }) =>
+      apiRequest("PUT", `/api/clients/${id}/reset-password`, { password }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
+      setIsDialogOpen(false);
+      setEditingClient(null);
+      setResetPassword(false);
+      toast({ title: "Password reset successfully" });
+    },
+    onError: () => {
+      toast({ title: "Failed to reset password", variant: "destructive" });
     },
   });
 
@@ -161,7 +179,14 @@ export default function ClientsPage() {
 
   const onSubmit = (data: ClientFormData) => {
     if (editingClient) {
-      updateClientMutation.mutate({ id: editingClient.id, data });
+      if (resetPassword && data.password) {
+        // Handle password reset separately
+        resetPasswordMutation.mutate({ id: editingClient.id, password: data.password });
+      } else {
+        // Regular client info update (exclude password fields)
+        const { username, password, ...updateData } = data;
+        updateClientMutation.mutate({ id: editingClient.id, data: updateData });
+      }
     } else {
       createClientMutation.mutate(data);
     }
@@ -169,6 +194,7 @@ export default function ClientsPage() {
 
   const handleEdit = (client: Client) => {
     setEditingClient(client);
+    setResetPassword(false);
     form.reset({
       name: client.name,
       email: client.email,
@@ -183,6 +209,7 @@ export default function ClientsPage() {
 
   const handleAddNew = () => {
     setEditingClient(null);
+    setResetPassword(false);
     form.reset({
       name: "",
       email: "",
@@ -315,38 +342,66 @@ export default function ClientsPage() {
                     </FormItem>
                   )}
                 />
-                {!editingClient && (
-                  <>
-                    <div className="border-t pt-4">
-                      <h4 className="text-sm font-medium mb-3 text-gray-900 dark:text-gray-100">Client Login Credentials</h4>
-                      <FormField
-                        control={form.control}
-                        name="username"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Username</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Client login username" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
+                {/* Login Credentials Section */}
+                {!editingClient ? (
+                  <div className="border-t pt-4">
+                    <h4 className="text-sm font-medium mb-3 text-gray-900 dark:text-gray-100">Client Login Credentials</h4>
+                    <FormField
+                      control={form.control}
+                      name="username"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Username</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Client login username" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Password</FormLabel>
+                          <FormControl>
+                            <Input type="password" placeholder="Client login password" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                ) : (
+                  <div className="border-t pt-4">
+                    <div className="flex items-center space-x-2 mb-3">
+                      <Checkbox 
+                        id="resetPassword" 
+                        checked={resetPassword} 
+                        onCheckedChange={(checked) => setResetPassword(checked === true)}
                       />
+                      <label htmlFor="resetPassword" className="text-sm font-medium text-gray-900 dark:text-gray-100 cursor-pointer flex items-center">
+                        <Key className="h-4 w-4 mr-2 text-orange-600" />
+                        Reset client password
+                      </label>
+                    </div>
+                    {resetPassword && (
                       <FormField
                         control={form.control}
                         name="password"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Password</FormLabel>
+                            <FormLabel>New Password</FormLabel>
                             <FormControl>
-                              <Input type="password" placeholder="Client login password" {...field} />
+                              <Input type="password" placeholder="Enter new password" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
-                    </div>
-                  </>
+                    )}
+                  </div>
                 )}
                 <div className="flex justify-end space-x-2 pt-4">
                   <Button
@@ -358,10 +413,13 @@ export default function ClientsPage() {
                   </Button>
                   <Button
                     type="submit"
-                    disabled={createClientMutation.isPending || updateClientMutation.isPending}
+                    disabled={createClientMutation.isPending || updateClientMutation.isPending || resetPasswordMutation.isPending}
                     className="bg-teal-600 hover:bg-teal-700"
                   >
-                    {editingClient ? "Update" : "Create"}
+                    {createClientMutation.isPending || updateClientMutation.isPending || resetPasswordMutation.isPending ? (
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    ) : null}
+                    {editingClient && resetPassword ? "Reset Password" : editingClient ? "Update" : "Create"}
                   </Button>
                 </div>
               </form>

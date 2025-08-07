@@ -568,6 +568,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Client password reset route
+  app.put("/api/clients/:id/reset-password", requireAuth, requirePermission("edit:clients"), async (req, res) => {
+    try {
+      const { password } = req.body;
+      
+      if (!password) {
+        return res.status(400).json({ message: "Password is required" });
+      }
+
+      // Get the client to make sure it exists
+      const client = await storage.getClient(req.params.id);
+      if (!client) {
+        return res.status(404).json({ message: "Client not found" });
+      }
+
+      // Find the client user associated with this client
+      const clientUser = await storage.getClientUserByClientId(client.id);
+      if (!clientUser) {
+        return res.status(404).json({ message: "Client user not found" });
+      }
+
+      // Hash the new password using the client auth format (salt:hash)
+      const { scrypt, randomBytes } = await import("crypto");
+      const { promisify } = await import("util");
+      const scryptAsync = promisify(scrypt);
+      
+      const salt = randomBytes(16).toString("hex");
+      const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+      const hashedPassword = `${salt}:${buf.toString("hex")}`;
+
+      // Update the client user's password
+      await storage.updateClientUser(clientUser.id, { password: hashedPassword });
+
+      res.json({ message: "Password reset successfully" });
+    } catch (error) {
+      console.error("Password reset error:", error);
+      res.status(500).json({ message: "Failed to reset password" });
+    }
+  });
+
   // Client User management routes for admins
   app.post("/api/clients/:clientId/user", requireAuth, requirePermission("edit:clients"), async (req, res) => {
     try {
