@@ -29,8 +29,8 @@ jobs:
         file: ./Dockerfile.prod
         push: true
         tags: |
-          ghcr.io/${{ github.repository_owner }}/dt-visuals:prod-latest
-          ghcr.io/${{ github.repository_owner }}/dt-visuals:prod-${{ github.sha }}
+          ghcr.io/${{ github.repository_owner }}/dtv:prod-latest
+          ghcr.io/${{ github.repository_owner }}/dtv:prod-${{ github.sha }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
     
@@ -41,8 +41,8 @@ jobs:
         file: ./Dockerfile.dev
         push: true
         tags: |
-          ghcr.io/${{ github.repository_owner }}/dt-visuals:dev-latest
-          ghcr.io/${{ github.repository_owner }}/dt-visuals:dev-${{ github.sha }}
+          ghcr.io/${{ github.repository_owner }}/dtv:dev-latest
+          ghcr.io/${{ github.repository_owner }}/dtv:dev-${{ github.sha }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
     
@@ -60,8 +60,8 @@ jobs:
           echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
           
           # Pull latest images
-          docker pull ghcr.io/${{ github.repository_owner }}/dt-visuals:prod-latest
-          docker pull ghcr.io/${{ github.repository_owner }}/dt-visuals:dev-latest
+          docker pull ghcr.io/${{ github.repository_owner }}/dtv:prod-latest
+          docker pull ghcr.io/${{ github.repository_owner }}/dtv:dev-latest
           
           # Update docker-compose with new images
           docker-compose down

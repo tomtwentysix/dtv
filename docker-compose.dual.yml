@@ -20,7 +20,7 @@ services:
 
   # Production App
   app-prod:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/dt-visuals:prod-latest
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/dtv:prod-latest
     container_name: dt-visuals-prod
     restart: unless-stopped
     environment:
@@ -43,7 +43,7 @@ services:
 
   # Development App
   app-dev:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/dt-visuals:dev-latest
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/dtv:dev-latest
     container_name: dt-visuals-dev
     restart: unless-stopped
     environment:

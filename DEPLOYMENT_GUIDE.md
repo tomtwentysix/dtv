@@ -48,8 +48,8 @@ If your repository is private, you have several options:
 **Option 1: Clone Repository (Recommended)**
 ```bash
 # Clone your private repository
-git clone https://github.com/YOUR_USERNAME/dt-visuals.git
-cd dt-visuals
+git clone https://github.com/YOUR_USERNAME/dtv.git
+cd dtv
 
 # Run authentication script
 chmod +x auth-setup.sh
@@ -71,8 +71,8 @@ sudo apt update && sudo apt install gh
 
 # Authenticate and download
 gh auth login
-gh repo clone YOUR_USERNAME/dt-visuals
-cd dt-visuals
+gh repo clone YOUR_USERNAME/dtv
+cd dtv
 chmod +x auth-setup.sh
 ./auth-setup.sh
 ```
@@ -120,7 +120,7 @@ SSH into your server and choose the appropriate method:
 **For Public Repositories:**
 ```bash
 # Download and run setup script
-wget https://raw.githubusercontent.com/YOUR_USERNAME/dt-visuals/main/setup-dual-deploy.sh
+wget https://raw.githubusercontent.com/YOUR_USERNAME/dtv/main/setup-dual-deploy.sh
 chmod +x setup-dual-deploy.sh
 ./setup-dual-deploy.sh
 ```
@@ -128,8 +128,8 @@ chmod +x setup-dual-deploy.sh
 **For Private Repositories:**
 ```bash
 # Clone repository (if not already done)
-git clone https://github.com/YOUR_USERNAME/dt-visuals.git
-cd dt-visuals
+git clone https://github.com/YOUR_USERNAME/dtv.git
+cd dtv
 
 # Run setup script
 chmod +x setup-dual-deploy.sh
