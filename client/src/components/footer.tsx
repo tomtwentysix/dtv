@@ -50,8 +50,7 @@ export function Footer() {
               )}
             </div>
             <p className="text-gray-400 text-sm leading-relaxed">
-              Creating cinematic experiences through professional media production, 
-              storytelling, and visual artistry.
+              DT Visuals | Video Production for Luxury Events, Brands & Music | Leicestershire & UK
             </p>
           </div>
 
