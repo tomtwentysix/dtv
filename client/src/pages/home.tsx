@@ -83,7 +83,7 @@ export default function Home() {
       return 'translateY(0px)';
     }
     const sectionScroll = Math.max(0, scrollY - sectionOffsets[sectionName]);
-    const maxMovement = window.innerHeight * 0.15; // Limit movement to 15% of viewport height
+    const maxMovement = window.innerHeight * 0.25; // Limit movement to 25% of viewport height
     const movement = Math.min(sectionScroll * intensity, maxMovement);
     return `translateY(${movement}px)`;
   };
@@ -102,9 +102,9 @@ export default function Home() {
             <video
               className="absolute inset-0 w-full object-cover parallax-bg"
               style={{
-                height: '140%',
-                top: '-20%',
-                transform: getParallaxTransform('hero', 0.3),
+                height: '180%',
+                top: '-40%',
+                transform: getParallaxTransform('hero', 0.4),
               }}
               src={heroMedia.url}
               autoPlay
@@ -120,10 +120,10 @@ export default function Home() {
               style={{
                 backgroundImage: `url('${heroMedia.url}')`,
                 width: '100%',
-                height: '140%',
-                top: '-20%',
+                height: '180%',
+                top: '-40%',
                 left: '0',
-                transform: getParallaxTransform('hero', 0.3),
+                transform: getParallaxTransform('hero', 0.4),
               }}
             />
           );
@@ -161,9 +161,9 @@ export default function Home() {
             <video
               className="absolute inset-0 w-full object-cover parallax-bg opacity-20"
               style={{
-                height: '150%',
-                top: '-25%',
-                transform: getParallaxTransform('what_we_do', 0.2),
+                height: '200%',
+                top: '-50%',
+                transform: getParallaxTransform('what_we_do', 0.3),
               }}
               src={whatWeDoMedia.url}
               autoPlay
@@ -179,10 +179,10 @@ export default function Home() {
               style={{
                 backgroundImage: `url('${whatWeDoMedia.url}')`,
                 width: '100%',
-                height: '150%',
-                top: '-25%',
+                height: '200%',
+                top: '-50%',
                 left: '0',
-                transform: getParallaxTransform('what_we_do', 0.2),
+                transform: getParallaxTransform('what_we_do', 0.3),
               }}
             />
           );
@@ -224,9 +224,9 @@ export default function Home() {
             <video
               className="absolute inset-0 w-full object-cover parallax-bg opacity-10"
               style={{
-                height: '140%',
-                top: '-20%',
-                transform: getParallaxTransform('who_we_work_with', 0.15),
+                height: '170%',
+                top: '-35%',
+                transform: getParallaxTransform('who_we_work_with', 0.25),
               }}
               src={whoWeWorkWithMedia.url}
               autoPlay
@@ -242,10 +242,10 @@ export default function Home() {
               style={{
                 backgroundImage: `url('${whoWeWorkWithMedia.url}')`,
                 width: '100%',
-                height: '140%',
-                top: '-20%',
+                height: '170%',
+                top: '-35%',
                 left: '0',
-                transform: getParallaxTransform('who_we_work_with', 0.15),
+                transform: getParallaxTransform('who_we_work_with', 0.25),
               }}
             />
           );
@@ -284,9 +284,9 @@ export default function Home() {
             <video
               className="absolute inset-0 w-full object-cover parallax-bg opacity-10"
               style={{
-                height: '140%',
-                top: '-20%',
-                transform: getParallaxTransform('how_we_work', 0.15),
+                height: '170%',
+                top: '-35%',
+                transform: getParallaxTransform('how_we_work', 0.25),
               }}
               src={howWeWorkMedia.url}
               autoPlay
@@ -302,10 +302,10 @@ export default function Home() {
               style={{
                 backgroundImage: `url('${howWeWorkMedia.url}')`,
                 width: '100%',
-                height: '140%',
-                top: '-20%',
+                height: '170%',
+                top: '-35%',
                 left: '0',
-                transform: getParallaxTransform('how_we_work', 0.15),
+                transform: getParallaxTransform('how_we_work', 0.25),
               }}
             />
           );
@@ -365,9 +365,9 @@ export default function Home() {
             <video
               className="absolute inset-0 w-full object-cover parallax-bg opacity-10"
               style={{
-                height: '140%',
-                top: '-20%',
-                transform: getParallaxTransform('retainer_partnerships', 0.15),
+                height: '170%',
+                top: '-35%',
+                transform: getParallaxTransform('retainer_partnerships', 0.25),
               }}
               src={retainerMedia.url}
               autoPlay
@@ -383,10 +383,10 @@ export default function Home() {
               style={{
                 backgroundImage: `url('${retainerMedia.url}')`,
                 width: '100%',
-                height: '140%',
-                top: '-20%',
+                height: '170%',
+                top: '-35%',
                 left: '0',
-                transform: getParallaxTransform('retainer_partnerships', 0.15),
+                transform: getParallaxTransform('retainer_partnerships', 0.25),
               }}
             />
           );
@@ -437,9 +437,9 @@ export default function Home() {
             <video
               className="absolute inset-0 w-full object-cover parallax-bg opacity-10"
               style={{
-                height: '140%',
-                top: '-20%',
-                transform: getParallaxTransform('who_weve_worked_with', 0.15),
+                height: '170%',
+                top: '-35%',
+                transform: getParallaxTransform('who_weve_worked_with', 0.25),
               }}
               src={workedWithMedia.url}
               autoPlay
@@ -455,10 +455,10 @@ export default function Home() {
               style={{
                 backgroundImage: `url('${workedWithMedia.url}')`,
                 width: '100%',
-                height: '140%',
-                top: '-20%',
+                height: '170%',
+                top: '-35%',
                 left: '0',
-                transform: getParallaxTransform('who_weve_worked_with', 0.15),
+                transform: getParallaxTransform('who_weve_worked_with', 0.25),
               }}
             />
           );
@@ -499,9 +499,9 @@ export default function Home() {
             <video
               className="absolute inset-0 w-full object-cover parallax-bg opacity-10"
               style={{
-                height: '140%',
-                top: '-20%',
-                transform: getParallaxTransform('lets_connect', 0.15),
+                height: '170%',
+                top: '-35%',
+                transform: getParallaxTransform('lets_connect', 0.25),
               }}
               src={connectMedia.url}
               autoPlay
@@ -517,10 +517,10 @@ export default function Home() {
               style={{
                 backgroundImage: `url('${connectMedia.url}')`,
                 width: '100%',
-                height: '140%',
-                top: '-20%',
+                height: '170%',
+                top: '-35%',
                 left: '0',
-                transform: getParallaxTransform('lets_connect', 0.15),
+                transform: getParallaxTransform('lets_connect', 0.25),
               }}
             />
           );
