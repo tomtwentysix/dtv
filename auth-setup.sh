@@ -26,12 +26,12 @@ echo "4. Click 'Generate token'"
 echo "5. Copy the token (you won't see it again!)"
 echo ""
 
-read -p "Enter your GitHub username: " github_username
-read -s -p "Enter your GitHub Personal Access Token: " github_token
+read -p "Enter your GitHub username: " GITHUB_USERNAME
+read -s -p "Enter your GitHub Personal Access Token: " GITHUB_TOKEN
 echo ""
 
 print_info "Testing authentication..."
-echo $github_token | docker login ghcr.io -u $github_username --password-stdin
+echo $GITHUB_TOKEN | docker login ghcr.io -u $GITHUB_USERNAME --password-stdin
 
 if [ $? -eq 0 ]; then
     print_success "Authentication successful!"
@@ -49,7 +49,9 @@ Requires=docker.service
 [Service]
 Type=oneshot
 User=$USER
-ExecStart=/bin/bash -c 'echo $github_token | docker login ghcr.io -u $github_username --password-stdin'
+Environment="GITHUB_TOKEN=$GITHUB_TOKEN"
+Environment="GITHUB_USERNAME=$GITHUB_USERNAME"
+ExecStart=/bin/bash -c 'echo \$GITHUB_TOKEN | docker login ghcr.io -u \$GITHUB_USERNAME --password-stdin'
 RemainAfterExit=yes
 
 [Install]

@@ -77,6 +77,16 @@ chmod +x auth-setup.sh
 ./auth-setup.sh
 ```
 
+**Option 4: Environment Variables**
+```bash
+# Set authentication variables for both scripts
+export GITHUB_USERNAME=your-github-username
+export GITHUB_TOKEN=your-personal-access-token
+
+# Run setup without prompts
+./setup-dual-deploy.sh
+```
+
 When prompted:
 1. **GitHub Username**: Your GitHub username
 2. **Personal Access Token**: Create one at https://github.com/settings/tokens/new
@@ -109,6 +119,20 @@ cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
 
 # Copy private key for GitHub secret
 cat ~/.ssh/id_rsa
+```
+
+### Set Environment Variables (For Private Repos)
+
+If using a private repository, set these on your server:
+```bash
+# Add to ~/.bashrc or ~/.profile for persistence
+echo 'export GITHUB_USERNAME=your-github-username' >> ~/.bashrc
+echo 'export GITHUB_TOKEN=your-personal-access-token' >> ~/.bashrc
+source ~/.bashrc
+
+# Or set temporarily for current session
+export GITHUB_USERNAME=your-github-username
+export GITHUB_TOKEN=your-personal-access-token
 ```
 
 ## 🏗️ Step 3: Server Deployment Setup
