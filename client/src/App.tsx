@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/hooks/use-theme";
+import { useDynamicFavicon } from "@/hooks/use-dynamic-favicon";
 import { ProtectedRoute } from "@/lib/protected-route";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
@@ -53,12 +54,19 @@ function Router() {
   );
 }
 
+// Component to handle dynamic favicon updates
+function FaviconManager() {
+  useDynamicFavicon();
+  return null;
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <AuthProvider>
           <TooltipProvider>
+            <FaviconManager />
             <Toaster />
             <Router />
           </TooltipProvider>
