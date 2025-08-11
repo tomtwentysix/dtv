@@ -15,8 +15,10 @@ services:
       - certbot-www:/var/www/certbot:ro
       - certbot-conf:/etc/letsencrypt:ro
     depends_on:
-      - app-prod
-      - app-dev
+      app-prod:
+        condition: service_started
+      app-dev:
+        condition: service_started
 
   # Production App
   app-prod:
