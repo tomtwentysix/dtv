@@ -59,12 +59,6 @@ jobs:
           # Navigate to deployment directory
           cd /opt/dt-visuals
           
-          # Fix Docker rootless port permissions
-          if ! sudo sysctl net.ipv4.ip_unprivileged_port_start | grep -q "= 80"; then
-            echo "net.ipv4.ip_unprivileged_port_start=80" | sudo tee -a /etc/sysctl.conf
-            sudo sysctl -p
-          fi
-          
           # Login to GitHub Container Registry
           echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
           
@@ -72,9 +66,21 @@ jobs:
           docker pull ghcr.io/${{ github.repository_owner }}/dtv:prod-latest
           docker pull ghcr.io/${{ github.repository_owner }}/dtv:dev-latest
           
-          # Update docker-compose with new images
-          docker-compose down
-          docker-compose up -d
+          # Stop and remove all existing containers and networks
+          docker-compose down --remove-orphans --volumes
+          docker system prune -af --volumes
+          
+          # Ensure user is in docker group and restart docker service
+          sudo usermod -aG docker $USER
+          sudo systemctl restart docker
+          sleep 3
+          
+          # Configure system for privileged ports
+          echo "net.ipv4.ip_unprivileged_port_start=80" | sudo tee /etc/sysctl.d/99-docker-ports.conf
+          sudo sysctl --system
+          
+          # Start containers with proper Docker setup
+          sudo -E docker-compose up -d
           
           # Clean up old images
           docker image prune -f
