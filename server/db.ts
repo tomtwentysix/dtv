@@ -7,8 +7,9 @@ if (!process.env.DATABASE_URL) {
 }
 
 // Check if we're in Docker environment (local PostgreSQL)
-const isDockerEnvironment = process.env.DATABASE_URL?.includes('postgres-dev') || 
-  process.env.DATABASE_URL?.includes('postgres-prod');
+const isDockerEnvironment = process.env.DOCKER_ENV === 'true' || 
+  process.env.DATABASE_URL?.includes('db-prod') || 
+  process.env.DATABASE_URL?.includes('db-dev');
 
 // Initialize database connection based on environment
 async function initDB() {

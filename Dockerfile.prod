@@ -34,16 +34,17 @@ FROM base AS production
 # Copy package files
 COPY package*.json ./
 
-# Install only production dependencies
+# Install production dependencies including drizzle-kit for migrations
 RUN npm ci --omit=dev && \
+    npm install drizzle-kit && \
     npm cache clean --force && \
     rm -rf /tmp/*
 
-# Copy built application from builder stage with proper ownership
+# Copy built application from builder stage with proper ownership (exclude development files)
 COPY --from=builder --chown=dtvisuals:nodejs /app/dist ./dist
 COPY --from=builder --chown=dtvisuals:nodejs /app/shared ./shared
 
-# Copy any other necessary files
+# Copy any other necessary files (exclude vite.ts for production)
 COPY --from=builder --chown=dtvisuals:nodejs /app/migrations ./migrations
 
 # Create uploads directory with proper ownership (only what we need)
