@@ -4,12 +4,13 @@ This guide walks you through deploying DT Visuals to your server using GitHub Ac
 
 ## 🎯 What You'll Get
 
-- **Production site**: https://dtvisuals.com
-- **Development site**: https://dev.dtvisuals.com  
-- **Automatic SSL certificates** via Let's Encrypt
+- **Production site**: http://your-server-ip:8080 (or https://your-server-ip:8443 with SSL)
+- **Development site**: http://your-server-ip:8080 (with Host header: dev.dtvisuals.com)
+- **Automatic SSL certificates** via Let's Encrypt (on port 8443)
 - **Separate databases** for production and development
 - **Persistent file uploads** for both environments
 - **Zero-downtime deployments** via GitHub Actions
+- **Non-privileged ports** (8080/8443) to avoid Docker permission issues
 
 ## 📋 Prerequisites
 
@@ -18,7 +19,7 @@ This guide walks you through deploying DT Visuals to your server using GitHub Ac
 - Domain name with DNS pointing to your server:
   - `dtvisuals.com` → Your server IP
   - `dev.dtvisuals.com` → Your server IP
-- Ports 80 and 443 open for web traffic
+- Ports 8080 and 8443 open for web traffic
 
 ### GitHub Requirements
 - GitHub repository (public or private)
