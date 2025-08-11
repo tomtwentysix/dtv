@@ -59,6 +59,12 @@ jobs:
           # Navigate to deployment directory
           cd /opt/dt-visuals
           
+          # Fix Docker rootless port permissions
+          if ! sudo sysctl net.ipv4.ip_unprivileged_port_start | grep -q "= 80"; then
+            echo "net.ipv4.ip_unprivileged_port_start=80" | sudo tee -a /etc/sysctl.conf
+            sudo sysctl -p
+          fi
+          
           # Login to GitHub Container Registry
           echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
           
