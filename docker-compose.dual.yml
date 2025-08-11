@@ -16,9 +16,9 @@ services:
       - certbot-conf:/etc/letsencrypt:ro
     depends_on:
       app-prod:
-        condition: service_started
+        condition: service_healthy
       app-dev:
-        condition: service_started
+        condition: service_healthy
 
   # Production App
   app-prod:

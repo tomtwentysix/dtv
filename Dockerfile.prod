@@ -62,5 +62,5 @@ EXPOSE 5000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD node -e "require('http').get('http://localhost:5000/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
 
-# Production command with inline migrations
-CMD ["sh", "-c", "npm run db:push || echo 'Migration failed, continuing...'; exec npm start"]
+# Production command with forced migrations
+CMD ["sh", "-c", "echo 'Waiting for database...'; sleep 5; npm run db:push || echo 'Migration failed, continuing...'; exec npm start"]
