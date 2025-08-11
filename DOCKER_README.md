@@ -346,20 +346,20 @@ For issues specific to:
 ## File Structure
 ```
 project/
-├── docker-compose.dev.yml      # Development environment
-├── docker-compose.prod.yml     # Production environment
+├── docker-compose.dual.yml     # Dual environment (prod + dev)
+├── docker-compose.letsencrypt.yml # Extended with SSL automation
 ├── Dockerfile.dev              # Development container
 ├── Dockerfile.prod             # Production container
 ├── .env.dev                    # Development environment variables
 ├── .env.prod                   # Production environment variables
 ├── deploy-dev.sh               # Development deployment script
 ├── deploy-prod.sh              # Production deployment script
+├── deploy-with-letsencrypt.sh  # SSL-enabled deployment script
 ├── docker-management.sh        # Management utility script
-├── docker/
-│   └── postgres/
-│       ├── init-dev.sql        # Development database initialization
-│       └── init-prod.sql       # Production database initialization
 └── backups/                    # Backup storage directory
+
+# Note: Database initialization now handled programmatically by server/init-database.ts
+# This provides better environment detection, migration support, and RBAC setup
 ```
 
 This setup provides a robust, scalable Docker deployment solution for the dt.visuals platform with clear separation between development and production environments while maintaining data persistence and easy management.

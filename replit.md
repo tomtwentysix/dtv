@@ -39,7 +39,7 @@ Preferred communication style: Simple, everyday language.
 - **Media Management**: File upload, categorization, tagging, featured media selection, and client-specific media assignment linked to client user accounts.
 - **Website Customization System**: Admin interface for managing background media (images/videos) across all website sections (homepage sections, portfolio, about, services, contact pages) with specific video requirements (auto-play, muted, looped, no controls). Supports dual light/dark mode logo system.
 - **UI/UX Design**: Cinematic dark/light theme, responsive layout, glass morphism effects, cinematic shadows, custom color scheme, and smooth animations. Incorporates user preference for theme-based blank backgrounds and dynamic navigation adjustments.
-- **Deployment Strategy**: Monorepo structure with comprehensive Docker support (Windows/Linux), automatic environment detection (Replit Neon/Docker PostgreSQL) for database configuration and admin user creation, and complete Let's Encrypt SSL automation with automatic certificate generation and renewal.
+- **Deployment Strategy**: Monorepo structure with comprehensive Docker support (Windows/Linux), programmatic database initialization via `server/init-database.ts` with automatic environment detection (Replit Neon/Docker PostgreSQL), RBAC system setup, and complete Let's Encrypt SSL automation with automatic certificate generation and renewal.
 - **Security Considerations**: Secure session configuration, CSRF protection, crypto-secure password hashing, environment-based secret management, and trusted proxy configurations.
 - **Enhanced User Management**: Includes `forename`, `surname`, and `displayName` fields for users with auto-population and improved UI consistency.
 
