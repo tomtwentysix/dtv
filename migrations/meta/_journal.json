@@ -8,6 +8,13 @@
       "when": 1754432179913,
       "tag": "0000_wonderful_mister_fear",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1754951270710,
+      "tag": "0001_silly_frightful_four",
+      "breakpoints": true
     }
   ]
 }

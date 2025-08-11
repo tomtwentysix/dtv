@@ -175,7 +175,7 @@ async function ensureDatabaseSchema() {
       // Try to run Drizzle push programmatically
       try {
         const { execSync } = await import('child_process');
-        execSync('npm run db:push', { 
+        execSync('npx drizzle-kit push', { 
           stdio: 'inherit',
           cwd: process.cwd()
         });
@@ -249,42 +249,95 @@ async function createBasicSchema() {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
 
-    -- Create other essential tables
+    -- Create comprehensive media management tables
     CREATE TABLE IF NOT EXISTS media (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
       title TEXT NOT NULL,
-      description TEXT,
       type TEXT NOT NULL,
-      file_path TEXT NOT NULL,
+      url TEXT NOT NULL,
+      poster_url TEXT,
+      filename TEXT NOT NULL,
       file_size INTEGER,
       mime_type TEXT,
-      tags TEXT[],
       is_featured BOOLEAN DEFAULT false,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      show_in_portfolio BOOLEAN DEFAULT true,
+      tags TEXT[],
+      project_stage TEXT,
+      notes TEXT,
+      client_id VARCHAR,
+      uploaded_by VARCHAR NOT NULL,
+      created_at TIMESTAMP DEFAULT now()
     );
 
     CREATE TABLE IF NOT EXISTS clients (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
       name TEXT NOT NULL,
-      email TEXT,
-      phone TEXT,
+      email TEXT UNIQUE NOT NULL,
       company TEXT,
+      phone TEXT,
       notes TEXT,
       is_active BOOLEAN DEFAULT true,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      created_by VARCHAR NOT NULL,
+      created_at TIMESTAMP DEFAULT now(),
+      updated_at TIMESTAMP DEFAULT now()
     );
 
     CREATE TABLE IF NOT EXISTS client_users (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      client_id UUID REFERENCES clients(id) ON DELETE CASCADE,
+      id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+      client_id VARCHAR NOT NULL,
       username TEXT UNIQUE NOT NULL,
       email TEXT UNIQUE NOT NULL,
       password TEXT NOT NULL,
       is_active BOOLEAN DEFAULT true,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      created_at TIMESTAMP DEFAULT now(),
+      last_login_at TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS media_clients (
+      id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+      media_id VARCHAR NOT NULL,
+      client_id VARCHAR NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS website_settings (
+      id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+      section TEXT UNIQUE NOT NULL,
+      background_image_id VARCHAR,
+      background_video_id VARCHAR,
+      contact_email TEXT,
+      contact_phone TEXT,
+      contact_address TEXT,
+      updated_by VARCHAR NOT NULL,
+      updated_at TIMESTAMP DEFAULT now()
+    );
+
+    CREATE TABLE IF NOT EXISTS branding_settings (
+      id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+      company_name TEXT DEFAULT 'dt.visuals' NOT NULL,
+      show_company_text BOOLEAN DEFAULT true NOT NULL,
+      logo_light_image_id VARCHAR,
+      logo_dark_image_id VARCHAR,
+      favicon_image_id VARCHAR,
+      updated_by VARCHAR NOT NULL,
+      updated_at TIMESTAMP DEFAULT now()
+    );
+
+    CREATE TABLE IF NOT EXISTS media_feedback (
+      id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+      media_id VARCHAR NOT NULL,
+      client_user_id VARCHAR NOT NULL,
+      feedback_text TEXT,
+      rating INTEGER,
+      created_at TIMESTAMP DEFAULT now()
+    );
+
+    CREATE TABLE IF NOT EXISTS media_timeline_notes (
+      id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+      media_id VARCHAR NOT NULL,
+      client_user_id VARCHAR NOT NULL,
+      timestamp_seconds INTEGER NOT NULL,
+      note_text TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT now()
     );
   `;
 
