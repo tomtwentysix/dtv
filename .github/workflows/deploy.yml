@@ -66,9 +66,9 @@ jobs:
           docker pull ghcr.io/${{ github.repository_owner }}/dtv:prod-latest
           docker pull ghcr.io/${{ github.repository_owner }}/dtv:dev-latest
           
-          # Stop and remove all existing containers and networks
-          docker-compose down --remove-orphans --volumes
-          docker system prune -af --volumes
+          # Stop and remove all existing containers and networks (preserve volumes)
+          docker-compose down --remove-orphans
+          docker system prune -af
           
           # Ensure user is in docker group and restart docker service
           sudo usermod -aG docker $USER
