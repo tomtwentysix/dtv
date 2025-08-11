@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  # Extend the existing dual environment with Let's Encrypt automation
+  
+  # Certbot service for SSL certificate management
+  certbot:
+    image: certbot/certbot:latest
+    container_name: dt-visuals-certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+      - ./certbot/logs:/var/log/letsencrypt
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --webroot --webroot-path=/var/www/certbot --email admin@dtvisuals.com --agree-tos --no-eff-email; sleep 12h & wait $${!}; done;'"
+    depends_on:
+      - nginx
+    restart: unless-stopped
+    networks:
+      - dtvisuals-network
+
+  # Enhanced nginx service with Let's Encrypt integration
+  nginx:
+    extends:
+      file: docker-compose.dual.yml
+      service: nginx
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx-letsencrypt-startup.sh:/docker-entrypoint.sh:ro
+      - ./certbot/conf:/etc/letsencrypt:ro
+      - ./certbot/www:/var/www/certbot:ro
+    depends_on:
+      - app-prod
+      - app-dev
+    restart: unless-stopped
+    networks:
+      - dtvisuals-network
+
+networks:
+  dtvisuals-network:
+    external: true

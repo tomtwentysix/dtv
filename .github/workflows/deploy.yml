@@ -67,23 +67,31 @@ jobs:
           docker pull ghcr.io/${{ github.repository_owner }}/dtv:dev-latest
           
           # Stop and remove all existing containers and networks (preserve volumes)
-          docker-compose down --remove-orphans
+          docker-compose -f docker-compose.letsencrypt.yml down --remove-orphans 2>/dev/null || true
+          docker-compose down --remove-orphans 2>/dev/null || true
           docker system prune -af
           
-          # Start containers (Docker should handle port binding automatically)
-          docker-compose up -d
+          # Deploy with Let's Encrypt automation
+          chmod +x deploy-with-letsencrypt.sh
+          ./deploy-with-letsencrypt.sh false
           
           # Wait a moment and check container status
           sleep 10
-          docker-compose ps
+          docker-compose -f docker-compose.letsencrypt.yml ps
           
           # Show logs for troubleshooting
+          echo "=== Let's Encrypt Deployment Status ==="
+          docker-compose -f docker-compose.letsencrypt.yml ps
           echo "=== Nginx Logs ==="
-          docker-compose logs --tail=50 nginx
+          docker-compose -f docker-compose.letsencrypt.yml logs --tail=50 nginx
+          echo "=== Certbot Logs ==="
+          docker-compose -f docker-compose.letsencrypt.yml logs --tail=20 certbot
           echo "=== Production App Logs ==="
-          docker-compose logs --tail=50 app-prod
+          docker-compose -f docker-compose.letsencrypt.yml logs --tail=50 app-prod
           echo "=== Development App Logs ==="
-          docker-compose logs --tail=50 app-dev
+          docker-compose -f docker-compose.letsencrypt.yml logs --tail=50 app-dev
+          echo "=== Certificate Status ==="
+          docker run --rm -v "$(pwd)/certbot/conf:/etc/letsencrypt" certbot/certbot:latest certificates || echo "No certificates found yet"
           
           # Clean up old images
           docker image prune -f
