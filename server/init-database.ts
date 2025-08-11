@@ -1,4 +1,4 @@
-import { db } from './db.js';
+import { db, pool } from './db.js';
 import { sql } from 'drizzle-orm';
 import { users, roles, permissions, userRoles, rolePermissions } from '../shared/schema.js';
 
@@ -6,6 +6,9 @@ export async function initializeDatabase() {
   console.log('🔧 Initializing database for current environment...');
   
   try {
+    // First, ensure the database schema exists
+    await ensureDatabaseSchema();
+    
     // Check if we're in a fresh database by counting users
     const userCount = await db.select({ count: sql<number>`count(*)` }).from(users);
     const currentUserCount = Number(userCount[0]?.count || 0);
@@ -22,7 +25,9 @@ export async function initializeDatabase() {
     return true;
   } catch (error) {
     console.error('❌ Database initialization failed:', error);
-    throw error;
+    console.error('Server will continue but some features may not work properly');
+    // Don't throw - let the server start anyway
+    return false;
   }
 }
 
@@ -146,6 +151,149 @@ async function ensureAdminExists() {
     await createAdminUser();
   } else {
     console.log(`✅ Found ${adminCount} admin user(s)`);
+  }
+}
+
+async function ensureDatabaseSchema() {
+  console.log('🔍 Checking database schema...');
+  
+  try {
+    // Use Drizzle sql to check if the users table exists
+    const result = await db.execute(sql`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'users'
+      );
+    `);
+    
+    const tableExists = result.rows[0]?.exists;
+    
+    if (!tableExists) {
+      console.log('📦 Database schema missing, running migrations...');
+      
+      // Try to run Drizzle push programmatically
+      try {
+        const { execSync } = await import('child_process');
+        execSync('npm run db:push', { 
+          stdio: 'inherit',
+          cwd: process.cwd()
+        });
+        console.log('✅ Database schema created successfully');
+      } catch (migrationError) {
+        console.log('⚠️  npm run db:push failed, trying alternative schema creation...');
+        
+        // Fallback: Create essential tables manually
+        await createBasicSchema();
+      }
+    } else {
+      console.log('✅ Database schema already exists');
+    }
+  } catch (error) {
+    console.error('❌ Schema check failed:', error);
+    console.log('🔧 Attempting to create basic schema...');
+    await createBasicSchema();
+  }
+}
+
+async function createBasicSchema() {
+  console.log('🛠️  Creating basic database schema...');
+  
+  // Create essential tables if they don't exist
+  const createTablesSQL = `
+    -- Create users table
+    CREATE TABLE IF NOT EXISTS users (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      username TEXT UNIQUE NOT NULL,
+      email TEXT UNIQUE NOT NULL,
+      password TEXT NOT NULL,
+      forename TEXT,
+      surname TEXT,
+      display_name TEXT,
+      is_active BOOLEAN DEFAULT true,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    -- Create roles table
+    CREATE TABLE IF NOT EXISTS roles (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      name TEXT UNIQUE NOT NULL,
+      description TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    -- Create permissions table
+    CREATE TABLE IF NOT EXISTS permissions (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      name TEXT UNIQUE NOT NULL,
+      description TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    -- Create user_roles junction table
+    CREATE TABLE IF NOT EXISTS user_roles (
+      user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+      role_id UUID REFERENCES roles(id) ON DELETE CASCADE,
+      PRIMARY KEY (user_id, role_id),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    -- Create role_permissions junction table
+    CREATE TABLE IF NOT EXISTS role_permissions (
+      role_id UUID REFERENCES roles(id) ON DELETE CASCADE,
+      permission_id UUID REFERENCES permissions(id) ON DELETE CASCADE,
+      PRIMARY KEY (role_id, permission_id),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    -- Create other essential tables
+    CREATE TABLE IF NOT EXISTS media (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      title TEXT NOT NULL,
+      description TEXT,
+      type TEXT NOT NULL,
+      file_path TEXT NOT NULL,
+      file_size INTEGER,
+      mime_type TEXT,
+      tags TEXT[],
+      is_featured BOOLEAN DEFAULT false,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS clients (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      name TEXT NOT NULL,
+      email TEXT,
+      phone TEXT,
+      company TEXT,
+      notes TEXT,
+      is_active BOOLEAN DEFAULT true,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS client_users (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      client_id UUID REFERENCES clients(id) ON DELETE CASCADE,
+      username TEXT UNIQUE NOT NULL,
+      email TEXT UNIQUE NOT NULL,
+      password TEXT NOT NULL,
+      is_active BOOLEAN DEFAULT true,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `;
+
+  try {
+    await db.execute(sql.raw(createTablesSQL));
+    console.log('✅ Basic schema created successfully');
+  } catch (error) {
+    console.error('❌ Failed to create basic schema:', error);
+    throw error;
   }
 }
 

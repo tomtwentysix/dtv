@@ -62,5 +62,5 @@ EXPOSE 5000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD node -e "require('http').get('http://localhost:5000/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
 
-# Production command with forced database recreation
-CMD ["sh", "-c", "echo 'Waiting for database...'; sleep 15; echo 'Running database migrations with force...'; npm run db:push -- --force || echo 'Force migration failed, trying normal...'; npm run db:push || echo 'Migration failed, continuing...'; exec npm start"]
+# Production command with database initialization handled by app
+CMD ["sh", "-c", "echo 'Waiting for database...'; sleep 10; echo 'Starting production server with automatic schema initialization...'; exec npm start"]

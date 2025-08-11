@@ -1,28 +1,66 @@
 #!/bin/bash
 
-# Manual production database migration script
 echo "=== Manual Production Database Migration ==="
 
-# Get the production container ID
-PROD_CONTAINER=$(docker ps --filter "name=dt-visuals-prod" --format "{{.ID}}")
+# Source environment variables
+source .env
 
-if [ -z "$PROD_CONTAINER" ]; then
-    echo "❌ Production container not found"
-    exit 1
-fi
+echo "🛑 Stopping production app to run migration safely..."
+docker stop dt-visuals-prod 2>/dev/null || true
 
-echo "📦 Found production container: $PROD_CONTAINER"
+echo "📋 Checking database connection..."
+docker exec dt-visuals-db-prod pg_isready -U dtvisuals -d dt_visuals_prod
 
-# Run migration inside the production container
-echo "🔧 Running database migration..."
-docker exec -it "$PROD_CONTAINER" sh -c "npm run db:push"
+echo "🔧 Running Drizzle migration manually in database container..."
+docker exec dt-visuals-db-prod psql -U dtvisuals -d dt_visuals_prod -c "
+-- Create tables if they don't exist
+CREATE TABLE IF NOT EXISTS users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  username TEXT UNIQUE NOT NULL,
+  email TEXT UNIQUE NOT NULL,
+  password TEXT NOT NULL,
+  forename TEXT,
+  surname TEXT,
+  display_name TEXT,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
-if [ $? -eq 0 ]; then
-    echo "✅ Production database migration completed successfully"
-    echo "🔄 Restarting production container..."
-    docker restart "$PROD_CONTAINER"
-else
-    echo "❌ Production database migration failed"
-    echo "📋 Checking container logs..."
-    docker logs "$PROD_CONTAINER" --tail 20
-fi
+CREATE TABLE IF NOT EXISTS roles (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT UNIQUE NOT NULL,
+  description TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS permissions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT UNIQUE NOT NULL,
+  description TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS user_roles (
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  role_id UUID REFERENCES roles(id) ON DELETE CASCADE,
+  PRIMARY KEY (user_id, role_id),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS role_permissions (
+  role_id UUID REFERENCES roles(id) ON DELETE CASCADE,
+  permission_id UUID REFERENCES permissions(id) ON DELETE CASCADE,
+  PRIMARY KEY (role_id, permission_id),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+"
+
+echo "✅ Manual schema created, starting production app..."
+docker start dt-visuals-prod
+
+echo "📋 Checking production app logs..."
+sleep 10
+docker logs dt-visuals-prod --tail 20

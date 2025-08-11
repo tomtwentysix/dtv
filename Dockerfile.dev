@@ -41,5 +41,5 @@ USER dtvisuals
 # Expose development port
 EXPOSE 5000
 
-# Development command with inline migrations
-CMD ["sh", "-c", "npm run db:push || echo 'Migration failed, continuing...'; exec npm run dev"]
+# Development command with database initialization handled by app
+CMD ["sh", "-c", "echo 'Starting development server with automatic schema initialization...'; exec npm run dev"]
