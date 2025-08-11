@@ -1,398 +1,328 @@
 # DT Visuals Deployment Guide
 
-This guide walks you through deploying DT Visuals to your server using GitHub Actions with automatic SSL certificates and dual environment support.
+## Overview
 
-## 🎯 What You'll Get
+Clean, production-ready deployment system for DT Visuals with dual environments (prod/dev), automated SSL, and GitHub Actions CI/CD.
 
-- **Production site**: http://your-server-ip:8080 (or https://your-server-ip:8443 with SSL)
-- **Development site**: http://your-server-ip:8080 (with Host header: dev.dtvisuals.com)
-- **Automatic SSL certificates** via Let's Encrypt (on port 8443)
-- **Separate databases** for production and development
-- **Persistent file uploads** for both environments
-- **Zero-downtime deployments** via GitHub Actions
-- **Non-privileged ports** (8080/8443) to avoid Docker permission issues
+**Architecture:** Bare-metal Ubuntu server with Node.js + PM2 + Nginx + PostgreSQL
 
-## 📋 Prerequisites
+## Repository Setup
 
-### Server Requirements
-- Linux server with root/sudo access
-- Domain name with DNS pointing to your server:
-  - `dtvisuals.com` → Your server IP
-  - `dev.dtvisuals.com` → Your server IP
-- Ports 8080 and 8443 open for web traffic
+### 1. GitHub Secrets Configuration
 
-### GitHub Requirements
-- GitHub repository (public or private)
-- GitHub Personal Access Token with appropriate permissions
+Add these secrets to your GitHub repository (`Settings` → `Secrets and variables` → `Actions`):
 
-## 🚀 Step 1: Server Preparation
-
-### Install Docker
-```bash
-# Update system
-sudo apt update && sudo apt upgrade -y
-
-# Install Docker
-curl -fsSL https://get.docker.com -o get-docker.sh
-sh get-docker.sh
-sudo usermod -aG docker $USER
-
-# Log out and back in, then test
-docker --version
-docker-compose --version
+```
+SERVER_HOST=your-server-ip-address
+SERVER_USER=root
+SSH_PRIVATE_KEY=your-private-ssh-key
+SERVER_PORT=22
 ```
 
-### Set Up GitHub Authentication (For Private Repos)
+### 2. Branch Structure
 
-If your repository is private, you have several options:
+- `main` branch → Production deployment
+- `dev` branch → Development deployment
 
-**Option 1: Clone Repository (Recommended)**
-```bash
-# Clone your private repository
-git clone https://github.com/YOUR_USERNAME/dtv.git
-cd dtv
+## Server Setup
 
-# Run authentication script
-chmod +x auth-setup.sh
-./auth-setup.sh
-```
+### 1. Initial Server Preparation
 
-**Option 2: Manual File Copy**
-- Download `auth-setup.sh` from your GitHub repository web interface
-- Upload to your server via SCP/SFTP
-- Make executable: `chmod +x auth-setup.sh`
-- Run: `./auth-setup.sh`
-
-**Option 3: GitHub CLI**
-```bash
-# Install GitHub CLI
-curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list
-sudo apt update && sudo apt install gh
-
-# Authenticate and download
-gh auth login
-gh repo clone YOUR_USERNAME/dtv
-cd dtv
-chmod +x auth-setup.sh
-./auth-setup.sh
-```
-
-**Option 4: Environment Variables**
-```bash
-# Set authentication variables for both scripts
-export GITHUB_USERNAME=your-github-username
-export GITHUB_TOKEN=your-personal-access-token
-
-# Run setup without prompts
-./setup-dual-deploy.sh
-```
-
-When prompted:
-1. **GitHub Username**: Your GitHub username
-2. **Personal Access Token**: Create one at https://github.com/settings/tokens/new
-   - Select scope: `read:packages`
-   - Copy the generated token
-
-## 🔧 Step 2: GitHub Repository Setup
-
-### Add Repository Secrets
-
-Go to your GitHub repository → Settings → Secrets and variables → Actions → New repository secret
-
-Add these secrets:
-
-| Secret Name | Value | Description |
-|-------------|-------|-------------|
-| `SERVER_HOST` | `your-server-ip` | Your server's IP address |
-| `SERVER_USER` | `your-username` | SSH username for your server |
-| `SERVER_SSH_KEY` | `-----BEGIN PRIVATE KEY-----...` | Your SSH private key |
-
-### Generate SSH Key (if needed)
-
-On your server:
-```bash
-# Generate SSH key pair
-ssh-keygen -t rsa -b 4096 -C "github-actions"
-
-# Add public key to authorized_keys
-cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
-
-# Copy private key for GitHub secret
-cat ~/.ssh/id_rsa
-```
-
-### Set Environment Variables (For Private Repos)
-
-If using a private repository, set these on your server:
-```bash
-# Add to ~/.bashrc or ~/.profile for persistence
-echo 'export GITHUB_USERNAME=your-github-username' >> ~/.bashrc
-echo 'export GITHUB_TOKEN=your-personal-access-token' >> ~/.bashrc
-source ~/.bashrc
-
-# Or set temporarily for current session
-export GITHUB_USERNAME=your-github-username
-export GITHUB_TOKEN=your-personal-access-token
-```
-
-## 🏗️ Step 3: Server Deployment Setup
-
-### Download Deployment Files
-
-SSH into your server and choose the appropriate method:
-
-**For Public Repositories:**
-```bash
-# Download and run setup script
-wget https://raw.githubusercontent.com/YOUR_USERNAME/dtv/main/setup-dual-deploy.sh
-chmod +x setup-dual-deploy.sh
-./setup-dual-deploy.sh
-```
-
-**For Private Repositories:**
-```bash
-# Clone repository (if not already done)
-git clone https://github.com/YOUR_USERNAME/dtv.git
-cd dtv
-
-# Run setup script
-chmod +x setup-dual-deploy.sh
-./setup-dual-deploy.sh
-```
-
-**Alternative: Manual Setup**
-If you prefer not to clone the entire repository:
+Run on a fresh Ubuntu 20.04/22.04 LTS server:
 
 ```bash
-# Create deployment directory
-sudo mkdir -p /opt/dt-visuals
-sudo chown $USER:$USER /opt/dt-visuals
-cd /opt/dt-visuals
-
-# Manually copy these files from your repository:
-# - docker-compose.dual.yml → docker-compose.yml
-# - nginx.conf
-# - .env.dual → .env
+# Download and run server setup
+wget https://raw.githubusercontent.com/tomtwentysix/dtv/main/server-setup.sh
+chmod +x server-setup.sh
+sudo ./server-setup.sh
 ```
 
-### Configure Environment
+This installs:
+- Node.js 20 LTS
+- PostgreSQL 15
+- Nginx
+- PM2 (process manager)
+- Certbot (SSL certificates)
+- Creates `dtvisuals` user and directory structure
 
-Edit the `.env` file in `/opt/dt-visuals/`:
+### 2. Database Configuration
 
 ```bash
-cd /opt/dt-visuals
-nano .env
+# Set secure database password
+sudo -u postgres psql -c "ALTER USER dtvisuals PASSWORD 'your-secure-password';"
+
+# Verify databases exist
+sudo -u postgres psql -l | grep dtvisuals
 ```
 
-Update these values:
-```env
-# GitHub repository info
-GITHUB_REPOSITORY_OWNER=your-github-username
-
-# Let's Encrypt email
-ACME_EMAIL=your-email@example.com
-
-# Database Passwords (generate secure passwords)
-PROD_DB_PASSWORD=your-very-secure-production-db-password
-DEV_DB_PASSWORD=your-secure-development-db-password
-
-# Session Secrets (generate with: openssl rand -base64 32)
-PROD_SESSION_SECRET=your-very-secure-production-session-secret
-DEV_SESSION_SECRET=your-secure-development-session-secret
-```
-
-### Generate Secure Passwords
+### 3. Application Setup
 
 ```bash
-# Generate database passwords
-openssl rand -base64 32  # For PROD_DB_PASSWORD
-openssl rand -base64 32  # For DEV_DB_PASSWORD
+# Clone repository to server
+cd /var/www/dtvisuals
+sudo -u dtvisuals git clone https://github.com/tomtwentysix/dtv.git app
+cd app
 
-# Generate session secrets  
-openssl rand -base64 32  # For PROD_SESSION_SECRET
-openssl rand -base64 32  # For DEV_SESSION_SECRET
+# Create environment files
+sudo -u dtvisuals cp .env.prod.template .env.prod
+sudo -u dtvisuals cp .env.dev.template .env.dev
+
+# Edit environment files with actual values
+sudo -u dtvisuals nano .env.prod
+sudo -u dtvisuals nano .env.dev
 ```
 
-## 🚀 Step 4: Deploy via GitHub
+**Required .env changes:**
+- Update `DATABASE_URL` with actual passwords
+- Generate secure `SESSION_SECRET` values (64+ characters)
+- Set correct domain names
 
-### Trigger Deployment
-
-Push any commit to your GitHub repository:
+### 4. Initial Deployment
 
 ```bash
-# Make a small change and push
-git add .
-git commit -m "Deploy to production"
-git push origin main
+# Install dependencies and build
+cd /var/www/dtvisuals/app
+sudo -u dtvisuals npm ci --production
+sudo -u dtvisuals npm run build
+
+# Run database migrations
+sudo -u dtvisuals NODE_ENV=production npm run db:migrate
+sudo -u dtvisuals NODE_ENV=development npm run db:migrate
+
+# Start PM2 processes
+sudo -u dtvisuals pm2 start ecosystem.config.js
+sudo -u dtvisuals pm2 save
+sudo -u dtvisuals pm2 startup
 ```
 
-### Monitor Deployment
-
-1. Go to your GitHub repository → Actions tab
-2. Watch the deployment workflow run
-3. Check the logs for any issues
-
-### Server Deployment Process
-
-The GitHub Action will:
-1. Build production and development Docker images
-2. Push images to GitHub Container Registry
-3. SSH into your server
-4. Pull latest images
-5. Restart services with zero downtime
-
-## 🔍 Step 5: Verification
-
-### Check Services
-
-On your server:
-```bash
-cd /opt/dt-visuals
-
-# Check all services are running
-docker-compose ps
-
-# Check logs
-docker-compose logs nginx
-docker-compose logs app-prod
-docker-compose logs app-dev
-docker-compose logs db-prod
-docker-compose logs db-dev
-```
-
-### Test Websites
-
-- **Production**: https://dtvisuals.com
-- **Development**: https://dev.dtvisuals.com
-
-Both should load with valid SSL certificates.
-
-### Verify Database Connectivity
+### 5. SSL Certificate Setup
 
 ```bash
-# Test production database
-docker-compose exec db-prod psql -U dtvisuals -d dt_visuals_prod -c "\\dt"
+# Point DNS records to your server first!
+# A record: dtvisuals.com → server-ip
+# A record: www.dtvisuals.com → server-ip  
+# A record: dev.dtvisuals.com → server-ip
 
-# Test development database  
-docker-compose exec db-dev psql -U dtvisuals -d dt_visuals_dev -c "\\dt"
+# Generate SSL certificates
+sudo ./ssl-setup.sh dtvisuals.com,www.dtvisuals.com,dev.dtvisuals.com admin@dtvisuals.com
 ```
 
-## 🔄 Step 6: Ongoing Deployments
+## DNS Configuration
 
-### Automatic Deployments
+Set these DNS records with your domain provider:
 
-Every push to `main` branch automatically deploys to production.
+```
+Type  Name                TTL    Value
+A     dtvisuals.com       300    your-server-ip
+A     www.dtvisuals.com   300    your-server-ip
+A     dev.dtvisuals.com   300    your-server-ip
+```
+
+## Deployment Process
+
+### Automatic Deployment (GitHub Actions)
+
+1. **Production:** Push to `main` branch
+2. **Development:** Push to `dev` branch
+
+The workflow automatically:
+- Builds the application
+- Deploys to server via SSH
+- Runs database migrations
+- Restarts PM2 processes
+- Performs health checks
 
 ### Manual Deployment
 
-If needed, manually trigger deployment:
-
 ```bash
-# On your server
-cd /opt/dt-visuals
-docker-compose pull
-docker-compose up -d
+# On the server
+cd /var/www/dtvisuals/app
+sudo ./deploy.sh prod main    # Deploy production from main branch
+sudo ./deploy.sh dev dev      # Deploy development from dev branch
 ```
 
-### Database Management
+## Environment Details
 
+### Production Environment
+- **URL:** https://dtvisuals.com
+- **Port:** 5001 (internal)
+- **Database:** dtvisuals_prod
+- **PM2 Process:** dtvisuals-prod
+- **Uploads:** /var/www/dtvisuals/uploads/prod/
+
+### Development Environment  
+- **URL:** https://dev.dtvisuals.com
+- **Port:** 5002 (internal)
+- **Database:** dtvisuals_dev
+- **PM2 Process:** dtvisuals-dev
+- **Uploads:** /var/www/dtvisuals/uploads/dev/
+
+## Monitoring & Maintenance
+
+### Application Monitoring
 ```bash
-# Backup production database
-docker-compose exec db-prod pg_dump -U dtvisuals dt_visuals_prod > backup_$(date +%Y%m%d).sql
+# Check application status
+sudo -u dtvisuals pm2 status
 
-# View database logs
-docker-compose logs db-prod
-docker-compose logs db-dev
+# View logs
+sudo -u dtvisuals pm2 logs dtvisuals-prod
+sudo -u dtvisuals pm2 logs dtvisuals-dev
+
+# Restart applications
+sudo -u dtvisuals pm2 restart dtvisuals-prod
+sudo -u dtvisuals pm2 restart dtvisuals-dev
 ```
 
-### SSL Certificate Renewal
-
-Certificates auto-renew, but to manually renew:
-
+### Database Monitoring
 ```bash
-cd /opt/dt-visuals
-docker-compose run --rm certbot renew
-docker-compose restart nginx
+# Connect to databases
+sudo -u postgres psql dtvisuals_prod
+sudo -u postgres psql dtvisuals_dev
+
+# Check database size
+sudo -u postgres psql -c "SELECT pg_database.datname, pg_size_pretty(pg_database_size(pg_database.datname)) AS size FROM pg_database;"
 ```
 
-## 🗂️ File Structure
+### SSL Certificate Monitoring
+```bash
+# Check certificate status
+sudo certbot certificates
 
-Your deployment will create this structure:
+# Test renewal (dry run)
+sudo certbot renew --dry-run
 
-```
-/opt/dt-visuals/
-├── docker-compose.yml       # Container orchestration
-├── nginx.conf              # Web server configuration  
-├── .env                    # Environment variables
-└── ssl/                    # SSL certificates
-    ├── privkey.pem
-    └── fullchain.pem
+# Force renewal if needed
+sudo certbot renew --force-renewal
 ```
 
-## 🔧 Troubleshooting
+### Nginx Monitoring
+```bash
+# Check nginx status
+sudo systemctl status nginx
+
+# Test configuration
+sudo nginx -t
+
+# View error logs
+sudo tail -f /var/log/nginx/error.log
+
+# View access logs
+sudo tail -f /var/log/nginx/access.log
+```
+
+## Troubleshooting
 
 ### Common Issues
 
-**503 Service Unavailable**
-```bash
-# Check if containers are running
-docker-compose ps
+1. **502 Bad Gateway**
+   - Check if PM2 processes are running: `sudo -u dtvisuals pm2 status`
+   - Check application logs: `sudo -u dtvisuals pm2 logs`
+   - Restart applications: `sudo -u dtvisuals pm2 restart all`
 
-# Restart services
-docker-compose restart
-```
+2. **SSL Certificate Errors**
+   - Check certificate expiry: `sudo certbot certificates`
+   - Renew if needed: `sudo certbot renew`
+   - Restart nginx: `sudo systemctl restart nginx`
 
-**SSL Certificate Issues**
-```bash
-# Check certificate status
-docker-compose logs certbot
+3. **Database Connection Errors**
+   - Check PostgreSQL status: `sudo systemctl status postgresql`
+   - Verify credentials in .env files
+   - Check database exists: `sudo -u postgres psql -l`
 
-# Manual certificate generation
-docker-compose run --rm certbot
-```
-
-**Database Connection Failed**
-```bash
-# Check database logs
-docker-compose logs db-prod
-
-# Verify environment variables
-docker-compose exec app-prod env | grep DATABASE_URL
-```
-
-**GitHub Actions Failed**
-- Check repository secrets are set correctly
-- Verify SSH key has correct permissions
-- Check server disk space: `df -h`
+4. **File Upload Errors**
+   - Check uploads directory permissions: `ls -la /var/www/dtvisuals/uploads/`
+   - Fix permissions: `sudo chown -R dtvisuals:www-data /var/www/dtvisuals/uploads/`
 
 ### Log Locations
 
 ```bash
 # Application logs
-docker-compose logs app-prod
-docker-compose logs app-dev
+/var/log/dtvisuals/prod-*.log
+/var/log/dtvisuals/dev-*.log
 
-# Nginx logs
-docker-compose logs nginx
+# PM2 logs
+sudo -u dtvisuals pm2 logs
 
-# Database logs
-docker-compose logs db-prod
-docker-compose logs db-dev
+# Nginx logs  
+/var/log/nginx/access.log
+/var/log/nginx/error.log
 
-# System logs
-journalctl -u docker
+# PostgreSQL logs
+/var/log/postgresql/postgresql-15-main.log
 ```
 
-## 🎉 Success!
+## Security Considerations
 
-Your DT Visuals application is now deployed with:
+### Firewall Configuration
+```bash
+# Check firewall status
+sudo ufw status
 
-- ✅ **Dual environments** (production + development)
-- ✅ **Automatic SSL certificates** 
-- ✅ **Persistent databases** with backups
-- ✅ **File upload storage** 
-- ✅ **Zero-downtime deployments**
-- ✅ **GitHub Actions CI/CD**
+# Allow only necessary ports
+sudo ufw allow ssh
+sudo ufw allow 'Nginx Full'
+sudo ufw enable
+```
 
-Push to GitHub and watch your site automatically deploy! 🚀
+### Regular Security Updates
+```bash
+# Update system packages
+sudo apt update && sudo apt upgrade -y
+
+# Update Node.js packages (in app directory)
+sudo -u dtvisuals npm audit fix
+```
+
+### Database Security
+- Use strong passwords for database users
+- Regularly backup databases
+- Monitor for unusual connection attempts
+- Keep PostgreSQL updated
+
+## Backup & Recovery
+
+See `ROLLBACK.md` for detailed backup and recovery procedures.
+
+### Quick Backup
+```bash
+# Create backup
+sudo /usr/local/bin/dtvisuals-backup
+
+# View backups
+ls -la /var/backups/dtvisuals/
+```
+
+## Performance Optimization
+
+### PM2 Optimization
+```bash
+# Enable PM2 monitoring
+sudo -u dtvisuals pm2 install pm2-server-monit
+
+# Optimize PM2 configuration
+sudo -u dtvisuals pm2 set pm2:autodump true
+sudo -u dtvisuals pm2 set pm2:watch-delay 1000
+```
+
+### Database Optimization
+```bash
+# Analyze database performance
+sudo -u postgres psql dtvisuals_prod -c "ANALYZE;"
+
+# Update statistics
+sudo -u postgres psql dtvisuals_prod -c "VACUUM ANALYZE;"
+```
+
+### Nginx Optimization
+Already configured with:
+- Gzip compression
+- Static file caching
+- Rate limiting
+- Keep-alive connections
+
+## Support
+
+- **Repository:** https://github.com/tomtwentysix/dtv
+- **Issues:** Create GitHub issues for bugs/features
+- **Logs:** Check application and system logs for troubleshooting
+- **Monitoring:** Use PM2 dashboard and server monitoring tools

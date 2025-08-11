@@ -1,3 +1,62 @@
+#!/bin/bash
+
+# SSL Certificate Setup with Let's Encrypt
+# Run this after server setup and DNS configuration
+
+set -e
+
+echo "=== DT Visuals SSL Certificate Setup ==="
+
+# Check if running as root
+if [[ $EUID -ne 0 ]]; then
+   echo "❌ This script must be run as root (use sudo)"
+   exit 1
+fi
+
+# Check if domains are provided
+DOMAINS=${1:-"dtvisuals.com,www.dtvisuals.com,dev.dtvisuals.com"}
+EMAIL=${2:-"admin@dtvisuals.com"}
+
+echo "📋 Configuration:"
+echo "   Domains: $DOMAINS"
+echo "   Email: $EMAIL"
+echo ""
+
+# Verify DNS configuration
+echo "🔍 Checking DNS configuration..."
+for domain in $(echo $DOMAINS | tr ',' ' '); do
+    echo "   Checking $domain..."
+    if nslookup $domain > /dev/null 2>&1; then
+        echo "   ✅ $domain DNS resolved"
+    else
+        echo "   ⚠️  $domain DNS not resolved - continuing anyway"
+    fi
+done
+
+# Stop nginx temporarily
+echo "🛑 Temporarily stopping nginx..."
+systemctl stop nginx
+
+# Get certificates using standalone mode (more reliable)
+echo "🔐 Obtaining SSL certificates..."
+certbot certonly \
+    --standalone \
+    --agree-tos \
+    --no-eff-email \
+    --email $EMAIL \
+    -d $(echo $DOMAINS | tr ',' ' -d ')
+
+# Create Diffie-Hellman parameters for better security
+echo "🔑 Generating Diffie-Hellman parameters..."
+if [[ ! -f /etc/ssl/certs/dhparam.pem ]]; then
+    openssl dhparam -out /etc/ssl/certs/dhparam.pem 2048
+fi
+
+# Setup nginx configuration
+echo "⚙️  Configuring nginx..."
+
+# Create nginx site configuration
+cat > /etc/nginx/sites-available/dtvisuals << 'EOF'
 # DT Visuals Nginx Configuration
 # Handles both production and development environments
 
@@ -20,7 +79,17 @@ upstream dev_app {
 server {
     listen 80;
     server_name dtvisuals.com www.dtvisuals.com dev.dtvisuals.com;
-    return 301 https://$server_name$request_uri;
+    
+    # Let's Encrypt challenges
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+        try_files $uri =404;
+    }
+    
+    # Redirect all other traffic to HTTPS
+    location / {
+        return 301 https://$server_name$request_uri;
+    }
 }
 
 # Production HTTPS Server
@@ -31,6 +100,7 @@ server {
     # SSL Configuration
     ssl_certificate /etc/letsencrypt/live/dtvisuals.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/dtvisuals.com/privkey.pem;
+    ssl_dhparam /etc/ssl/certs/dhparam.pem;
     
     # SSL Security Settings
     ssl_protocols TLSv1.2 TLSv1.3;
@@ -38,6 +108,8 @@ server {
     ssl_prefer_server_ciphers off;
     ssl_session_cache shared:SSL:10m;
     ssl_session_timeout 5m;
+    ssl_stapling on;
+    ssl_stapling_verify on;
     
     # Security Headers
     add_header X-Frame-Options "SAMEORIGIN" always;
@@ -116,11 +188,6 @@ server {
         proxy_read_timeout 300s;
         proxy_connect_timeout 75s;
     }
-    
-    # Let's Encrypt challenges
-    location /.well-known/acme-challenge/ {
-        root /var/www/certbot;
-    }
 }
 
 # Development HTTPS Server
@@ -128,9 +195,10 @@ server {
     listen 443 ssl http2;
     server_name dev.dtvisuals.com;
     
-    # SSL Configuration
+    # SSL Configuration (same certificates)
     ssl_certificate /etc/letsencrypt/live/dtvisuals.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/dtvisuals.com/privkey.pem;
+    ssl_dhparam /etc/ssl/certs/dhparam.pem;
     
     # SSL Security Settings (same as production)
     ssl_protocols TLSv1.2 TLSv1.3;
@@ -174,3 +242,56 @@ server {
         proxy_connect_timeout 75s;
     }
 }
+EOF
+
+# Remove default nginx site and enable our site
+rm -f /etc/nginx/sites-enabled/default
+ln -sf /etc/nginx/sites-available/dtvisuals /etc/nginx/sites-enabled/
+
+# Test nginx configuration
+echo "🧪 Testing nginx configuration..."
+nginx -t
+
+# Start nginx
+echo "🚀 Starting nginx..."
+systemctl start nginx
+systemctl enable nginx
+
+# Setup automatic certificate renewal
+echo "🔄 Setting up automatic certificate renewal..."
+cat > /etc/cron.d/certbot-renewal << EOF
+# Renew Let's Encrypt certificates twice daily
+0 */12 * * * root certbot renew --quiet --hook-script "systemctl reload nginx"
+EOF
+
+# Test certificate renewal
+echo "🧪 Testing certificate renewal..."
+certbot renew --dry-run
+
+# Summary
+echo ""
+echo "=== SSL Setup Complete! ==="
+echo ""
+echo "✅ SSL certificates obtained for:"
+for domain in $(echo $DOMAINS | tr ',' ' '); do
+    echo "   - $domain"
+done
+echo ""
+echo "✅ Nginx configured with:"
+echo "   - HTTP to HTTPS redirect"
+echo "   - Modern SSL/TLS security"
+echo "   - Rate limiting"
+echo "   - Security headers"
+echo "   - Gzip compression"
+echo ""
+echo "✅ Automatic renewal scheduled"
+echo ""
+echo "🔗 URLs:"
+echo "   Production: https://dtvisuals.com"
+echo "   Development: https://dev.dtvisuals.com"
+echo ""
+echo "📋 Commands:"
+echo "   Test SSL: curl -I https://dtvisuals.com"
+echo "   Check certificates: certbot certificates"
+echo "   Renew certificates: certbot renew"
+echo "   Nginx logs: tail -f /var/log/nginx/error.log"
