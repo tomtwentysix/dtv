@@ -60,18 +60,50 @@ npm ci --production
 echo "🔨 Building application..."
 npm run build
 
+# Set up environment file if it doesn't exist
+ENV_FILE=".env.${ENVIRONMENT}"
+if [[ ! -f "$ENV_FILE" ]]; then
+    echo "⚙️  Creating $ENV_FILE..."
+    if [[ "$ENVIRONMENT" == "prod" ]]; then
+        cat > .env.prod << 'EOF'
+NODE_ENV=production
+PORT=5001
+HOST=0.0.0.0
+DATABASE_URL=postgresql://dtvisuals:CHANGE_PASSWORD@localhost:5432/dtvisuals_prod
+SESSION_SECRET=CHANGE_TO_64_CHAR_RANDOM_STRING
+ENABLE_TIMELINE=true
+DEBUG=false
+DOMAIN=dtvisuals.com
+EOF
+    else
+        cat > .env.dev << 'EOF'
+NODE_ENV=development
+PORT=5002
+HOST=0.0.0.0
+DATABASE_URL=postgresql://dtvisuals:CHANGE_PASSWORD@localhost:5432/dtvisuals_dev
+SESSION_SECRET=CHANGE_TO_64_CHAR_RANDOM_STRING
+ENABLE_TIMELINE=true
+DEBUG=true
+DOMAIN=dev.dtvisuals.com
+EOF
+    fi
+    chown dtvisuals:dtvisuals "$ENV_FILE"
+    chmod 600 "$ENV_FILE"
+    echo "❌ Environment file created but needs configuration!"
+    echo "   Edit: $ENV_FILE"
+    echo "   Set DATABASE_URL password and SESSION_SECRET"
+    echo "   Generate secret: openssl rand -hex 64"
+    exit 1
+fi
+
 # Run database migrations
 echo "🗃️  Running database migrations..."
-if [[ ! -f "run-migration-with-env.sh" ]]; then
-    echo "❌ Migration script not found. Using fallback method..."
-    if [[ "$ENVIRONMENT" == "prod" ]]; then
-        set -a; source .env.prod 2>/dev/null; set +a; npx drizzle-kit migrate
-    else
-        set -a; source .env.dev 2>/dev/null; set +a; npx drizzle-kit migrate
-    fi
-else
-    ./run-migration-with-env.sh "$ENVIRONMENT"
+set -a; source "$ENV_FILE"; set +a
+if [[ -z "$DATABASE_URL" ]]; then
+    echo "❌ DATABASE_URL not configured in $ENV_FILE"
+    exit 1
 fi
+npx drizzle-kit migrate
 
 # Restart application
 echo "🔄 Restarting application..."

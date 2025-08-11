@@ -233,19 +233,15 @@ cd $APP_DIR
 echo "📦 Installing dependencies..."
 npm ci --production
 
-# Set up environment files
-echo "⚙️  Setting up environment files..."
-./setup-env-server.sh
-
+# Initial deployment setup complete
 echo ""
-echo "⚠️  IMPORTANT: Configure your environment files before running migrations!"
-echo "   1. Edit .env.prod with your database password and session secret"
-echo "   2. Edit .env.dev with your database password and session secret" 
-echo "   3. Generate session secrets: openssl rand -hex 64"
+echo "✅ Server setup complete!"
 echo ""
-echo "🗃️  After configuring, run migrations with:"
-echo "   ./run-migration-with-env.sh prod"
-echo "   ./run-migration-with-env.sh dev"
+echo "📋 Next steps:"
+echo "   1. Set up DNS: Point dtvisuals.com and dev.dtvisuals.com to this server"
+echo "   2. Deploy: sudo ./deploy.sh prod main"
+echo "   3. Configure environment files when prompted"
+echo "   4. Set up SSL: sudo ./ssl-setup.sh dtvisuals.com,dev.dtvisuals.com admin@domain.com"
 
 # Build frontend
 echo "🔨 Building frontend..."
