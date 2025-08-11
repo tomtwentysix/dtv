@@ -43,11 +43,27 @@ echo "📋 Waiting for application services to be ready..."
 check_service "app-prod" "5000"
 check_service "app-dev" "5000"
 
+echo "🔧 Checking SSL certificates..."
+if [ ! -f "/etc/letsencrypt/live/dtvisuals.com/fullchain.pem" ]; then
+    echo "⚠️  SSL certificates not found, creating temporary self-signed certificates..."
+    mkdir -p /etc/letsencrypt/live/dtvisuals.com/
+    
+    openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+        -keyout /etc/letsencrypt/live/dtvisuals.com/privkey.pem \
+        -out /etc/letsencrypt/live/dtvisuals.com/fullchain.pem \
+        -subj "/C=US/ST=State/L=City/O=DT-Visuals/OU=Media/CN=dtvisuals.com/emailAddress=admin@dtvisuals.com"
+    
+    echo "✅ Temporary self-signed certificates created"
+else
+    echo "✅ SSL certificates found"
+fi
+
 echo "🔧 Validating nginx configuration..."
 nginx -t || {
     echo "❌ Nginx configuration test failed!"
     exit 1
 }
 
+echo "✅ Nginx configuration is valid!"
 echo "🚀 Starting nginx reverse proxy..."
 exec nginx -g "daemon off;"
