@@ -73,6 +73,8 @@ services:
     image: postgres:15-alpine
     container_name: dt-visuals-db-prod
     restart: unless-stopped
+    ports:
+      - "5433:5432"  # External port 5433 -> Internal port 5432
     environment:
       - POSTGRES_DB=dt_visuals_prod
       - POSTGRES_USER=dtvisuals
@@ -92,6 +94,8 @@ services:
     image: postgres:15-alpine
     container_name: dt-visuals-db-dev
     restart: unless-stopped
+    ports:
+      - "5434:5432"  # External port 5434 -> Internal port 5432
     environment:
       - POSTGRES_DB=dt_visuals_dev
       - POSTGRES_USER=dtvisuals
