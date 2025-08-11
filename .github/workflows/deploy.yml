@@ -77,9 +77,9 @@ jobs:
           # Run database migrations
           echo "🗃️  Running database migrations..."
           if [[ "$ENV" == "prod" ]]; then
-            sudo -u dtvisuals NODE_ENV=production npm run db:migrate
+            sudo -u dtvisuals NODE_ENV=production npx drizzle-kit migrate
           else
-            sudo -u dtvisuals NODE_ENV=development npm run db:migrate
+            sudo -u dtvisuals NODE_ENV=development npx drizzle-kit migrate
           fi
           
           # Restart PM2 application

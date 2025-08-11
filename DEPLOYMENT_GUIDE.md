@@ -86,8 +86,8 @@ sudo -u dtvisuals npm ci --production
 sudo -u dtvisuals npm run build
 
 # Run database migrations
-sudo -u dtvisuals NODE_ENV=production npm run db:migrate
-sudo -u dtvisuals NODE_ENV=development npm run db:migrate
+sudo -u dtvisuals NODE_ENV=production npx drizzle-kit migrate
+sudo -u dtvisuals NODE_ENV=development npx drizzle-kit migrate
 
 # Start PM2 processes
 sudo -u dtvisuals pm2 start ecosystem.config.js

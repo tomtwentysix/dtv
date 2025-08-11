@@ -63,9 +63,9 @@ npm run build
 # Run database migrations
 echo "🗃️  Running database migrations..."
 if [[ "$ENVIRONMENT" == "prod" ]]; then
-    NODE_ENV=production npm run db:migrate
+    NODE_ENV=production npx drizzle-kit migrate
 else
-    NODE_ENV=development npm run db:migrate
+    NODE_ENV=development npx drizzle-kit migrate
 fi
 
 # Restart application

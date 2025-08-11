@@ -55,8 +55,10 @@ If database migrations need to be rolled back:
 cd /var/www/dtvisuals/app
 npm run db:status
 
-# 2. Rollback specific migration (if supported by Drizzle)
-# Note: Drizzle doesn't have built-in rollback, manual intervention required
+# 2. Check current migration status
+npx drizzle-kit migrate --help
+
+# Note: Drizzle migrations are forward-only, manual intervention required for rollbacks
 
 # 3. Restore database from backup (if available)
 # Production database
