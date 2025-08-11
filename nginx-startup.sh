@@ -3,8 +3,8 @@
 echo "=== DT Visuals Nginx Startup Script ==="
 echo "Installing dependencies and waiting for app containers..."
 
-# Install required packages
-apk add --no-cache wget curl netcat-openbsd
+# Install required packages including openssl for certificate generation
+apk add --no-cache wget curl netcat-openbsd openssl
 
 # Function to check if a service is responding
 check_service() {
@@ -46,14 +46,69 @@ check_service "app-dev" "5000"
 echo "🔧 Checking SSL certificates..."
 if [ ! -f "/etc/letsencrypt/live/dtvisuals.com/fullchain.pem" ]; then
     echo "⚠️  SSL certificates not found, creating temporary self-signed certificates..."
-    mkdir -p /etc/letsencrypt/live/dtvisuals.com/
     
+    # Create certificates in /tmp first (writable), then move via volume mount
+    TMP_CERT_DIR="/tmp/ssl-certs"
+    mkdir -p "$TMP_CERT_DIR"
+    
+    # Generate self-signed certificate in writable directory
     openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-        -keyout /etc/letsencrypt/live/dtvisuals.com/privkey.pem \
-        -out /etc/letsencrypt/live/dtvisuals.com/fullchain.pem \
-        -subj "/C=US/ST=State/L=City/O=DT-Visuals/OU=Media/CN=dtvisuals.com/emailAddress=admin@dtvisuals.com"
+        -keyout "$TMP_CERT_DIR/privkey.pem" \
+        -out "$TMP_CERT_DIR/fullchain.pem" \
+        -subj "/C=US/ST=State/L=City/O=DT-Visuals/OU=Media/CN=dtvisuals.com/emailAddress=admin@dtvisuals.com" 2>/dev/null
     
-    echo "✅ Temporary self-signed certificates created"
+    # Try to move certificates to expected location if volume is mounted writable
+    if mkdir -p /etc/letsencrypt/live/dtvisuals.com/ 2>/dev/null; then
+        cp "$TMP_CERT_DIR/privkey.pem" /etc/letsencrypt/live/dtvisuals.com/privkey.pem 2>/dev/null || true
+        cp "$TMP_CERT_DIR/fullchain.pem" /etc/letsencrypt/live/dtvisuals.com/fullchain.pem 2>/dev/null || true
+    fi
+    
+    # If still no certificates in expected location, create a simplified nginx config without SSL
+    if [ ! -f "/etc/letsencrypt/live/dtvisuals.com/fullchain.pem" ]; then
+        echo "⚠️  Cannot create certificates in read-only filesystem, switching to HTTP-only mode"
+        
+        # Create a temporary nginx config without SSL
+        cat > /tmp/nginx-http-only.conf << 'EOF'
+events {
+    worker_connections 1024;
+}
+http {
+    upstream app-prod {
+        server app-prod:5000;
+    }
+    upstream app-dev {
+        server app-dev:5000;
+    }
+    server {
+        listen 80;
+        server_name dtvisuals.com www.dtvisuals.com;
+        location / {
+            proxy_pass http://app-prod;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+    }
+    server {
+        listen 80;
+        server_name dev.dtvisuals.com;
+        location / {
+            proxy_pass http://app-dev;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+    }
+}
+EOF
+        
+        echo "📝 Created HTTP-only nginx configuration"
+        cp /tmp/nginx-http-only.conf /etc/nginx/nginx.conf
+    else
+        echo "✅ Temporary self-signed certificates created"
+    fi
 else
     echo "✅ SSL certificates found"
 fi
