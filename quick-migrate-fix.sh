@@ -13,11 +13,18 @@ sudo -u dtvisuals npm ci --production
 echo "🔨 Building application..."
 sudo -u dtvisuals npm run build
 
-echo "🗃️  Running database migrations for PRODUCTION..."
-sudo -u dtvisuals NODE_ENV=production npx drizzle-kit migrate
+echo "🗃️  Setting up environment files..."
+sudo ./setup-env-server.sh
 
-echo "🗃️  Running database migrations for DEVELOPMENT..."
-sudo -u dtvisuals NODE_ENV=development npx drizzle-kit migrate
+echo ""
+echo "⚠️  CRITICAL: You must configure environment files before migrations will work!"
+echo "   1. Edit database password: sudo -u dtvisuals nano .env.prod"
+echo "   2. Edit database password: sudo -u dtvisuals nano .env.dev"
+echo "   3. Generate session secrets: openssl rand -hex 64"
+echo ""
+echo "🗃️  After configuring, run migrations:"
+echo "   sudo -u dtvisuals ./run-migration-with-env.sh prod"
+echo "   sudo -u dtvisuals ./run-migration-with-env.sh dev"
 
 echo "🔄 Restarting PM2 processes..."
 sudo -u dtvisuals pm2 restart all || {

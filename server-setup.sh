@@ -233,13 +233,19 @@ cd $APP_DIR
 echo "📦 Installing dependencies..."
 npm ci --production
 
-# Run migrations
-echo "🗃️  Running database migrations..."
-if [[ "$ENVIRONMENT" == "prod" ]]; then
-    NODE_ENV=production npx drizzle-kit migrate
-else
-    NODE_ENV=development npx drizzle-kit migrate
-fi
+# Set up environment files
+echo "⚙️  Setting up environment files..."
+./setup-env-server.sh
+
+echo ""
+echo "⚠️  IMPORTANT: Configure your environment files before running migrations!"
+echo "   1. Edit .env.prod with your database password and session secret"
+echo "   2. Edit .env.dev with your database password and session secret" 
+echo "   3. Generate session secrets: openssl rand -hex 64"
+echo ""
+echo "🗃️  After configuring, run migrations with:"
+echo "   ./run-migration-with-env.sh prod"
+echo "   ./run-migration-with-env.sh dev"
 
 # Build frontend
 echo "🔨 Building frontend..."

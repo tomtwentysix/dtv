@@ -62,10 +62,15 @@ npm run build
 
 # Run database migrations
 echo "🗃️  Running database migrations..."
-if [[ "$ENVIRONMENT" == "prod" ]]; then
-    NODE_ENV=production npx drizzle-kit migrate
+if [[ ! -f "run-migration-with-env.sh" ]]; then
+    echo "❌ Migration script not found. Using fallback method..."
+    if [[ "$ENVIRONMENT" == "prod" ]]; then
+        set -a; source .env.prod 2>/dev/null; set +a; npx drizzle-kit migrate
+    else
+        set -a; source .env.dev 2>/dev/null; set +a; npx drizzle-kit migrate
+    fi
 else
-    NODE_ENV=development npx drizzle-kit migrate
+    ./run-migration-with-env.sh "$ENVIRONMENT"
 fi
 
 # Restart application
