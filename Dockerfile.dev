@@ -42,12 +42,7 @@ USER dtvisuals
 EXPOSE 5000
 
 # Create startup script for development (before changing user)
-RUN echo '#!/bin/sh
-set -e
-echo "Running database migrations..."
-npm run db:push || echo "Migration failed, continuing..."
-echo "Starting development server..."
-exec npm run dev' > /app/start.sh && \
+RUN echo '#!/bin/sh\nset -e\necho "Running database migrations..."\nnpm run db:push || echo "Migration failed, continuing..."\necho "Starting development server..."\nexec npm run dev' > /app/start.sh && \
     chmod +x /app/start.sh && \
     chown dtvisuals:nodejs /app/start.sh
 
