@@ -1,6 +1,7 @@
 #!/bin/sh
 
-echo "Waiting for app containers to be ready..."
+echo "Installing wget and waiting for app containers..."
+apk add --no-cache wget
 
 # Function to check if a service is responding using wget
 check_service() {
