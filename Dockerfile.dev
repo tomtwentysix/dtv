@@ -35,16 +35,16 @@ RUN mkdir -p uploads node_modules/.vite && \
     chown dtvisuals:nodejs uploads node_modules/.vite && \
     chmod 755 uploads node_modules/.vite
 
+# Create startup script for development (before changing user)
+RUN echo '#!/bin/sh\nset -e\necho "Running database migrations..."\nnpm run db:push || echo "Migration failed, continuing..."\necho "Starting development server..."\nexec npm run dev' > /app/start.sh && \
+    chmod +x /app/start.sh && \
+    chown dtvisuals:nodejs /app/start.sh
+
 # Change to non-root user
 USER dtvisuals
 
 # Expose development port
 EXPOSE 5000
-
-# Create startup script for development (before changing user)
-RUN echo '#!/bin/sh\nset -e\necho "Running database migrations..."\nnpm run db:push || echo "Migration failed, continuing..."\necho "Starting development server..."\nexec npm run dev' > /app/start.sh && \
-    chmod +x /app/start.sh && \
-    chown dtvisuals:nodejs /app/start.sh
 
 # Development command with migrations
 CMD ["/app/start.sh"]

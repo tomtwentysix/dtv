@@ -51,6 +51,11 @@ RUN mkdir -p uploads && \
     chown dtvisuals:nodejs uploads && \
     chmod 755 uploads
 
+# Create startup script for production (before changing user)
+RUN echo '#!/bin/sh\nset -e\necho "Running database migrations..."\nnpm run db:push || echo "Migration failed, continuing..."\necho "Starting application..."\nexec npm start' > /app/start.sh && \
+    chmod +x /app/start.sh && \
+    chown dtvisuals:nodejs /app/start.sh
+
 # Change to non-root user
 USER dtvisuals
 
@@ -60,11 +65,6 @@ EXPOSE 5000
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD node -e "require('http').get('http://localhost:5000/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
-
-# Create startup script for production (before changing user)
-RUN echo '#!/bin/sh\nset -e\necho "Running database migrations..."\nnpm run db:push || echo "Migration failed, continuing..."\necho "Starting application..."\nexec npm start' > /app/start.sh && \
-    chmod +x /app/start.sh && \
-    chown dtvisuals:nodejs /app/start.sh
 
 # Production command with migrations
 CMD ["/app/start.sh"]
