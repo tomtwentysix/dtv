@@ -73,5 +73,17 @@ jobs:
           # Start containers (Docker should handle port binding automatically)
           docker-compose up -d
           
+          # Wait a moment and check container status
+          sleep 10
+          docker-compose ps
+          
+          # Show logs for troubleshooting
+          echo "=== Nginx Logs ==="
+          docker-compose logs --tail=50 nginx
+          echo "=== Production App Logs ==="
+          docker-compose logs --tail=50 app-prod
+          echo "=== Development App Logs ==="
+          docker-compose logs --tail=50 app-dev
+          
           # Clean up old images
           docker image prune -f
