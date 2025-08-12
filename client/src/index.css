@@ -476,6 +476,9 @@
   .animate-scale-in {
     animation: scaleIn 0.3s ease-out;
   }
+  .border-border {
+    border: 1px solid var(--border);
+  }
 }
 
 @keyframes fadeIn {
