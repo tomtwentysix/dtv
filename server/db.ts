@@ -1,4 +1,4 @@
-import * as schema from "@shared/schema";
+import * as schema from "../shared/schema.js";
 
 if (!process.env.DATABASE_URL) {
   throw new Error(
@@ -7,9 +7,14 @@ if (!process.env.DATABASE_URL) {
 }
 
 // Check if we're in Docker environment (local PostgreSQL)
+// Default to PostgreSQL for production or any postgresql:// connection string
 const isDockerEnvironment = process.env.DOCKER_ENV === 'true' || 
+  process.env.DATABASE_URL?.includes('postgres-prod') || 
+  process.env.DATABASE_URL?.includes('postgres-dev') || 
   process.env.DATABASE_URL?.includes('db-prod') || 
-  process.env.DATABASE_URL?.includes('db-dev');
+  process.env.DATABASE_URL?.includes('db-dev') ||
+  process.env.NODE_ENV === 'production' ||
+  (process.env.DATABASE_URL?.startsWith('postgresql://') && !process.env.DATABASE_URL?.includes('neon'));
 
 // Initialize database connection based on environment
 async function initDB() {

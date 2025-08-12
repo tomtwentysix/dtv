@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { storage } from './storage';
 import crypto from 'crypto';
-import { ClientUser } from '@shared/schema';
+import { ClientUser } from '../shared/schema.js';
 
 // Extend Express Request type to include clientUser and session
 declare global {
