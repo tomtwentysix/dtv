@@ -1,90 +1,98 @@
-# DT Visuals - Production Deployment System
+# DT Visuals
 
-> Clean, production-ready dual-environment deployment for cinematic media production company
+> Full-stack web application for cinematic media production company
 
-## Quick Start
+## Getting Started
 
-### For Production Deployment
+### Prerequisites
 
-1. **Server Setup** (Ubuntu 20.04/22.04):
+- Node.js 20+ LTS
+- PostgreSQL (or compatible database)
+- npm or yarn
+
+### Installation
+
+1. **Clone the repository:**
    ```bash
-   wget https://raw.githubusercontent.com/tomtwentysix/dtv/main/server-setup.sh
-   sudo chmod +x server-setup.sh && sudo ./server-setup.sh
+   git clone https://github.com/tomtwentysix/dtv.git
+   cd dtv
    ```
 
-2. **Configure Environment**:
+2. **Install dependencies:**
    ```bash
-   cp .env.prod.template .env.prod
-   cp .env.dev.template .env.dev
-   # Edit files with actual database passwords and secrets
+   npm install
    ```
 
-3. **Setup SSL**:
+3. **Set up environment variables:**
+   Copy the example environment file and configure it:
    ```bash
-   sudo ./ssl-setup.sh dtvisuals.com,www.dtvisuals.com,dev.dtvisuals.com admin@dtvisuals.com
+   cp .env.example .env
+   ```
+   Then edit `.env` with your actual database connection and other configuration values.
+
+4. **Set up the database:**
+   ```bash
+   npm run db:push
    ```
 
-4. **Deploy**:
+5. **Start the development server:**
    ```bash
-   ./deploy.sh prod main
+   npm run dev
    ```
 
-### For GitHub Actions
-
-Add repository secrets:
-- `SERVER_HOST` - Server IP address
-- `SERVER_USER` - SSH username (typically `root`)
-- `SSH_PRIVATE_KEY` - Private SSH key
-- `SERVER_PORT` - SSH port (default `22`)
-
-Deploy by pushing to branches:
-- `main` branch → Production deployment
-- `dev` branch → Development deployment
+   The application will be available at `http://localhost:5173`
 
 ## Architecture
 
-**Stack:** React + TypeScript + Vite + Node.js + Express + PostgreSQL + PM2 + Nginx
-
-**Environments:**
-- **Production**: https://dtvisuals.com (port 5001 internal)
-- **Development**: https://dev.dtvisuals.com (port 5002 internal)
+**Stack:** React + TypeScript + Vite + Node.js + Express + PostgreSQL
 
 **Key Features:**
-- Automatic SSL certificates via Let's Encrypt
-- Database migrations on each deployment
-- PM2 process management with auto-restart
-- Rate limiting and security headers
-- Automatic backups and rollback procedures
-- Comprehensive monitoring and logging
+- React frontend with TypeScript
+- Express.js REST API backend
+- PostgreSQL database with Drizzle ORM
+- Authentication and authorization
+- File upload and media management
+- Responsive design with Tailwind CSS
 
-## File Structure
+## Project Structure
 
 ```
-├── .env.prod.template          # Production environment template
-├── .env.dev.template           # Development environment template
-├── .github/workflows/deploy.yml # GitHub Actions deployment
-├── ecosystem.config.js         # PM2 process configuration
-├── nginx.conf                  # Nginx reverse proxy config
-├── server-setup.sh            # Server installation script
-├── ssl-setup.sh               # SSL certificate automation
-├── deploy.sh                  # Manual deployment script
-├── DEPLOYMENT_GUIDE.md        # Complete deployment guide
-├── ROLLBACK.md                # Emergency rollback procedures
-└── README.md                  # This file
+├── client/                     # React frontend application
+│   ├── src/
+│   │   ├── components/        # Reusable UI components
+│   │   ├── pages/            # Page components
+│   │   ├── hooks/            # Custom React hooks
+│   │   └── lib/              # Utility functions
+├── server/                     # Express.js backend
+│   ├── routes.ts             # API routes
+│   ├── auth.ts               # Authentication logic
+│   ├── db.ts                 # Database connection
+│   └── middleware/           # Express middleware
+├── shared/                     # Shared types and schemas
+├── migrations/                 # Database migrations
+└── attached_assets/           # Static assets
 ```
 
-## URLs
+## Available Scripts
 
-- **Production**: https://dtvisuals.com
-- **Development**: https://dev.dtvisuals.com
-- **Repository**: https://github.com/tomtwentysix/dtv
+- `npm run dev` - Start development server
+- `npm run build` - Build for production  
+- `npm run start` - Start production server
+- `npm run check` - Run TypeScript type checking
+- `npm run db:push` - Push database schema changes
 
-## Support
+## Development
 
-- **Setup Issues**: See `DEPLOYMENT_GUIDE.md`
-- **Problems**: See `ROLLBACK.md`
-- **Monitoring**: Use PM2 dashboard and server logs
+The application runs in development mode with hot reloading enabled. The frontend development server runs on port 5173, and the backend API runs on port 5000.
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test your changes
+5. Submit a pull request
 
 ---
 
-**Built with simplicity and reliability in mind** ✨
+**Built for DT Visuals** ✨
