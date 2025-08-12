@@ -30,7 +30,7 @@ import {
   type InsertWebsiteSettings,
   type BrandingSettings,
   type InsertBrandingSettings
-} from "@shared/schema";
+} from "../shared/schema.js";
 import { db } from "./db";
 import { eq, and, inArray } from "drizzle-orm";
 import session from "express-session";

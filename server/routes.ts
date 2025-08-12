@@ -7,7 +7,7 @@ import { setupAuth } from "./auth";
 import { storage } from "./storage";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
-import { users, media, mediaFeedback, mediaTimelineNotes, clientUsers, clients } from "@shared/schema";
+import { users, media, mediaFeedback, mediaTimelineNotes, clientUsers, clients } from "../shared/schema.js";
 import { requireAuth, requirePermission, requireRole, requireAnyRole } from "./middleware/rbac";
 import { requireClientAuth, loginClientUser, registerClientUser } from "./client-auth";
 import multer from "multer";
