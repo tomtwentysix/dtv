@@ -58,7 +58,14 @@ npm ci --production
 
 # Build application
 echo "🔨 Building application..."
-npm run build
+export QT_QPA_PLATFORM=offscreen
+export DISPLAY=:99
+export NODE_ENV=production
+npm run build || {
+    echo "⚠️  Build failed with GUI issues, trying headless build..."
+    npx vite build --mode production --logLevel warn
+    npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+}
 
 # Set up environment file if it doesn't exist
 ENV_FILE=".env.${ENVIRONMENT}"
