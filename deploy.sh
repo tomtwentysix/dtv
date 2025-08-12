@@ -1,10 +1,5 @@
 #!/bin/bash
 
-# ============================================
-# DT Visuals Manual Deployment Script (Improved + Vite Fix)
-# Usage: ./deploy.sh [prod|dev] [branch]
-# ============================================
-
 set -euo pipefail
 
 ENVIRONMENT=${1:-prod}
@@ -29,48 +24,40 @@ echo "Branch: $BRANCH"
 echo "PM2 App: $PM2_APP"
 echo ""
 
-# ---- Safety Checks ----
 if [[ ! -f "package.json" ]]; then
     echo "❌ Error: package.json not found. Run from project root."
     exit 1
 fi
 
 if [[ ! -d "/var/www/dtvisuals" ]]; then
-    echo "❌ Error: Must be run on the server with /var/www/dtvisuals directory."
+    echo "❌ Error: Must be run on server with /var/www/dtvisuals directory."
     exit 1
 fi
 
-# ---- Backup ----
 BACKUP_DIR="/var/www/dtvisuals/app.backup.$(date +%Y%m%d-%H%M%S)"
 echo "📦 Creating backup at $BACKUP_DIR..."
 sudo -u dtvisuals cp -r /var/www/dtvisuals/app "$BACKUP_DIR" 2>/dev/null || true
 
-# ---- Update Code ----
 echo "📥 Updating code..."
 git fetch origin
 git reset --hard
 git checkout "$BRANCH"
 git pull origin "$BRANCH" --ff-only
 
-# ---- Install Dependencies ----
-echo "📦 Installing dependencies..."
-export npm_config_audit=false
-export npm_config_fund=false
-npm ci --omit=dev --no-audit --no-fund --silent || npm install --omit=dev --no-audit --no-fund --silent
+echo "📦 Installing all dependencies (including dev)..."
+npm ci --no-audit --no-fund --silent
 
-# ---- Build Application ----
 echo "🔨 Building application..."
 export QT_QPA_PLATFORM=offscreen
 export DISPLAY=:99
 export NODE_ENV=production
 export HEADLESS=1
 
-# Kill only if running
 pgrep -f "vite build" && pkill -f "vite build"
 pgrep -f "npm run build" && pkill -f "npm run build"
 
-echo "⚙️ Building frontend (Vite fix applied)..."
-timeout 300 npx --yes --package vite vite build --mode production --logLevel error || {
+echo "⚙️ Building frontend (with Vite)..."
+timeout 300 npx vite build --mode production --logLevel error || {
     echo "❌ Frontend build failed"
     exit 1
 }
@@ -93,9 +80,11 @@ npx esbuild server/index.ts \
         exit 1
     }
 
+echo "📦 Pruning dev dependencies to keep production clean..."
+npm prune --production
+
 echo "✅ Build completed successfully"
 
-# ---- Environment File ----
 ENV_FILE=".env.${ENVIRONMENT}"
 if [[ ! -f "$ENV_FILE" ]]; then
     echo "⚙️ Creating $ENV_FILE..."
@@ -134,7 +123,6 @@ EOF
     exit 1
 fi
 
-# ---- Database Migrations ----
 echo "🗃️ Running database migrations..."
 set -a; source "$ENV_FILE"; set +a
 if [[ -z "${DATABASE_URL:-}" ]]; then
@@ -143,14 +131,12 @@ if [[ -z "${DATABASE_URL:-}" ]]; then
 fi
 npx drizzle-kit migrate
 
-# ---- Restart Application ----
 echo "🔄 Restarting application..."
 sudo -u dtvisuals pm2 restart "$PM2_APP" 2>/dev/null || {
     echo "PM2 app not found, starting..."
     sudo -u dtvisuals pm2 start ecosystem.config.js --only "$PM2_APP"
 }
 
-# ---- Health Check ----
 echo "⏳ Waiting for application to start..."
 sleep 5
 HEALTH_URL="http://localhost:$PORT/api/health"
@@ -170,7 +156,6 @@ for ((ATTEMPT=1; ATTEMPT<=MAX_ATTEMPTS; ATTEMPT++)); do
     sleep 10
 done
 
-# ---- Final Status ----
 echo ""
 echo "📊 Current Status:"
 sudo -u dtvisuals pm2 list | grep dtvisuals || true
