@@ -71,13 +71,19 @@ pkill -f "npm run build" 2>/dev/null || true
 
 # Use headless-optimized build commands
 echo "Building frontend (headless mode)..."
-timeout 300 npx vite build --mode production --logLevel error || {
+timeout 300 npx vite build --mode=production --logLevel=error || {
     echo "❌ Frontend build failed or timed out"
     exit 1
 }
 
+# Check if frontend built successfully
+if [ ! -d "dist" ]; then
+    echo "❌ Frontend build directory missing"
+    exit 1
+fi
+
 echo "Building backend..."
-npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist || {
+npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist --target=node18 || {
     echo "❌ Backend build failed"
     exit 1
 }
