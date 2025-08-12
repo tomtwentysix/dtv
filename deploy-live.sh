@@ -168,8 +168,13 @@ if [[ -f package.json ]]; then
 fi
 
 log "Installing client dependencies…"
-[[ -f client/package.json ]] || fail "client/package.json not found."
-sudo -u "$APP_USER" bash -lc "cd '$APP_DIR/client' && (npm ci || npm install)" >>"$LOG_FILE" 2>&1
+if [[ ! -d "$APP_DIR/node_modules" ]]; then
+  log "Installing root dependencies..."
+  sudo -u "$APP_USER" bash -lc "cd '$APP_DIR' && (npm ci || npm install)" >>"$LOG_FILE" 2>&1
+fi
+
+log "Client dependencies assumed present at root (monorepo structure). Skipping client npm install."
+
 
 # Ensure build tools present
 log "Ensuring dev tools (vite, esbuild)…"
