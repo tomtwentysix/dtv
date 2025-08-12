@@ -40,9 +40,7 @@ sudo -u dtvisuals cp -r /var/www/dtvisuals/app "$BACKUP_DIR" 2>/dev/null || true
 
 echo "📥 Updating code..."
 git fetch origin
-git reset --hard
-git checkout "$BRANCH"
-git pull origin "$BRANCH" --ff-only
+
 
 echo "📦 Installing all dependencies (including dev)..."
 npm ci --no-audit --no-fund --silent
