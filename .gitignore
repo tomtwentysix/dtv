@@ -4,7 +4,7 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
-
+*.env
 # Uploads directory - exclude large media files
 uploads/
 uploads/*
