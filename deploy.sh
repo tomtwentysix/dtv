@@ -54,18 +54,35 @@ git pull origin $BRANCH
 
 # Install dependencies
 echo "📦 Installing dependencies..."
-npm ci --production
+export npm_config_audit=false
+export npm_config_fund=false
+npm ci --omit=dev --no-audit --no-fund --silent
 
 # Build application
 echo "🔨 Building application..."
 export QT_QPA_PLATFORM=offscreen
 export DISPLAY=:99
 export NODE_ENV=production
-npm run build || {
-    echo "⚠️  Build failed with GUI issues, trying headless build..."
-    npx vite build --mode production --logLevel warn
-    npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+export HEADLESS=1
+
+# Kill any hanging build processes
+pkill -f "vite build" 2>/dev/null || true
+pkill -f "npm run build" 2>/dev/null || true
+
+# Use headless-optimized build commands
+echo "Building frontend (headless mode)..."
+timeout 300 npx vite build --mode production --logLevel error || {
+    echo "❌ Frontend build failed or timed out"
+    exit 1
 }
+
+echo "Building backend..."
+npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist || {
+    echo "❌ Backend build failed"
+    exit 1
+}
+
+echo "✅ Build completed successfully"
 
 # Set up environment file if it doesn't exist
 ENV_FILE=".env.${ENVIRONMENT}"
@@ -120,16 +137,31 @@ sudo -u dtvisuals pm2 restart $PM2_APP 2>/dev/null || {
 }
 
 # Wait for app to be ready
-echo "⏳ Waiting for application to be ready..."
-sleep 15
+echo "⏳ Waiting for application to start..."
+sleep 5
 
 # Health check
 echo "🏥 Performing health check..."
-if curl -f http://localhost:$PORT/api/health > /dev/null 2>&1; then
-    echo "✅ Application is healthy"
-else
-    echo "⚠️  Health check failed - check logs: pm2 logs $PM2_APP"
-fi
+HEALTH_URL="http://localhost:$PORT/api/health"
+MAX_ATTEMPTS=6
+ATTEMPT=1
+
+while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
+    if curl -f -s --connect-timeout 5 --max-time 10 "$HEALTH_URL" > /dev/null 2>&1; then
+        echo "✅ Application is healthy"
+        break
+    else
+        if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
+            echo "❌ Health check failed after $MAX_ATTEMPTS attempts"
+            echo "Check logs: sudo -u dtvisuals pm2 logs $PM2_APP"
+            exit 1
+        else
+            echo "⏳ Attempt $ATTEMPT/$MAX_ATTEMPTS failed, retrying in 10s..."
+            sleep 10
+            ATTEMPT=$((ATTEMPT + 1))
+        fi
+    fi
+done
 
 # Show status
 echo ""
