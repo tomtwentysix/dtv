@@ -476,9 +476,44 @@
   .animate-scale-in {
     animation: scaleIn 0.3s ease-out;
   }
-  .border-border {
-    border: 1px solid var(--border);
-  }
+@layer utilities {
+  .bg-background { background-color: var(--background); }
+  .bg-popover { background-color: var(--popover); }
+  .bg-card { background-color: var(--card); }
+  .bg-input { background-color: var(--input); }
+  .bg-accent { background-color: var(--accent); }
+  .bg-destructive { background-color: var(--destructive); }
+  .bg-glass-dark { background-color: var(--glass-dark); }
+  .bg-glass-light { background-color: var(--glass-light); }
+
+  .text-foreground { color: var(--foreground); }
+  .text-muted-foreground { color: var(--muted-foreground); }
+  .text-card-foreground { color: var(--card-foreground); }
+  .text-popover-foreground { color: var(--popover-foreground); }
+  .text-primary-foreground { color: var(--primary-foreground); }
+  .text-secondary-foreground { color: var(--secondary-foreground); }
+  .text-accent-foreground { color: var(--accent-foreground); }
+  .text-destructive-foreground { color: var(--destructive-foreground); }
+  .text-ring { color: var(--ring); }
+
+  .text-dark-teal { color: var(--dark-teal); }
+  .text-muted-orange { color: var(--muted-orange); }
+
+  .border-border { border: 1px solid var(--border); }
+  .border-card { border-color: var(--card); }
+  .border-input { border-color: var(--input); }
+  .border-dark-teal { border-color: var(--dark-teal); }
+  .border-muted-orange { border-color: var(--muted-orange); }
+
+  .bg-dark-teal { background-color: var(--dark-teal); }
+  .bg-muted-orange { background-color: var(--muted-orange); }
+
+  .ring-ring { box-shadow: 0 0 0 3px var(--ring); }
+
+  /* Radius utilities */
+  .rounded-radius { border-radius: var(--radius); }
+}
+
 }
 
 @keyframes fadeIn {
