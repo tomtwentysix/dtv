@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ============================================
-# DT Visuals Manual Deployment Script (Improved)
+# DT Visuals Manual Deployment Script (Improved + Vite Fix)
 # Usage: ./deploy.sh [prod|dev] [branch]
 # ============================================
 
@@ -69,8 +69,8 @@ export HEADLESS=1
 pgrep -f "vite build" && pkill -f "vite build"
 pgrep -f "npm run build" && pkill -f "npm run build"
 
-echo "⚙️ Building frontend..."
-timeout 300 npx vite build --mode=production --logLevel=error || {
+echo "⚙️ Building frontend (Vite fix applied)..."
+timeout 300 npx --yes --package vite vite build --mode production --logLevel error || {
     echo "❌ Frontend build failed"
     exit 1
 }
@@ -175,3 +175,9 @@ echo ""
 echo "📊 Current Status:"
 sudo -u dtvisuals pm2 list | grep dtvisuals || true
 echo ""
+echo "✅ Deployment completed!"
+if [[ "$ENVIRONMENT" == "prod" ]]; then
+    echo "🌐 Production URL: https://dtvisuals.com"
+else
+    echo "🌐 Development URL: https://dev.dtvisuals.com"
+fi
