@@ -53,8 +53,8 @@ export DISPLAY=:99
 export NODE_ENV=production
 export HEADLESS=1
 
-pgrep -f "vite build" && pkill -f "vite build"
-pgrep -f "npm run build" && pkill -f "npm run build"
+pgrep -f "vite build" && pkill -f "vite build" || true
+pgrep -f "npm run build" && pkill -f "npm run build" || true
 
 echo "⚙️ Building frontend (with Vite)..."
 timeout 300 npx vite build --mode production --logLevel error || {
@@ -79,9 +79,6 @@ npx esbuild server/index.ts \
         echo "❌ Backend build failed"
         exit 1
     }
-
-echo "📦 Pruning dev dependencies to keep production clean..."
-npm prune --production
 
 echo "✅ Build completed successfully"
 
@@ -129,7 +126,13 @@ if [[ -z "${DATABASE_URL:-}" ]]; then
     echo "❌ DATABASE_URL not configured in $ENV_FILE"
     exit 1
 fi
-npx drizzle-kit migrate
+npx drizzle-kit migrate || {
+    echo "❌ Database migrations failed"
+    exit 1
+}
+
+echo "📦 Pruning dev dependencies to keep production clean..."
+npm prune --production
 
 echo "🔄 Restarting application..."
 sudo -u dtvisuals pm2 restart "$PM2_APP" 2>/dev/null || {
