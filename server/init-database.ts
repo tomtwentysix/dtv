@@ -93,8 +93,94 @@ async function createEssentialData() {
   await db.insert(rolePermissions).values(rolePermissionValues).onConflictDoNothing();
   console.log('Assigned permissions to roles');
   
-  // Create admin user
+  // Create admin user (always created for both environments)
   await createAdminUser(adminRoleId);
+  
+  // Create additional test data for development environment
+  const isDevEnvironment = process.env.NODE_ENV === 'development';
+  if (isDevEnvironment) {
+    console.log('🧪 Development environment detected, creating test data...');
+    await createDevelopmentTestData(staffRoleId, clientRoleId);
+  }
+}
+
+async function createDevelopmentTestData(staffRoleId: string, clientRoleId: string) {
+  try {
+    // Import clients and clientUsers from schema
+    const { clients, clientUsers } = await import('../shared/schema.js');
+    
+    console.log('🧪 Creating development test users...');
+    
+    // Create a staff user for testing
+    const staffUserId = crypto.randomUUID();
+    const staffPassword = 'df10c71f317ded80d49fc8ebd89b928fdb6706e3bb45ea330da8a7caa009d98ebc3c57461844955f37b7dbb5651a00c42a0a924e7030550d4eb8bb2b1196878a.4e8dad95ff12fe8b727f303f8ac1a12f'; // "admin123" hashed
+    
+    await db.insert(users).values({
+      id: staffUserId,
+      username: 'staff',
+      email: 'staff@dtvisuals.com',
+      password: staffPassword,
+      forename: 'Staff',
+      surname: 'Member',
+      displayName: 'Staff Member',
+      isActive: true
+    }).onConflictDoNothing();
+    
+    // Assign staff role
+    await db.insert(userRoles).values({
+      userId: staffUserId,
+      roleId: staffRoleId
+    }).onConflictDoNothing();
+    
+    console.log('Created staff user: staff@dtvisuals.com / admin123');
+    
+    // Create test clients
+    const testClients = [
+      {
+        id: crypto.randomUUID(),
+        name: 'Demo Client',
+        email: 'demo@client.com',
+        company: 'Demo Company Ltd',
+        phone: '+1-234-567-8900',
+        notes: 'Demo client for testing purposes',
+        isActive: true,
+        createdBy: staffUserId
+      },
+      {
+        id: crypto.randomUUID(),
+        name: 'Test Productions',
+        email: 'test@productions.com',
+        company: 'Test Productions Inc',
+        phone: '+1-234-567-8901',
+        notes: 'Another test client for development',
+        isActive: true,
+        createdBy: staffUserId
+      }
+    ];
+    
+    await db.insert(clients).values(testClients).onConflictDoNothing();
+    console.log('Created test clients');
+    
+    // Create client users for the test clients
+    const clientUserPassword = 'df10c71f317ded80d49fc8ebd89b928fdb6706e3bb45ea330da8a7caa009d98ebc3c57461844955f37b7dbb5651a00c42a0a924e7030550d4eb8bb2b1196878a.4e8dad95ff12fe8b727f303f8ac1a12f'; // "admin123" hashed
+    
+    const testClientUsers = testClients.map((client, index) => ({
+      id: crypto.randomUUID(),
+      clientId: client.id,
+      username: `client${index + 1}`,
+      email: client.email,
+      password: clientUserPassword,
+      isActive: true
+    }));
+    
+    await db.insert(clientUsers).values(testClientUsers).onConflictDoNothing();
+    console.log('Created client users: client1@client.com / admin123, test@productions.com / admin123');
+    
+    console.log('✅ Development test data created successfully');
+  } catch (error) {
+    console.error('⚠️  Failed to create development test data:', error);
+    // Don't throw - continue with basic setup
+  }
 }
 
 async function createAdminUser(adminRoleId?: string) {
@@ -348,17 +434,4 @@ async function createBasicSchema() {
     console.error('❌ Failed to create basic schema:', error);
     throw error;
   }
-}
-
-// Environment detection
-export function getEnvironmentInfo() {
-  const isReplit = process.env.REPLIT_DB_URL || process.env.DATABASE_URL?.includes('neon');
-  const isDocker = process.env.NODE_ENV === 'production' || process.env.DATABASE_URL?.includes('postgres-');
-  
-  return {
-    isReplit,
-    isDocker,
-    environment: isReplit ? 'replit' : isDocker ? 'docker' : 'local',
-    databaseUrl: process.env.DATABASE_URL
-  };
 }
