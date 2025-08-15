@@ -27,13 +27,81 @@ This installs Node.js, PostgreSQL, PM2, Nginx, and creates necessary users.
 
 ### 2. Database Setup
 
-```bash
-# Set PostgreSQL password
-sudo -u postgres psql -c "ALTER USER dtvisuals PASSWORD 'your-secure-password';"
+The server setup script automatically:
+- Installs PostgreSQL 15
+- Creates `dtvisuals` user with a secure auto-generated password
+- Creates `dtvisuals_prod` and `dtvisuals_dev` databases
+- Sets up proper permissions and schema access
+- Tests database connections
 
-# Create databases
-sudo -u postgres createdb dtvisuals_prod
-sudo -u postgres createdb dtvisuals_dev
+**Important:** The database password is saved to `/tmp/dtvisuals_db_password.txt` - you'll need this for your environment files.
+
+To verify your database setup:
+```bash
+# Check the generated password
+cat /tmp/dtvisuals_db_password.txt
+
+# Test database connections
+sudo -u dtvisuals psql -U dtvisuals -d dtvisuals_prod -h localhost
+sudo -u dtvisuals psql -U dtvisuals -d dtvisuals_dev -h localhost
+
+# List databases
+sudo -u postgres psql -l | grep dtvisuals
+```
+
+### 2.1. Manual PostgreSQL Troubleshooting
+
+If you need to reset or troubleshoot PostgreSQL:
+
+```bash
+# Check PostgreSQL status
+sudo systemctl status postgresql
+
+# Restart PostgreSQL if needed
+sudo systemctl restart postgresql
+
+# Reset user password if needed
+sudo -u postgres psql -c "ALTER USER dtvisuals PASSWORD 'your-new-password';"
+
+# Check database permissions
+sudo -u postgres psql -c "SELECT datname, datdba FROM pg_database WHERE datname LIKE 'dtvisuals%';"
+
+# Check user permissions
+sudo -u postgres psql -c "SELECT rolname, rolsuper, rolcreatedb, rolcanlogin FROM pg_roles WHERE rolname = 'dtvisuals';"
+```
+
+### 2.2. Directory Structure & Uploads
+
+The server setup automatically creates the following directory structure:
+
+```
+/var/www/dtvisuals/
+├── app/                    # Application code (git repository)
+├── uploads/
+│   ├── prod/              # Production uploads (persistent)
+│   └── dev/               # Development uploads (persistent)
+└── ecosystem.config.js    # PM2 configuration
+```
+
+**Upload Directory Configuration:**
+- Production uploads: `/var/www/dtvisuals/uploads/prod`
+- Development uploads: `/var/www/dtvisuals/uploads/dev`
+- The application automatically uses `UPLOADS_DIR` environment variable
+- Files uploaded remain persistent across deployments
+- Proper permissions are set automatically (dtvisuals:www-data, 755)
+
+To verify upload directories:
+```bash
+# Check directory structure
+ls -la /var/www/dtvisuals/
+ls -la /var/www/dtvisuals/uploads/
+
+# Check permissions
+ls -ld /var/www/dtvisuals/uploads/*
+
+# Test upload directory access
+sudo -u dtvisuals touch /var/www/dtvisuals/uploads/prod/test.txt
+sudo -u dtvisuals rm /var/www/dtvisuals/uploads/prod/test.txt
 ```
 
 ### 3. Environment Configuration
@@ -43,18 +111,23 @@ Create production and development environment files:
 ```bash
 cd /var/www/dtvisuals/app
 
+# Get the auto-generated database password
+DB_PASSWORD=$(cat /tmp/dtvisuals_db_password.txt)
+echo "Database password: $DB_PASSWORD"
+
 # Production environment
 sudo -u dtvisuals cp .env.prod.template .env.prod
 sudo -u dtvisuals nano .env.prod
 ```
 
-Update `.env.prod` with:
+Update `.env.prod` with the generated password:
 ```env
 NODE_ENV=production
 PORT=5001
-DATABASE_URL=postgresql://dtvisuals:your-secure-password@localhost:5432/dtvisuals_prod
-SESSION_SECRET=your-64-char-random-string
+DATABASE_URL=postgresql://dtvisuals:REPLACE_WITH_GENERATED_PASSWORD@localhost:5432/dtvisuals_prod
+SESSION_SECRET=GENERATE_64_CHAR_RANDOM_STRING
 DOMAIN=yourdomain.com
+UPLOADS_DIR=/var/www/dtvisuals/uploads/prod
 ```
 
 ```bash
@@ -63,8 +136,14 @@ sudo -u dtvisuals cp .env.dev.template .env.dev
 sudo -u dtvisuals nano .env.dev
 ```
 
-Update `.env.dev` with:
+Update `.env.dev` with the same database password:
 ```env
+NODE_ENV=development
+PORT=5002
+DATABASE_URL=postgresql://dtvisuals:REPLACE_WITH_GENERATED_PASSWORD@localhost:5432/dtvisuals_dev
+SESSION_SECRET=GENERATE_64_CHAR_RANDOM_STRING
+DOMAIN=dev.yourdomain.com
+UPLOADS_DIR=/var/www/dtvisuals/uploads/dev
 NODE_ENV=development
 PORT=5002
 DATABASE_URL=postgresql://dtvisuals:your-secure-password@localhost:5432/dtvisuals_dev
