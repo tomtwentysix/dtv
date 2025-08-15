@@ -42,23 +42,13 @@ git pull origin $BRANCH
 
 # Create required directories
 echo "📁 Creating required directories..."
-if [[ "$ENVIRONMENT" == "prod" ]]; then
-    UPLOADS_DIR="/var/www/dtvisuals/uploads/prod"
-else
-    UPLOADS_DIR="/var/www/dtvisuals/uploads/dev"
-fi
-
-# Ensure uploads directory exists and has proper permissions
-mkdir -p "$UPLOADS_DIR"
-chown -R dtvisuals:www-data "$UPLOADS_DIR"
-chmod -R 755 "$UPLOADS_DIR"
 
 # Create local uploads directory for application if it doesn't exist
 mkdir -p uploads
 chown -R dtvisuals:www-data uploads
 chmod -R 755 uploads
 
-echo "✅ Upload directories created: $UPLOADS_DIR"
+echo "✅ Upload directory created: ./uploads"
 
 # Install dependencies
 echo "📦 Installing dependencies..."

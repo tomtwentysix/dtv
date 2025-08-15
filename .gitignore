@@ -4,6 +4,8 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+# Environment files - contain sensitive data
+.env
 *.env
 # Uploads directory - exclude large media files
 uploads/

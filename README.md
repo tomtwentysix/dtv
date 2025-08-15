@@ -22,7 +22,7 @@
 wget https://raw.githubusercontent.com/tomtwentysix/dtv/main/server-setup.sh
 sudo chmod +x server-setup.sh && sudo ./server-setup.sh
 # ✅ This creates PostgreSQL with secure auto-generated password
-# ✅ Creates all required directories including persistent uploads folders
+# ✅ Creates all required directories and configuration
 
 # 2. Clone and configure
 cd /var/www/dtvisuals
@@ -122,7 +122,7 @@ curl http://localhost:5001/api/health
 ### Key Features Added
 
 - **🔧 Automated PostgreSQL Setup**: Generates secure passwords automatically
-- **📁 Persistent Upload Directories**: Uploads survive deployments in `/var/www/dtvisuals/uploads/{prod,dev}`
+- **📁 Simplified Upload Storage**: Uploads stored within app directory, git ignored
 - **⚙️  Environment Configuration**: `setup-env.sh` automates .env file creation with secure defaults
 - **✅ Setup Verification**: `verify-setup.sh` validates your installation
 - **🔒 Security**: Proper permissions, secure passwords, and session secrets
