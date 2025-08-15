@@ -37,7 +37,7 @@ fi
 # Pull latest code
 echo "📥 Pulling latest code from $BRANCH..."
 git fetch origin
-git reset --hard origin/$BRANCH
+
 
 # Create required directories
 echo "📁 Creating required directories..."
