@@ -288,6 +288,46 @@ curl -I https://dev.yourdomain.com
 
 ## Troubleshooting
 
+### Upload Directory Issues
+
+If uploads are not working or files disappear after deployment:
+
+```bash
+# Check if upload directories exist
+ls -la /var/www/dtvisuals/uploads/
+ls -la /var/www/dtvisuals/uploads/prod/
+ls -la /var/www/dtvisuals/uploads/dev/
+
+# Check permissions
+ls -ld /var/www/dtvisuals/uploads/*
+# Should show: drwxr-xr-x dtvisuals www-data
+
+# Check environment variables in your .env files
+grep UPLOADS_DIR /var/www/dtvisuals/app/.env.prod
+grep UPLOADS_DIR /var/www/dtvisuals/app/.env.dev
+# Should show: UPLOADS_DIR=/var/www/dtvisuals/uploads/prod (or dev)
+
+# Test upload directory access
+sudo -u dtvisuals touch /var/www/dtvisuals/uploads/prod/test.txt
+sudo -u dtvisuals ls -la /var/www/dtvisuals/uploads/prod/test.txt
+sudo -u dtvisuals rm /var/www/dtvisuals/uploads/prod/test.txt
+
+# Fix permissions if needed
+sudo chown -R dtvisuals:www-data /var/www/dtvisuals/uploads/
+sudo chmod -R 755 /var/www/dtvisuals/uploads/
+
+# Recreate directories if missing
+sudo mkdir -p /var/www/dtvisuals/uploads/{prod,dev}
+sudo chown -R dtvisuals:www-data /var/www/dtvisuals/uploads/
+sudo chmod -R 755 /var/www/dtvisuals/uploads/
+```
+
+**Common Upload Issues:**
+- Files disappear after deployment → Check UPLOADS_DIR in .env files points to persistent directory
+- Permission denied errors → Run the permission fix commands above  
+- 404 errors for uploaded files → Verify Nginx serves `/uploads` path correctly
+- Large file uploads fail → Check `MAX_FILE_SIZE` in .env and Nginx client_max_body_size
+
 ### Common Issues
 
 1. **Database Connection Failed**
