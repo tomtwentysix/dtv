@@ -57,8 +57,8 @@ DOMAIN=${PROD_DOMAIN}
 APP_NAME=DT-Visuals-Production
 
 # File Upload Configuration
-UPLOADS_DIR=/var/www/dtvisuals/uploads/prod
-MAX_FILE_SIZE=50000000
+UPLOADS_DIR=./uploads
+MAX_FILE_SIZE=2621440000
 
 # Security Configuration
 TRUSTED_PROXIES=127.0.0.1,::1
@@ -93,8 +93,8 @@ DOMAIN=${DEV_DOMAIN}
 APP_NAME=DT-Visuals-Development
 
 # File Upload Configuration
-UPLOADS_DIR=/var/www/dtvisuals/uploads/dev
-MAX_FILE_SIZE=50000000
+UPLOADS_DIR=./uploads
+MAX_FILE_SIZE=2621440000
 
 # Security Configuration
 TRUSTED_PROXIES=127.0.0.1,::1
@@ -117,8 +117,7 @@ echo "📋 Configuration Summary:"
 echo "   Production domain: ${PROD_DOMAIN}"
 echo "   Development domain: ${DEV_DOMAIN}"
 echo "   Database password: ${DB_PASSWORD:0:8}..."
-echo "   Production uploads: /var/www/dtvisuals/uploads/prod"
-echo "   Development uploads: /var/www/dtvisuals/uploads/dev"
+echo "   Uploads directory: ./uploads (within app)"
 echo ""
 echo "🔒 Security Notes:"
 echo "   - Environment files are owned by dtvisuals:www-data with 600 permissions"

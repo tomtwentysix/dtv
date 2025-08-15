@@ -55,7 +55,7 @@ fi
 
 # Create directory structure
 echo "📁 Creating directory structure..."
-mkdir -p /var/www/dtvisuals/{app,uploads/{prod,dev}}
+mkdir -p /var/www/dtvisuals/app
 mkdir -p /var/log/dtvisuals
 mkdir -p /var/www/certbot
 
@@ -351,7 +351,6 @@ echo "   - Nginx logs: sudo tail -f /var/log/nginx/error.log"
 echo "   - PostgreSQL logs: sudo tail -f /var/log/postgresql/postgresql-$PG_MAJOR-main.log"
 echo "   - Database connection test: sudo -u dtvisuals psql -U dtvisuals -d dtvisuals_prod -h localhost"
 echo "   - Check disk space: df -h"
-echo "   - Check uploads directories: ls -la /var/www/dtvisuals/uploads/"
 EOF
 
 chmod +x server-setup.sh
