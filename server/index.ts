@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
+import path from "path";
 import { registerRoutes } from "./routes";
-import { initializeDatabase, getEnvironmentInfo } from "./init-database.js";
+import { initializeDatabase } from "./init-database.js";
 import { log, serveStatic } from "./utils.js";
 
 const app = express();
@@ -22,7 +23,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 // Serve static files from uploads directory
-app.use('/uploads', express.static('uploads'));
+const uploadDir = process.env.UPLOADS_DIR || path.join(process.cwd(), "uploads");
+app.use('/uploads', express.static(uploadDir));
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -57,9 +59,7 @@ app.use((req, res, next) => {
 (async () => {
   // Initialize database before starting the server
   try {
-    const envInfo = getEnvironmentInfo();
-    console.log(`🌍 Environment detected: ${envInfo.environment}`);
-    console.log(`💾 Database: ${envInfo.databaseUrl?.substring(0, 50)}...`);
+    console.log('🐘 Using PostgreSQL database connection');
     
     await initializeDatabase();
   } catch (error) {
@@ -92,15 +92,16 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // Set different default ports based on environment
-  const defaultPort = process.env.NODE_ENV === "development" ? '5002' : '5001';
-  const port = parseInt(process.env.PORT || defaultPort, 10);
-  
+  // ALWAYS serve the app on the port specified in the environment variable PORT
+  // Other ports are firewalled. Default to 5000 if not specified.
+  // this serves both the API and the client.
+  // It is the only port that is not firewalled.
+  const port = parseInt(process.env.PORT || '5000', 10);
   server.listen({
     port,
     host: "0.0.0.0",
     reusePort: true,
   }, () => {
-    log(`serving on port ${port} in ${process.env.NODE_ENV || 'production'} mode`);
+    log(`serving on port ${port}`);
   });
 })();
