@@ -12,68 +12,6 @@ import { requireAuth, requirePermission, requireRole, requireAnyRole } from "./m
 import { requireClientAuth, loginClientUser, registerClientUser } from "./client-auth";
 import multer from "multer";
 
-// Initialize default roles and permissions
-async function initializeRBAC() {
-  try {
-    // Create default permissions
-    const defaultPermissions = [
-      { name: "upload:media", description: "Can upload new media" },
-      { name: "assign:media", description: "Can assign media to clients" },
-      { name: "delete:media", description: "Can delete media" },
-      { name: "view:clients", description: "Can view client profiles" },
-      { name: "edit:clients", description: "Can create/edit clients" },
-      { name: "edit:users", description: "Can create/edit staff users" },
-      { name: "edit:roles", description: "Can create/edit roles and permissions" },
-      { name: "edit:website", description: "Can edit website settings and customization" },
-      { name: "view:analytics", description: "Can view analytics and stats" },
-      { name: "manage:system", description: "Full system management access" },
-    ];
-
-    for (const perm of defaultPermissions) {
-      const existing = await storage.getPermissionByName(perm.name);
-      if (!existing) {
-        await storage.createPermission(perm);
-      }
-    }
-
-    // Create default roles
-    const adminRole = await storage.getRoleByName("Admin");
-    if (!adminRole) {
-      const newAdminRole = await storage.createRole({
-        name: "Admin",
-        description: "Full access to all admin features",
-      });
-      
-      // Assign all permissions to admin
-      const allPermissions = await storage.getAllPermissions();
-      for (const permission of allPermissions) {
-        await storage.assignPermissionToRole(newAdminRole.id, permission.id);
-      }
-    }
-
-    const staffRole = await storage.getRoleByName("Staff");
-    if (!staffRole) {
-      const newStaffRole = await storage.createRole({
-        name: "Staff",
-        description: "Limited access based on assigned permissions",
-      });
-      
-      // Assign basic permissions to staff
-      const basicPermissions = ["upload:media", "assign:media", "view:clients", "edit:website"];
-      for (const permName of basicPermissions) {
-        const permission = await storage.getPermissionByName(permName);
-        if (permission) {
-          await storage.assignPermissionToRole(newStaffRole.id, permission.id);
-        }
-      }
-    }
-
-    // Note: Client role removed - clients now have their own authentication system separate from users
-  } catch (error) {
-    console.error("Error initializing RBAC:", error);
-  }
-}
-
 // Configure multer for file uploads
 const uploadDir = process.env.UPLOADS_DIR || path.join(process.cwd(), "uploads");
 if (!fs.existsSync(uploadDir)) {
@@ -105,9 +43,6 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Initialize RBAC system
-  await initializeRBAC();
-  
   // Setup authentication
   setupAuth(app);
 
