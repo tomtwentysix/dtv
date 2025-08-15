@@ -1,12 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import { storage } from "../storage";
+import { User } from "@shared/schema";
 
 export interface AuthenticatedRequest extends Request {
-  user?: {
-    id: string;
-    username: string;
-    email: string;
-  };
+  user?: User;
 }
 
 export function requireAuth(req: AuthenticatedRequest, res: Response, next: NextFunction) {
