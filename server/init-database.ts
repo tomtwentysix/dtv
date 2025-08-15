@@ -1,6 +1,8 @@
 import { db, pool } from './db.js';
 import { sql } from 'drizzle-orm';
 import { users, roles, permissions, userRoles, rolePermissions } from '../shared/schema.js';
+import crypto from 'crypto';
+import { hashPassword } from './auth.ts';
 
 export async function initializeDatabase() {
   console.log('🔧 Initializing database for current environment...');
@@ -113,7 +115,7 @@ async function createDevelopmentTestData(staffRoleId: string, clientRoleId: stri
     
     // Create a staff user for testing
     const staffUserId = crypto.randomUUID();
-    const staffPassword = 'df10c71f317ded80d49fc8ebd89b928fdb6706e3bb45ea330da8a7caa009d98ebc3c57461844955f37b7dbb5651a00c42a0a924e7030550d4eb8bb2b1196878a.4e8dad95ff12fe8b727f303f8ac1a12f'; // "admin123" hashed
+    const staffPassword = await hashPassword('admin123'); // Use consistent hashing
     
     await db.insert(users).values({
       id: staffUserId,
@@ -162,7 +164,7 @@ async function createDevelopmentTestData(staffRoleId: string, clientRoleId: stri
     console.log('Created test clients');
     
     // Create client users for the test clients
-    const clientUserPassword = 'df10c71f317ded80d49fc8ebd89b928fdb6706e3bb45ea330da8a7caa009d98ebc3c57461844955f37b7dbb5651a00c42a0a924e7030550d4eb8bb2b1196878a.4e8dad95ff12fe8b727f303f8ac1a12f'; // "admin123" hashed
+    const clientUserPassword = await hashPassword('admin123'); // Use consistent hashing
     
     const testClientUsers = testClients.map((client, index) => ({
       id: crypto.randomUUID(),
@@ -184,8 +186,8 @@ async function createDevelopmentTestData(staffRoleId: string, clientRoleId: stri
 }
 
 async function createAdminUser(adminRoleId?: string) {
-  // Password is "admin123" hashed with scrypt
-  const hashedPassword = 'df10c71f317ded80d49fc8ebd89b928fdb6706e3bb45ea330da8a7caa009d98ebc3c57461844955f37b7dbb5651a00c42a0a924e7030550d4eb8bb2b1196878a.4e8dad95ff12fe8b727f303f8ac1a12f';
+  // Hash the default admin password "admin123"
+  const hashedPassword = await hashPassword('admin123');
   
   const adminUserId = crypto.randomUUID();
   
