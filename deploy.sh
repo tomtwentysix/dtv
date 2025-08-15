@@ -74,10 +74,53 @@ npm run build
 
 # Run database migrations
 echo "🗃️ Running database migrations..."
-if [[ "$ENVIRONMENT" == "prod" ]]; then
-    NODE_ENV=production npm run db:push
+
+# Load environment variables from the appropriate .env file
+echo "📋 Loading environment variables from $ENV_FILE..."
+if [[ -f "$ENV_FILE" ]]; then
+    set -a  # Export all variables
+    source "$ENV_FILE"
+    set +a  # Stop exporting
 else
-    NODE_ENV=development npm run db:push
+    echo "❌ Environment file $ENV_FILE not found!"
+    exit 1
+fi
+
+# Validate DATABASE_URL
+if [[ -z "$DATABASE_URL" ]]; then
+    echo "❌ DATABASE_URL is not set in $ENV_FILE"
+    exit 1
+fi
+
+# Basic validation of DATABASE_URL format
+if [[ ! "$DATABASE_URL" =~ ^postgresql:// ]]; then
+    echo "❌ DATABASE_URL must start with 'postgresql://' in $ENV_FILE"
+    exit 1
+fi
+
+# Check if DATABASE_URL has a hostname (not ending with @)
+if [[ "$DATABASE_URL" =~ @$ ]]; then
+    echo "❌ DATABASE_URL is missing hostname in $ENV_FILE"
+    exit 1
+fi
+
+echo "✅ DATABASE_URL validation passed"
+
+# Run database migration with error handling
+if [[ "$ENVIRONMENT" == "prod" ]]; then
+    if NODE_ENV=production npm run db:push; then
+        echo "✅ Database migrations completed successfully"
+    else
+        echo "⚠️ Database migration failed, but continuing deployment..."
+        echo "   You may need to run migrations manually: npm run db:push"
+    fi
+else
+    if NODE_ENV=development npm run db:push; then
+        echo "✅ Database migrations completed successfully"
+    else
+        echo "⚠️ Database migration failed, but continuing deployment..."
+        echo "   You may need to run migrations manually: npm run db:push"
+    fi
 fi
 
 # Restart PM2 application
