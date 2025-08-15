@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { storage } from './storage';
-import crypto from 'crypto';
 import { ClientUser } from '@shared/schema';
+import { hashPassword, comparePasswords } from './auth.ts';
 
 // Extend Express Request type to include clientUser and session
 declare global {
@@ -13,28 +13,6 @@ declare global {
       clientUserId?: string;
     }
   }
-}
-
-// Hash password using scrypt
-function hashPassword(password: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const salt = crypto.randomBytes(16).toString('hex');
-    crypto.scrypt(password, salt, 64, (err, derivedKey) => {
-      if (err) reject(err);
-      resolve(salt + ':' + derivedKey.toString('hex'));
-    });
-  });
-}
-
-// Verify password
-function verifyPassword(password: string, hash: string): Promise<boolean> {
-  return new Promise((resolve, reject) => {
-    const [salt, key] = hash.split(':');
-    crypto.scrypt(password, salt, 64, (err, derivedKey) => {
-      if (err) reject(err);
-      resolve(key === derivedKey.toString('hex'));
-    });
-  });
 }
 
 // Client authentication middleware
@@ -69,7 +47,7 @@ export async function loginClientUser(username: string, password: string): Promi
       return null;
     }
 
-    const isValid = await verifyPassword(password, clientUser.password);
+    const isValid = await comparePasswords(password, clientUser.password);
     if (!isValid) {
       return null;
     }
