@@ -21,22 +21,29 @@
 # 1. Server setup (one-time)
 wget https://raw.githubusercontent.com/tomtwentysix/dtv/main/server-setup.sh
 sudo chmod +x server-setup.sh && sudo ./server-setup.sh
+# ✅ This creates PostgreSQL with secure auto-generated password
+# ✅ Creates all required directories including persistent uploads folders
 
 # 2. Clone and configure
 cd /var/www/dtvisuals
 sudo -u dtvisuals git clone https://github.com/tomtwentysix/dtv.git app
 cd app
-sudo -u dtvisuals cp .env.prod.template .env.prod
-# Edit .env.prod with your database and domain settings
 
-# 3. Setup SSL
+# 3. Verify setup
+sudo ./verify-setup.sh
+
+# 4. Configure environment (automated)
+sudo ./setup-env.sh
+# ✅ This uses the auto-generated database password
+# ✅ Creates secure session secrets
+# ✅ Configures upload directories properly
+
+# 5. Setup SSL
 sudo ./ssl-setup.sh yourdomain.com,www.yourdomain.com,dev.yourdomain.com admin@yourdomain.com
 
-# 4. Initial deployment
-sudo -u dtvisuals npm ci --production
-sudo -u dtvisuals npm run build
-sudo -u dtvisuals npm run db:push
-sudo -u dtvisuals pm2 start ecosystem.config.js --only dtvisuals-prod
+# 6. Deploy
+sudo ./deploy.sh prod main
+# ✅ Ensures upload directories are created and persistent
 ```
 
 ### For GitHub Actions Automation
@@ -104,10 +111,21 @@ curl http://localhost:5001/api/health
 ├── ecosystem.config.js         # PM2 process configuration
 ├── nginx.conf                  # Nginx reverse proxy config
 ├── server-setup.sh            # Server installation script
+├── deploy.sh                  # Manual deployment script  
 ├── ssl-setup.sh               # SSL certificate automation
+├── setup-env.sh               # Environment configuration helper
+├── verify-setup.sh            # Setup verification script
 ├── DEPLOYMENT_GUIDE.md        # Complete deployment guide
 └── README.md                  # This file
 ```
+
+### Key Features Added
+
+- **🔧 Automated PostgreSQL Setup**: Generates secure passwords automatically
+- **📁 Persistent Upload Directories**: Uploads survive deployments in `/var/www/dtvisuals/uploads/{prod,dev}`
+- **⚙️  Environment Configuration**: `setup-env.sh` automates .env file creation with secure defaults
+- **✅ Setup Verification**: `verify-setup.sh` validates your installation
+- **🔒 Security**: Proper permissions, secure passwords, and session secrets
 
 ## Documentation
 
