@@ -37,7 +37,8 @@ fi
 # Pull latest code
 echo "📥 Pulling latest code from $BRANCH..."
 git fetch origin
-
+git checkout $BRANCH
+git pull origin $BRANCH
 
 # Create required directories
 echo "📁 Creating required directories..."
@@ -62,7 +63,7 @@ echo "✅ Upload directories created: $UPLOADS_DIR"
 # Install dependencies
 echo "📦 Installing dependencies..."
 if [[ "$ENVIRONMENT" == "prod" ]]; then
-    npm ci --production
+    npm ci --omit=dev
 else
     npm ci
 fi
@@ -81,7 +82,28 @@ fi
 
 # Restart PM2 application
 echo "🔄 Restarting application..."
-pm2 restart $PM2_APP || pm2 start ecosystem.config.js --only $PM2_APP
+# Check if app is already running in PM2
+if pm2 list | grep -q "$PM2_APP"; then
+    echo "Restarting existing PM2 process..."
+    pm2 restart $PM2_APP
+else
+    echo "Starting new PM2 process..."
+    # Use the ecosystem.config.js from the parent directory
+    cd ..
+    if [[ -f "ecosystem.config.js" ]]; then
+        pm2 start ecosystem.config.js --only $PM2_APP
+    else
+        echo "❌ ecosystem.config.js not found in parent directory!"
+        cd app
+        # Fallback to direct start if no ecosystem file
+        if [[ "$ENVIRONMENT" == "prod" ]]; then
+            pm2 start dist/index.js --name $PM2_APP --env production
+        else
+            pm2 start dist/index.js --name $PM2_APP --env development
+        fi
+    fi
+    cd app
+fi
 
 # Wait for application to be ready
 echo "⏳ Waiting for application to be ready..."
