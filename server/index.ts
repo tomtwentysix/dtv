@@ -1,6 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
-import { initializeDatabase, getEnvironmentInfo } from "./init-database.js";
+import { initializeDatabase } from "./init-database.js";
 import { log, serveStatic } from "./utils.js";
 
 const app = express();
@@ -57,9 +57,7 @@ app.use((req, res, next) => {
 (async () => {
   // Initialize database before starting the server
   try {
-    const envInfo = getEnvironmentInfo();
-    console.log(`🌍 Environment detected: ${envInfo.environment}`);
-    console.log(`💾 Database: ${envInfo.databaseUrl?.substring(0, 50)}...`);
+    console.log('🐘 Using PostgreSQL database connection');
     
     await initializeDatabase();
   } catch (error) {
