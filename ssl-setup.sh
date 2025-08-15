@@ -39,12 +39,18 @@ systemctl stop nginx
 
 # Get certificates using standalone mode (more reliable)
 echo "🔐 Obtaining SSL certificates..."
+# Create domain arguments correctly
+DOMAIN_ARGS=""
+for domain in $(echo $DOMAINS | tr ',' ' '); do
+    DOMAIN_ARGS="$DOMAIN_ARGS -d $domain"
+done
+
 certbot certonly \
     --standalone \
     --agree-tos \
     --no-eff-email \
     --email $EMAIL \
-    -d $(echo $DOMAINS | tr ',' ' -d ')
+    $DOMAIN_ARGS
 
 # Create Diffie-Hellman parameters for better security
 echo "🔑 Generating Diffie-Hellman parameters..."
