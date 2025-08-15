@@ -10,9 +10,22 @@ export interface AuthenticatedRequest extends Request {
 }
 
 export function requireAuth(req: AuthenticatedRequest, res: Response, next: NextFunction) {
-  if (!req.isAuthenticated() || !req.user) {
+  const isAuthenticated = req.isAuthenticated();
+  const hasUser = !!req.user;
+  
+  // Add debugging information to help diagnose the issue
+  if (!isAuthenticated || !hasUser) {
+    console.error("Authentication failed:", {
+      isAuthenticated,
+      hasUser,
+      sessionID: req.sessionID,
+      userAgent: req.get('User-Agent'),
+      path: req.path,
+      method: req.method
+    });
     return res.status(401).json({ message: "Authentication required" });
   }
+  
   next();
 }
 

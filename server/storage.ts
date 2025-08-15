@@ -367,13 +367,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserRoles(userId: string): Promise<Role[]> {
-    const userRoleResults = await db
-      .select({ role: roles })
-      .from(userRoles)
-      .innerJoin(roles, eq(userRoles.roleId, roles.id))
-      .where(eq(userRoles.userId, userId));
-    
-    return userRoleResults.map(result => result.role);
+    try {
+      const userRoleResults = await db
+        .select({ role: roles })
+        .from(userRoles)
+        .innerJoin(roles, eq(userRoles.roleId, roles.id))
+        .where(eq(userRoles.userId, userId));
+      
+      return userRoleResults.map(result => result.role);
+    } catch (error) {
+      console.error("Error fetching user roles:", error);
+      // Return empty array if tables don't exist or query fails
+      // This prevents the application from breaking if RBAC isn't fully initialized
+      return [];
+    }
   }
 
   async getUsersWithRole(roleId: string): Promise<User[]> {
@@ -414,14 +421,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserPermissions(userId: string): Promise<Permission[]> {
-    const userPermissionResults = await db
-      .select({ permission: permissions })
-      .from(userRoles)
-      .innerJoin(rolePermissions, eq(userRoles.roleId, rolePermissions.roleId))
-      .innerJoin(permissions, eq(rolePermissions.permissionId, permissions.id))
-      .where(eq(userRoles.userId, userId));
-    
-    return userPermissionResults.map(result => result.permission);
+    try {
+      const userPermissionResults = await db
+        .select({ permission: permissions })
+        .from(userRoles)
+        .innerJoin(rolePermissions, eq(userRoles.roleId, rolePermissions.roleId))
+        .innerJoin(permissions, eq(rolePermissions.permissionId, permissions.id))
+        .where(eq(userRoles.userId, userId));
+      
+      return userPermissionResults.map(result => result.permission);
+    } catch (error) {
+      console.error("Error fetching user permissions:", error);
+      // Return empty array if tables don't exist or query fails
+      // This prevents the application from breaking if RBAC isn't fully initialized
+      return [];
+    }
   }
 
   // Media management

@@ -29,13 +29,24 @@ export async function comparePasswords(supplied: string, stored: string) {
 }
 
 export function setupAuth(app: Express) {
+  const sessionSecret = process.env.SESSION_SECRET || "dt-visuals-secret-key";
+  const isProduction = process.env.NODE_ENV === "production";
+  const forceHTTPS = process.env.FORCE_HTTPS === "true";
+  
+  console.log("Session configuration:", {
+    nodeEnv: process.env.NODE_ENV,
+    isProduction,
+    forceHTTPS,
+    hasSessionSecret: !!process.env.SESSION_SECRET
+  });
+  
   const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET || "dt-visuals-secret-key",
+    secret: sessionSecret,
     resave: false,
     saveUninitialized: false,
     store: storage.sessionStore,
     cookie: {
-      secure: process.env.NODE_ENV === "production",
+      secure: forceHTTPS, // Only require HTTPS if explicitly set
       httpOnly: true,
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
     },
@@ -71,12 +82,23 @@ export function setupAuth(app: Express) {
     )
   );
 
-  passport.serializeUser((user, done) => done(null, user.id));
+  passport.serializeUser((user, done) => {
+    console.log("Serializing user:", user.id);
+    done(null, user.id);
+  });
+  
   passport.deserializeUser(async (id: string, done) => {
     try {
+      console.log("Deserializing user:", id);
       const user = await storage.getUser(id);
+      if (!user) {
+        console.error("User not found during deserialization:", id);
+        return done(null, false);
+      }
+      console.log("Successfully deserialized user:", user.username);
       done(null, user);
     } catch (error) {
+      console.error("Error during user deserialization:", error);
       done(error);
     }
   });
@@ -118,7 +140,21 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/login", passport.authenticate("local"), (req, res) => {
-    res.status(200).json(req.user);
+    console.log("Login successful:", { 
+      userId: req.user?.id, 
+      username: req.user?.username,
+      sessionID: req.sessionID,
+      isAuthenticated: req.isAuthenticated()
+    });
+    
+    // Ensure session is saved before responding
+    req.session.save((err) => {
+      if (err) {
+        console.error("Session save error:", err);
+        return res.status(500).json({ message: "Session save failed" });
+      }
+      res.status(200).json(req.user);
+    });
   });
 
   app.post("/api/logout", (req, res, next) => {
