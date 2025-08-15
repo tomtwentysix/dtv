@@ -33,11 +33,36 @@ for domain in $(echo $DOMAINS | tr ',' ' '); do
     fi
 done
 
-# Stop nginx temporarily
-echo "🛑 Temporarily stopping nginx..."
-systemctl stop nginx
+# Create webroot directory for certbot challenge
+echo "🔧 Preparing webroot for certbot..."
+mkdir -p /var/www/certbot
+chmod -R 755 /var/www/certbot
 
-# Get certificates using standalone mode (more reliable)
+# Create nginx config to handle certbot challenges without stopping the app
+echo "⚙️ Creating temporary nginx config for certbot..."
+cat > /etc/nginx/conf.d/certbot-acme.conf << 'EOF'
+server {
+    listen 80;
+    server_name dtvisuals.com www.dtvisuals.com dev.dtvisuals.com;
+    
+    # Only handle Let's Encrypt challenges
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+        try_files $uri =404;
+    }
+    
+    # Preserve existing traffic
+    location / {
+        return 404;
+    }
+}
+EOF
+
+# Reload nginx to apply the temporary config
+echo "🔄 Reloading nginx to handle certbot challenges..."
+nginx -t && systemctl reload nginx
+
+# Get certificates using webroot mode
 echo "🔐 Obtaining SSL certificates..."
 # Create domain arguments correctly
 DOMAIN_ARGS=""
@@ -46,11 +71,16 @@ for domain in $(echo $DOMAINS | tr ',' ' '); do
 done
 
 certbot certonly \
-    --standalone \
+    --webroot \
+    --webroot-path=/var/www/certbot \
     --agree-tos \
     --no-eff-email \
     --email $EMAIL \
     $DOMAIN_ARGS
+
+# Remove temporary nginx config
+echo "🧹 Cleaning up temporary nginx config..."
+rm -f /etc/nginx/conf.d/certbot-acme.conf
 
 # Create Diffie-Hellman parameters for better security
 echo "🔑 Generating Diffie-Hellman parameters..."
@@ -258,9 +288,9 @@ ln -sf /etc/nginx/sites-available/dtvisuals /etc/nginx/sites-enabled/
 echo "🧪 Testing nginx configuration..."
 nginx -t
 
-# Start nginx
-echo "🚀 Starting nginx..."
-systemctl start nginx
+# Reload nginx to apply the final config
+echo "🚀 Reloading nginx with new configuration..."
+systemctl reload nginx
 systemctl enable nginx
 
 # Setup automatic certificate renewal
