@@ -853,7 +853,7 @@ export default function AdminMedia() {
                       {...uploadForm.register("file", { required: "Please select a file" })}
                     />
                     <p className="text-sm text-gray-500">
-                      Supported formats: JPG, PNG, GIF, MP4, MOV, AVI, MKV (Max 500MB)
+                      Supported formats: JPG, PNG, GIF, MP4, MOV, AVI, MKV (Max 2500MB)
                     </p>
                   </div>
 

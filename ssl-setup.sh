@@ -156,7 +156,7 @@ server {
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
     
     # File upload size
-    client_max_body_size 100M;
+    client_max_body_size 2500M;
     
     # Gzip compression
     gzip on;
@@ -206,7 +206,7 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_read_timeout 300s;
+        proxy_read_timeout 1800s;
         proxy_connect_timeout 75s;
     }
     
@@ -248,7 +248,7 @@ server {
     add_header X-Content-Type-Options "nosniff" always;
     
     # File upload size
-    client_max_body_size 100M;
+    client_max_body_size 2500M;
     
     # Gzip compression
     gzip on;

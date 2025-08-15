@@ -21,7 +21,7 @@ if (!fs.existsSync(uploadDir)) {
 const upload = multer({
   dest: uploadDir,
   limits: {
-    fileSize: 500 * 1024 * 1024, // 500MB limit for video files
+    fileSize: 2500 * 1024 * 1024, // 2500MB limit for video files
   },
   fileFilter: (req, file, cb) => {
     const allowedMimes = [
@@ -365,7 +365,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     ])(req, res, async (err) => {
       if (err) {
         if (err.code === 'LIMIT_FILE_SIZE') {
-          return res.status(413).json({ message: "File too large. Maximum size allowed is 500MB." });
+          return res.status(413).json({ message: "File too large. Maximum size allowed is 2500MB." });
         }
         if (err.message === 'Invalid file type') {
           return res.status(400).json({ message: "Invalid file type. Please upload JPG, PNG, GIF, MP4, MOV, AVI, or MKV files." });
