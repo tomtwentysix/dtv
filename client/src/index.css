@@ -110,7 +110,7 @@
     mix-blend-mode: difference;
     filter: contrast(2) brightness(1.5);
     /* Reduce font size by 2pt from original Tailwind sizes */
-  font-size: 2.72rem; /* 43.5px, reduced by 25% */
+    font-size: 3.625rem; /* 58px, reduced from text-6xl (60px) */
   }
   
   .hero-accent {
@@ -118,7 +118,7 @@
     mix-blend-mode: difference;
     filter: contrast(2) brightness(1.5);
     /* Same font size as hero-title for consistency */
-  font-size: 2.72rem; /* 43.5px, reduced by 25% */
+    font-size: 3.625rem; /* 58px, reduced from text-6xl (60px) */
   }
 
   .hero-subtitle {
@@ -126,7 +126,7 @@
     mix-blend-mode: difference;
     filter: contrast(1.8) brightness(1.3);
     /* Reduce font size by 2pt from original Tailwind sizes */
-  font-size: 0.84rem; /* 13.5px, reduced by 25% */
+    font-size: 1.125rem; /* 18px, reduced from text-xl (20px) */
   }
 
   /* Hero content spacing from navigation */
