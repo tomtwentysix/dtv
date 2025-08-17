@@ -4,7 +4,7 @@ import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "wouter";
-import { Check, Video, Film, Building2, Music, Tv, Scissors, Wine, at-sign } from "lucide-react";
+import { Check, Video, Film, Building2, Music, Tv, Scissors, Wine, AtSign } from "lucide-react";
 import { getBackgroundMedia, useWebsiteSettings } from "@/lib/background-utils";
 
 const services = [
@@ -78,7 +78,7 @@ const services = [
       "Motion graphics",
       "Format optimization"
     ],
-    icon: at-sign
+    icon: AtSign
   }
 ];
 
