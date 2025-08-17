@@ -314,7 +314,7 @@ export default function Home() {
                 <Loader2 className="h-8 w-8 animate-spin" />
               </div>
             ) : featuredMedia && featuredMedia.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-center mx-auto">
                 {featuredMedia.map((media: any) => (
                   <Card 
                     key={media.id} 
@@ -515,7 +515,7 @@ export default function Home() {
               </Card>
             </div>
             <p className="text-xl text-gray-600 dark:text-gray-400">
-              We move fast, think ahead, and deliver with polish.
+              We move fast, think ahead, and deliver.
             </p>
           </div>
         </div>
@@ -574,7 +574,7 @@ export default function Home() {
               <h3 className="text-2xl font-bold mb-6">You get:</h3>
               <ul className="text-lg text-gray-600 dark:text-gray-400 space-y-4">
                 <li>• Priority scheduling</li>
-                <li>• 1–2 shoot days per month</li>
+                <li>• Dedicated shoot days per month</li>
                 <li>• Post-production and delivery</li>
                 <li>• Strategic input & idea generation</li>
                 <li>• A trusted creative partner who grows with your vision</li>

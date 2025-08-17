@@ -166,7 +166,7 @@ export default function Portfolio() {
         <div className="relative z-10 text-center max-w-4xl mx-auto px-4">
           <h1 className="text-5xl md:text-6xl font-bold mb-6 hero-title">Portfolio</h1>
           <p className="text-xl max-w-3xl mx-auto hero-subtitle">
-            Explore our collection of cinematic works across various industries and creative projects.
+            Explore a selection of our standout video projects showcasing our creativity and expertise across different styles and industries.
           </p>
         </div>
       </section>

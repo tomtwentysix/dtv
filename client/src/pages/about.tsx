@@ -64,21 +64,38 @@ export default function About() {
             <div>
               <h2 className="text-4xl font-bold mb-6">Our Mission</h2>
               <p className="text-lg text-gray-600 dark:text-gray-400 mb-6">
-                At dt.visuals, we believe in the power of visual storytelling to transform ideas into impactful experiences. 
-                Our mission is to create cinematic content that not only captivates audiences but also drives meaningful 
-                connections between brands and their communities.
+                At dt. visuals, we specialise in premium video production services that bring your brand story to life through powerful, cinematic visual storytelling. 
+                Based in Leicestershire and serving clients UK wide, we create compelling videos tailored for luxury events, corporate communications, commercial projects, documentaries, music industry productions, and more.
               </p>
               <p className="text-lg text-gray-600 dark:text-gray-400">
-                We combine technical expertise with creative vision to deliver premium video production services 
-                that exceed expectations and set new industry standards.
+                Our mission is to deliver high quality, engaging video content that captivates audiences and strengthens meaningful connections between brands and their communities. 
+                By combining cutting-edge technology with creative vision and professional expertise, dt. visuals consistently exceeds client expectations and sets new standards in the UK video production industry.
+              </p>
+               <p className="text-lg text-gray-600 dark:text-gray-400">
+                Whether you need commercial videos, documentary filmmaking, corporate videos, event videography, or music video production, we are passionate about transforming your ideas into unforgettable visual experiences.
               </p>
             </div>
             <div className="relative">
-              <img 
-                src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600" 
-                alt="Film crew in action"
-                className="rounded-lg cinematic-shadow"
-              />
+              {(() => {
+                const missionImage = (websiteSettings || []).find((s) => s.section === "about_mission_image")?.backgroundImage;
+                if (missionImage) {
+                  return (
+                    <img
+                      src={missionImage.url}
+                      alt={missionImage.title || "Mission section image"}
+                      className="rounded-lg cinematic-shadow"
+                    />
+                  );
+                }
+                // fallback image if not set
+                return (
+                  <img
+                    src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600"
+                    alt="Film crew in action"
+                    className="rounded-lg cinematic-shadow"
+                  />
+                );
+              })()}
             </div>
           </div>
         </div>
@@ -115,7 +132,7 @@ export default function About() {
             <div className="text-center mb-16">
               <h2 className="text-4xl font-bold mb-6">Our Values</h2>
               <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-                The principles that guide every project we undertake.
+                At dt. visuals, we believe exceptional video production starts with strong values that guide our craft and client relationships.
               </p>
             </div>
 
@@ -127,9 +144,9 @@ export default function About() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                     </svg>
                   </div>
-                  <h3 className="text-2xl font-bold mb-4">Innovation</h3>
+                  <h3 className="text-2xl font-bold mb-4">Creativty & Excellence</h3>
                   <p className="text-gray-600 dark:text-gray-400">
-                    We embrace cutting-edge technology and creative techniques to push the boundaries of visual storytelling.
+                    Innovative ideas and meticulous attention to detail combine to create cinematic videos that captivate and inspire.
                   </p>
                 </CardContent>
               </Card>
@@ -141,9 +158,9 @@ export default function About() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                     </svg>
                   </div>
-                  <h3 className="text-2xl font-bold mb-4">Passion</h3>
+                  <h3 className="text-2xl font-bold mb-4">Client Collaboration</h3>
                   <p className="text-gray-600 dark:text-gray-400">
-                    Every project is driven by our genuine love for the craft and commitment to creating exceptional work.
+                    Your vision drives every step, we partner closely to ensure your story is told authentically and effectively.
                   </p>
                 </CardContent>
               </Card>
@@ -155,9 +172,9 @@ export default function About() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
                     </svg>
                   </div>
-                  <h3 className="text-2xl font-bold mb-4">Excellence</h3>
+                  <h3 className="text-2xl font-bold mb-4">Professionalism & Reliability</h3>
                   <p className="text-gray-600 dark:text-gray-400">
-                    We maintain the highest standards of quality in every aspect of our production process.
+                    Clear communication, punctual delivery, and a seamless process are our promises to you.
                   </p>
                 </CardContent>
               </Card>

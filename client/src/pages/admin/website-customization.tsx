@@ -37,7 +37,7 @@ type MediaType = {
 
 type WebsiteSettingsType = {
   id: string;
-  section: 'hero' | 'what_we_do' | 'who_we_work_with' | 'how_we_work' | 'retainer_partnerships' | 'who_weve_worked_with' | 'lets_connect' | 'portfolio_header' | 'portfolio_gallery' | 'about_header' | 'about_values' | 'services_header' | 'services_section' | 'services_cta';
+  section: 'hero' | 'what_we_do' | 'who_we_work_with' | 'how_we_work' | 'retainer_partnerships' | 'who_weve_worked_with' | 'lets_connect' | 'portfolio_header' | 'portfolio_gallery' | 'about_header' | 'about_mission_image' | 'about_values' | 'services_header' | 'services_section' | 'services_cta';
   backgroundImageId: string | null;
   backgroundVideoId: string | null;
   backgroundImage?: MediaType;
@@ -255,6 +255,7 @@ export default function WebsiteCustomization() {
       case 'portfolio_header': return 'Portfolio Page Header';
       case 'portfolio_gallery': return 'Portfolio Gallery Section';
       case 'about_header': return 'About Page Header';
+      case 'about_mission_image': return 'About Page Mission Image';
       case 'about_values': return 'About Page Values Section';
       case 'services_header': return 'Services Page Header';
       case 'services_section': return 'Services Page Services Grid';
@@ -275,6 +276,7 @@ export default function WebsiteCustomization() {
       case 'portfolio_header': return 'Header banner background for the portfolio page';
       case 'portfolio_gallery': return 'Background for the portfolio gallery section';
       case 'about_header': return 'Header banner background for the about page';
+      case 'about_mission_image': return 'Image for the "Our Mission" section on about page';
       case 'about_values': return 'Background for the "Our Values" section on about page';
       case 'services_header': return 'Header banner background for the services page';
       case 'services_section': return 'Background for the services grid section';
@@ -308,7 +310,7 @@ export default function WebsiteCustomization() {
   const pageGroups = {
     'Homepage': ['hero', 'what_we_do', 'who_we_work_with', 'how_we_work', 'retainer_partnerships', 'who_weve_worked_with', 'lets_connect'],
     'Portfolio': ['portfolio_header', 'portfolio_gallery'],
-    'About': ['about_header', 'about_values'],
+    'About': ['about_header', 'about_mission_image', 'about_values'],
     'Services': ['services_header', 'services_section', 'services_cta']
   };
 
