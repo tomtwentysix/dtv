@@ -65,6 +65,7 @@
 
   html {
     scroll-behavior: smooth;
+    font-size: 12px; /* Set base font size to 12px for better scaling */
   }
 }
 
