@@ -127,6 +127,8 @@ async function createEssentialData() {
     { name: 'edit:users', description: 'Can create/edit staff users' },
     { name: 'edit:roles', description: 'Can create/edit roles and permissions' },
     { name: 'edit:clients', description: 'Can create/edit client information' },
+    { name: 'view:clients', description: 'Can view client profiles' },
+    { name: 'assign:media', description: 'Can assign media to clients' },
     { name: 'upload:media', description: 'Can upload and manage media files' },
     { name: 'edit:media', description: 'Can edit media information and assignments' },
     { name: 'view:media', description: 'Can view assigned media content' },
@@ -150,7 +152,9 @@ async function createEssentialData() {
   // Assign permissions to roles
   const adminPermissions = Object.values(permissionIds); // Admin gets all permissions
   const staffPermissions = [
+    permissionIds['view:clients'],
     permissionIds['edit:clients'],
+    permissionIds['assign:media'],
     permissionIds['upload:media'],
     permissionIds['edit:media'],
     permissionIds['view:media'],
