@@ -146,7 +146,7 @@ export default function AdminMedia() {
       title: "",
       tags: "",
       isFeatured: false,
-      showInPortfolio: true,
+      showInPortfolio: false, // Changed to default false to require explicit user choice
       projectStage: "",
       notes: "",
       clientId: "",
@@ -1396,18 +1396,23 @@ export default function AdminMedia() {
                     </div>
                     {item.type === "image" ? (
                       <img
-                        src={item.url}
+                        src={item.thumbnailUrl || item.url}
                         alt={item.title}
                         className="w-full h-full object-cover"
                         onError={(e) => {
-                          console.error('Image failed to load:', item.url);
-                          e.currentTarget.style.display = 'none';
+                          console.error('Image failed to load:', item.thumbnailUrl || item.url);
+                          // If thumbnail fails, try original
+                          if (item.thumbnailUrl && e.currentTarget.src !== item.url) {
+                            e.currentTarget.src = item.url;
+                          } else {
+                            e.currentTarget.style.display = 'none';
+                          }
                         }}
                       />
                     ) : (
                       <video
                         src={item.url}
-                        poster={item.posterUrl}
+                        poster={item.thumbnailUrl || item.posterUrl}
                         className="w-full h-full object-cover"
                         muted
                         onError={(e) => {
@@ -1415,7 +1420,7 @@ export default function AdminMedia() {
                         }}
                         onLoadedMetadata={(e) => {
                           // Set to 2 seconds for thumbnail if no poster
-                          if (!item.posterUrl) {
+                          if (!item.posterUrl && !item.thumbnailUrl) {
                             const video = e.target as HTMLVideoElement;
                             video.currentTime = 2;
                           }
