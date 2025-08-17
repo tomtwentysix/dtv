@@ -113,24 +113,12 @@
     font-size: 3.625rem; /* 58px, reduced from text-6xl (60px) */
   }
   
-  @media (min-width: 768px) {
-    .hero-title {
-      font-size: 5.875rem; /* 94px, reduced from text-8xl (96px) */
-    }
-  }
-
   .hero-accent {
     color: white;
     mix-blend-mode: difference;
     filter: contrast(2) brightness(1.5);
     /* Same font size as hero-title for consistency */
     font-size: 3.625rem; /* 58px, reduced from text-6xl (60px) */
-  }
-  
-  @media (min-width: 768px) {
-    .hero-accent {
-      font-size: 5.875rem; /* 94px, reduced from text-8xl (96px) */
-    }
   }
 
   .hero-subtitle {
@@ -140,97 +128,12 @@
     /* Reduce font size by 2pt from original Tailwind sizes */
     font-size: 1.125rem; /* 18px, reduced from text-xl (20px) */
   }
-  
-  @media (min-width: 768px) {
-    .hero-subtitle {
-      font-size: 1.375rem; /* 22px, reduced from text-2xl (24px) */
-    }
-  }
 
   /* Hero content spacing from navigation */
   .hero-content {
     margin-top: 2rem; /* 32px of spacing from navigation */
   }
 
-  /* Public Page Font Size Reduction - Better for smaller screens */
-  /* Keep original sizes on 4K/large screens (1536px+), reduce on smaller screens */
-  /* Exclude navigation and admin pages from font size reduction */
-  
-  /* Large screens and below (not 4K) */
-  @media (max-width: 1535px) {
-    .public-page .text-6xl,
-    main .text-6xl:not([class*="nav"]):not([class*="admin"]) {
-      font-size: 3.25rem !important; /* Reduced from 3.75rem (60px to 52px) */
-    }
-    
-    .public-page .text-5xl,
-    main .text-5xl:not([class*="nav"]):not([class*="admin"]) {
-      font-size: 2.5rem !important; /* Reduced from 3rem (48px to 40px) */
-    }
-    
-    .public-page .text-4xl,
-    main .text-4xl:not([class*="nav"]):not([class*="admin"]) {
-      font-size: 2rem !important; /* Reduced from 2.25rem (36px to 32px) */
-    }
-    
-    .public-page .text-3xl,
-    main .text-3xl:not([class*="nav"]):not([class*="admin"]) {
-      font-size: 1.625rem !important; /* Reduced from 1.875rem (30px to 26px) */
-    }
-    
-    .public-page .text-2xl,
-    main .text-2xl:not([class*="nav"]):not([class*="admin"]) {
-      font-size: 1.375rem !important; /* Reduced from 1.5rem (24px to 22px) */
-    }
-    
-    .public-page .text-xl,
-    main .text-xl:not([class*="nav"]):not([class*="admin"]) {
-      font-size: 1.125rem !important; /* Reduced from 1.25rem (20px to 18px) */
-    }
-
-    .public-page .text-lg,
-    main .text-lg:not([class*="nav"]):not([class*="admin"]) {
-      font-size: 1rem !important; /* Reduced from 1.125rem (18px to 16px) */
-    }
-  }
-
-  /* Mobile and tablet adjustments - even smaller on mobile */
-  @media (max-width: 768px) {
-    .public-page .text-6xl,
-    main .text-6xl:not([class*="nav"]):not([class*="admin"]) {
-      font-size: 2.75rem !important; /* Further reduced for mobile */
-    }
-    
-    .public-page .text-5xl,
-    main .text-5xl:not([class*="nav"]):not([class*="admin"]) {
-      font-size: 2.125rem !important; /* Further reduced for mobile */
-    }
-    
-    .public-page .text-4xl,
-    main .text-4xl:not([class*="nav"]):not([class*="admin"]) {
-      font-size: 1.75rem !important; /* Further reduced for mobile */
-    }
-    
-    .public-page .text-3xl,
-    main .text-3xl:not([class*="nav"]):not([class*="admin"]) {
-      font-size: 1.5rem !important; /* Further reduced for mobile */
-    }
-    
-    .public-page .text-2xl,
-    main .text-2xl:not([class*="nav"]):not([class*="admin"]) {
-      font-size: 1.25rem !important; /* Further reduced for mobile */
-    }
-    
-    .public-page .text-xl,
-    main .text-xl:not([class*="nav"]):not([class*="admin"]) {
-      font-size: 1rem !important; /* Further reduced for mobile */
-    }
-
-    .public-page .text-lg,
-    main .text-lg:not([class*="nav"]):not([class*="admin"]) {
-      font-size: 0.9375rem !important; /* Further reduced for mobile */
-    }
-  }
 
   /* Global Dynamic Text Contrast */
   .text-dynamic {
