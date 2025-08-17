@@ -14,8 +14,13 @@ import multer from "multer";
 
 // Configure multer for file uploads
 const uploadDir = process.env.UPLOADS_DIR || path.join(process.cwd(), "uploads");
+console.log(`📁 Upload directory configured at: ${uploadDir}`);
+
 if (!fs.existsSync(uploadDir)) {
+  console.log(`📁 Creating uploads directory: ${uploadDir}`);
   fs.mkdirSync(uploadDir, { recursive: true });
+} else {
+  console.log(`📁 Upload directory exists: ${uploadDir}`);
 }
 
 const upload = multer({
@@ -47,6 +52,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
 
   // Serve uploaded files
+  console.log(`📁 Setting up static file serving from: ${uploadDir}`);
   app.use("/uploads", express.static(uploadDir));
 
   // API Routes
@@ -385,6 +391,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const { title, tags, isFeatured, showInPortfolio, projectStage, notes, clientId } = req.body;
         const fileUrl = `/uploads/${mainFile.filename}`;
         const posterUrl = posterFile ? `/uploads/${posterFile.filename}` : null;
+        
+        console.log(`📤 File uploaded: ${mainFile.originalname} -> ${mainFile.filename}`);
+        console.log(`📤 File URL will be: ${fileUrl}`);
+        console.log(`📤 File saved to: ${path.join(uploadDir, mainFile.filename)}`);
+        
+        // Verify the file exists after upload
+        const fullFilePath = path.join(uploadDir, mainFile.filename);
+        if (fs.existsSync(fullFilePath)) {
+          console.log(`✅ File verified on disk: ${fullFilePath}`);
+        } else {
+          console.error(`❌ File NOT found on disk: ${fullFilePath}`);
+        }
         
         const media = await storage.createMedia({
           title,

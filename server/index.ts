@@ -1,5 +1,4 @@
 import express, { type Request, Response, NextFunction } from "express";
-import path from "path";
 import { registerRoutes } from "./routes";
 import { initializeDatabase } from "./init-database.js";
 import { log, serveStatic } from "./utils.js";
@@ -21,10 +20,6 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-
-// Serve static files from uploads directory
-const uploadDir = process.env.UPLOADS_DIR || path.join(process.cwd(), "uploads");
-app.use('/uploads', express.static(uploadDir));
 
 app.use((req, res, next) => {
   const start = Date.now();
