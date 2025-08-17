@@ -12,10 +12,12 @@ import { requireAuth, requirePermission, requireRole, requireAnyRole } from "./m
 import { requireClientAuth, loginClientUser, registerClientUser } from "./client-auth";
 import multer from "multer";
 import { generateThumbnail, getThumbnailPath, getThumbnailUrl } from "./media-processing";
+import { BackgroundOptimizationService } from "./background-optimization";
 
 // Configure multer for file uploads
 const uploadDir = process.env.UPLOADS_DIR || path.join(process.cwd(), "uploads");
 const thumbnailDir = path.join(uploadDir, "thumbnails");
+const webpDir = path.join(uploadDir, "webp");
 console.log(`📁 Upload directory configured at: ${uploadDir}`);
 
 if (!fs.existsSync(uploadDir)) {
@@ -31,6 +33,16 @@ if (!fs.existsSync(thumbnailDir)) {
 } else {
   console.log(`📁 Thumbnails directory exists: ${thumbnailDir}`);
 }
+
+if (!fs.existsSync(webpDir)) {
+  console.log(`📁 Creating WebP directory: ${webpDir}`);
+  fs.mkdirSync(webpDir, { recursive: true, mode: 0o755 });
+} else {
+  console.log(`📁 WebP directory exists: ${webpDir}`);
+}
+
+// Initialize background optimization service
+const backgroundOptimizer = new BackgroundOptimizationService(storage, uploadDir);
 
 // Ensure the directory is readable and writable
 try {
@@ -71,6 +83,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Serve uploaded files
   console.log(`📁 Setting up static file serving from: ${uploadDir}`);
   app.use("/uploads", express.static(uploadDir));
+
+  // Run startup background optimization (async, don't block server startup)
+  backgroundOptimizer.optimizeAllBackgrounds().catch(error => {
+    console.error('Startup background optimization failed:', error);
+  });
 
   // API Routes
 
@@ -1001,6 +1018,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         backgroundVideoId: backgroundVideoId || null,
         updatedBy: req.user!.id,
       });
+      
+      // Trigger WebP optimization for background images
+      if (backgroundImageId) {
+        // Run optimization in background, don't wait for it
+        backgroundOptimizer.optimizeOnSelection(backgroundImageId).catch(error => {
+          console.error(`Failed to optimize background image ${backgroundImageId}:`, error);
+        });
+      }
       
       res.json(setting);
     } catch (error) {

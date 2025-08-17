@@ -110,3 +110,60 @@ export function getThumbnailUrl(thumbnailPath: string, uploadDir: string): strin
   const relativePath = path.relative(uploadDir, thumbnailPath);
   return `/uploads/${relativePath}`;
 }
+
+/**
+ * Generate WebP version of an image for background optimization
+ */
+export async function generateWebPBackground(
+  inputPath: string,
+  outputPath: string,
+  maxWidth: number = 1920
+): Promise<void> {
+  try {
+    await sharp(inputPath)
+      .resize(maxWidth, null, {
+        fit: 'inside',
+        withoutEnlargement: true
+      })
+      .webp({ quality: 80 })
+      .toFile(outputPath);
+      
+    console.log(`✅ WebP background generated: ${outputPath}`);
+  } catch (error) {
+    console.error(`❌ Failed to generate WebP background:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Get WebP filename from original filename
+ */
+export function getWebPFilename(originalFilename: string): string {
+  const ext = path.extname(originalFilename);
+  const baseName = path.basename(originalFilename, ext);
+  return `${baseName}.webp`;
+}
+
+/**
+ * Get WebP path from original path
+ */
+export function getWebPPath(uploadDir: string, originalFilename: string): string {
+  const webpDir = path.join(uploadDir, 'webp');
+  const webpFilename = getWebPFilename(originalFilename);
+  return path.join(webpDir, webpFilename);
+}
+
+/**
+ * Get WebP URL from WebP path
+ */
+export function getWebPUrl(webpPath: string, uploadDir: string): string {
+  const relativePath = path.relative(uploadDir, webpPath);
+  return `/uploads/${relativePath}`;
+}
+
+/**
+ * Check if WebP version exists for a given image
+ */
+export function webpExists(webpPath: string): boolean {
+  return fs.existsSync(webpPath);
+}
