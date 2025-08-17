@@ -121,6 +121,20 @@ export default function Home() {
     setSelectedVideo(item);
     setIsPlaying(false);
     setCurrentTime(0);
+    // Try to autoplay and go fullscreen on mobile after a short delay
+    setTimeout(() => {
+      if (modalVideoRef.current) {
+        modalVideoRef.current.play().catch(() => {});
+        // Go fullscreen on mobile
+        const isMobile = window.innerWidth <= 768;
+        if (isMobile && modalVideoRef.current.requestFullscreen) {
+          modalVideoRef.current.requestFullscreen().catch(() => {});
+        } else if (isMobile && (modalVideoRef.current as any).webkitEnterFullscreen) {
+          // Safari iOS
+          (modalVideoRef.current as any).webkitEnterFullscreen();
+        }
+      }
+    }, 100);
   };
 
   const closeVideoModal = () => {
