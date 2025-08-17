@@ -37,7 +37,7 @@ type MediaType = {
 
 type WebsiteSettingsType = {
   id: string;
-  section: 'hero' | 'what_we_do' | 'who_we_work_with' | 'how_we_work' | 'retainer_partnerships' | 'who_weve_worked_with' | 'lets_connect' | 'portfolio_header' | 'portfolio_gallery' | 'about_header' | 'about_mission_image' | 'about_values' | 'services_header' | 'services_section' | 'services_cta';
+  section: 'hero' | 'what_we_do' | 'who_we_work_with' | 'how_we_work' | 'retainer_partnerships' | 'who_weve_worked_with' | 'lets_connect' | 'portfolio_header' | 'portfolio_gallery' | 'about_header' | 'about_mission_image' | 'about_values' | 'services_header' | 'services_section' | 'services_cta' | 'contact_header' | 'contact_info';
   backgroundImageId: string | null;
   backgroundVideoId: string | null;
   backgroundImage?: MediaType;
@@ -261,6 +261,7 @@ export default function WebsiteCustomization() {
       case 'services_section': return 'Services Page Services Grid';
       case 'services_cta': return 'Services Page Call-to-Action';
       case 'contact_header': return 'Contact Page Header';
+      case 'contact_info': return 'Contact Page Contact Information Section';
       default: return section;
     }
   };
@@ -283,6 +284,7 @@ export default function WebsiteCustomization() {
       case 'services_section': return 'Background for the services grid section';
       case 'services_cta': return 'Background for the "Ready to bring your vision to life" call-to-action section';
       case 'contact_header': return 'Header banner background for the contact page';
+      case 'contact_info': return 'Background for the contact information section on the contact page';
       default: return 'Section background configuration';
     }
   };
@@ -315,7 +317,7 @@ export default function WebsiteCustomization() {
     'Portfolio': ['portfolio_header', 'portfolio_gallery'],
     'About': ['about_header', 'about_mission_image', 'about_values'],
     'Services': ['services_header', 'services_section', 'services_cta'],
-    'Contact': ['contact_header']
+    'Contact': ['contact_header', 'contact_info']
   };
 
   return (
