@@ -108,7 +108,7 @@ export default function AuthPage() {
         </Link>
         <div className="w-full max-w-md space-y-8">
           <div className="text-center">
-            <h1 className="text-3xl font-bold text-dark-teal mb-2">dt.visuals</h1>
+            <h1 className="text-xl font-bold text-dark-teal mb-2">dt.visuals</h1>
             <p className="text-gray-600 dark:text-gray-400">
               Access your cinematic media portal
             </p>
@@ -204,8 +204,8 @@ export default function AuthPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
             </svg>
           </div>
-          <h2 className="text-3xl font-bold">Cinematic Excellence</h2>
-          <p className="text-lg opacity-90">
+          <h2 className="text-xl font-bold">Cinematic Excellence</h2>
+          <p className="text-sm opacity-90">
             Access your exclusive media content and collaborate with our team on your cinematic projects.
           </p>
           <div className="space-y-2 text-sm opacity-80">

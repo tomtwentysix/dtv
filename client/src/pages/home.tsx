@@ -292,17 +292,17 @@ export default function Home() {
         })()}
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-5xl font-bold mb-6">What We Do</h2>
-            <p className="text-2xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto mb-8">
+            <h2 className="text-3xl font-bold mb-6">What We Do</h2>
+            <p className="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto mb-8">
               Visuals That Go Beyond Just Looking Good
             </p>
-            <p className="text-xl text-gray-600 dark:text-gray-400 max-w-4xl mx-auto mb-8">
+            <p className="text-base text-gray-600 dark:text-gray-400 max-w-4xl mx-auto mb-8">
               We craft high impact video content with intention, depth and cinematic quality.
             </p>
-            <p className="text-lg text-gray-600 dark:text-gray-400 max-w-4xl mx-auto mb-8">
+            <p className="text-sm text-gray-600 dark:text-gray-400 max-w-4xl mx-auto mb-8">
               From brand stories and campaign films to live events and music videos, we bring a full spectrum approach, blending creative thinking, technical precision and an instinct for storytelling.
             </p>
-            <p className="text-lg text-gray-600 dark:text-gray-400 max-w-4xl mx-auto">
+            <p className="text-sm text-gray-600 dark:text-gray-400 max-w-4xl mx-auto">
               Led by Dan, our team collaborates closely with every client to deliver work that's not just on brief, 
               but ahead of it.
             </p>
@@ -419,22 +419,22 @@ export default function Home() {
         })()}
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-5xl font-bold mb-6">Who We Work With</h2>
-            <p className="text-2xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto mb-8">
+            <h2 className="text-3xl font-bold mb-6">Who We Work With</h2>
+            <p className="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto mb-8">
               We Collaborate With Visionaries
             </p>
           </div>
 
           <div className="max-w-4xl mx-auto text-center">
-            <p className="text-xl text-gray-600 dark:text-gray-400 mb-8">Our clients are:</p>
-            <ul className="text-lg text-gray-600 dark:text-gray-400 space-y-4 mb-8 list-none">
+            <p className="text-base text-gray-600 dark:text-gray-400 mb-8">Our clients are:</p>
+            <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-4 mb-8 list-none">
               <li>• Creative agencies & brand leaders</li>
               <li>• Luxury event producers & performers</li>
               <li>• Musicians, labels & visual artists</li>
               <li>• Ambitious founders and businesses</li>
               <li>• Corporate teams with a creative edge</li>
             </ul>
-            <p className="text-xl text-gray-600 dark:text-gray-400">
+            <p className="text-base text-gray-600 dark:text-gray-400">
               If you're building something that deserves to be seen and felt, we're the right creative partner.
             </p>
           </div>
