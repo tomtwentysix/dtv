@@ -32,7 +32,7 @@ import {
   type InsertBrandingSettings
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, inArray } from "drizzle-orm";
+import { eq, and, inArray, sql } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -104,6 +104,7 @@ export interface IStorage {
   getMediaByUploader(uploaderId: string): Promise<Media[]>;
   createMedia(media: InsertMedia): Promise<Media>;
   updateMedia(id: string, updates: Partial<InsertMedia>): Promise<Media | undefined>;
+  updateMediaWebpUrl(id: string, webpUrl: string): Promise<Media | undefined>;
   deleteMedia(id: string): Promise<boolean>;
   
   // Media-Client associations
@@ -117,6 +118,7 @@ export interface IStorage {
   getWebsiteSettings(): Promise<WebsiteSettings[]>;
   getWebsiteSettingBySection(section: string): Promise<WebsiteSettings | undefined>;
   updateWebsiteSetting(section: string, setting: InsertWebsiteSettings): Promise<WebsiteSettings>;
+  getBackgroundImages(): Promise<Media[]>;
   
   // Contact information management
   getContactInfo(): Promise<WebsiteSettings | undefined>;
@@ -526,6 +528,15 @@ export class DatabaseStorage implements IStorage {
     return result.rowCount !== null && result.rowCount > 0;
   }
 
+  async updateMediaWebpUrl(id: string, webpUrl: string): Promise<Media | undefined> {
+    const [updatedMedia] = await db
+      .update(media)
+      .set({ webpUrl })
+      .where(eq(media.id, id))
+      .returning();
+    return updatedMedia || undefined;
+  }
+
   // Media-Client associations
   async assignMediaToClient(mediaId: string, clientId: string): Promise<boolean> {
     try {
@@ -614,6 +625,22 @@ export class DatabaseStorage implements IStorage {
     }
 
     return existingSetting;
+  }
+
+  async getBackgroundImages(): Promise<Media[]> {
+    // Get all background images referenced in website settings
+    const settings = await db.select().from(websiteSettings).where(
+      // Only get settings that have a background image ID
+      sql`background_image_id IS NOT NULL`
+    );
+    
+    const imageIds = settings
+      .map(s => s.backgroundImageId)
+      .filter((id): id is string => id !== null && id !== undefined);
+    
+    if (imageIds.length === 0) return [];
+    
+    return await db.select().from(media).where(inArray(media.id, imageIds));
   }
 
   // Client feedback and timeline notes implementation (now using clientUserId)

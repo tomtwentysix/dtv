@@ -10,6 +10,7 @@ type WebsiteSettingsType = {
     url: string;
     title: string;
     type: string;
+    webpUrl?: string; // Optional WebP optimized version
   };
   backgroundVideo?: {
     id: string;
@@ -19,7 +20,7 @@ type WebsiteSettingsType = {
   };
 };
 
-// Get background media for a section with theme-based fallback
+// Get background media for a section with theme-based fallback and WebP optimization
 export const getBackgroundMedia = (websiteSettings: WebsiteSettingsType[], section: string) => {
   const setting = websiteSettings?.find((s: WebsiteSettingsType) => s.section === section);
   
@@ -35,7 +36,8 @@ export const getBackgroundMedia = (websiteSettings: WebsiteSettingsType[], secti
   if (setting?.backgroundImage) {
     return {
       type: "image",
-      url: setting.backgroundImage.url,
+      // Prefer WebP version if available, fallback to original
+      url: setting.backgroundImage.webpUrl || setting.backgroundImage.url,
       title: setting.backgroundImage.title
     };
   }

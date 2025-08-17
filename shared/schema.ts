@@ -74,6 +74,7 @@ export const media = pgTable("media", {
   url: text("url").notNull(),
   posterUrl: text("poster_url"), // For video poster frames
   thumbnailUrl: text("thumbnail_url"), // For optimized thumbnails
+  webpUrl: text("webp_url"), // For WebP optimized backgrounds
   filename: text("filename").notNull(),
   fileSize: integer("file_size"),
   mimeType: text("mime_type"),
