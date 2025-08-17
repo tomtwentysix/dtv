@@ -11,9 +11,13 @@ import { users, media, mediaFeedback, mediaTimelineNotes, clientUsers, clients }
 import { requireAuth, requirePermission, requireRole, requireAnyRole } from "./middleware/rbac";
 import { requireClientAuth, loginClientUser, registerClientUser } from "./client-auth";
 import multer from "multer";
+import { generateThumbnail, getThumbnailPath, getThumbnailUrl } from "./media-processing";
+import { BackgroundOptimizationService } from "./background-optimization";
 
 // Configure multer for file uploads
 const uploadDir = process.env.UPLOADS_DIR || path.join(process.cwd(), "uploads");
+const thumbnailDir = path.join(uploadDir, "thumbnails");
+const webpDir = path.join(uploadDir, "webp");
 console.log(`📁 Upload directory configured at: ${uploadDir}`);
 
 if (!fs.existsSync(uploadDir)) {
@@ -22,6 +26,23 @@ if (!fs.existsSync(uploadDir)) {
 } else {
   console.log(`📁 Upload directory exists: ${uploadDir}`);
 }
+
+if (!fs.existsSync(thumbnailDir)) {
+  console.log(`📁 Creating thumbnails directory: ${thumbnailDir}`);
+  fs.mkdirSync(thumbnailDir, { recursive: true, mode: 0o755 });
+} else {
+  console.log(`📁 Thumbnails directory exists: ${thumbnailDir}`);
+}
+
+if (!fs.existsSync(webpDir)) {
+  console.log(`📁 Creating WebP directory: ${webpDir}`);
+  fs.mkdirSync(webpDir, { recursive: true, mode: 0o755 });
+} else {
+  console.log(`📁 WebP directory exists: ${webpDir}`);
+}
+
+// Initialize background optimization service
+const backgroundOptimizer = new BackgroundOptimizationService(storage, uploadDir);
 
 // Ensure the directory is readable and writable
 try {
@@ -62,6 +83,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Serve uploaded files
   console.log(`📁 Setting up static file serving from: ${uploadDir}`);
   app.use("/uploads", express.static(uploadDir));
+
+  // Run startup background optimization (async, don't block server startup)
+  backgroundOptimizer.optimizeAllBackgrounds().catch(error => {
+    console.error('Startup background optimization failed:', error);
+  });
 
   // API Routes
 
@@ -460,11 +486,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error(`❌ File NOT found on disk: ${fullFilePath}`);
         }
         
+        // Generate thumbnail
+        let thumbnailUrl: string | null = null;
+        try {
+          const thumbnailPath = getThumbnailPath(uploadDir, mainFile.filename);
+          await generateThumbnail(fullFilePath, thumbnailPath, mainFile.mimetype);
+          thumbnailUrl = getThumbnailUrl(thumbnailPath, uploadDir);
+          console.log(`📸 Thumbnail generated: ${thumbnailUrl}`);
+        } catch (thumbnailError) {
+          console.error(`⚠️  Failed to generate thumbnail:`, thumbnailError);
+          // Don't fail the upload if thumbnail generation fails
+        }
+        
         const media = await storage.createMedia({
           title,
           type: mainFile.mimetype.startsWith("video/") ? "video" : "image",
           url: fileUrl,
           posterUrl,
+          thumbnailUrl,
           filename: mainFile.originalname,
           fileSize: mainFile.size,
           mimeType: mainFile.mimetype,
@@ -979,6 +1018,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         backgroundVideoId: backgroundVideoId || null,
         updatedBy: req.user!.id,
       });
+      
+      // Trigger WebP optimization for background images
+      if (backgroundImageId) {
+        // Run optimization in background, don't wait for it
+        backgroundOptimizer.optimizeOnSelection(backgroundImageId).catch(error => {
+          console.error(`Failed to optimize background image ${backgroundImageId}:`, error);
+        });
+      }
       
       res.json(setting);
     } catch (error) {

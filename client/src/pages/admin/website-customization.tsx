@@ -260,6 +260,7 @@ export default function WebsiteCustomization() {
       case 'services_header': return 'Services Page Header';
       case 'services_section': return 'Services Page Services Grid';
       case 'services_cta': return 'Services Page Call-to-Action';
+      case 'contact_header': return 'Contact Page Header';
       default: return section;
     }
   };
@@ -281,6 +282,7 @@ export default function WebsiteCustomization() {
       case 'services_header': return 'Header banner background for the services page';
       case 'services_section': return 'Background for the services grid section';
       case 'services_cta': return 'Background for the "Ready to bring your vision to life" call-to-action section';
+      case 'contact_header': return 'Header banner background for the contact page';
       default: return 'Section background configuration';
     }
   };
@@ -290,6 +292,7 @@ export default function WebsiteCustomization() {
     if (section.startsWith('portfolio_')) return 'Portfolio Page';
     if (section.startsWith('about_')) return 'About Page';
     if (section.startsWith('services_')) return 'Services Page';
+    if (section.startsWith('contact_')) return 'Contact Page';
     return 'Other';
   };
 
@@ -311,7 +314,8 @@ export default function WebsiteCustomization() {
     'Homepage': ['hero', 'what_we_do', 'who_we_work_with', 'how_we_work', 'retainer_partnerships', 'who_weve_worked_with', 'lets_connect'],
     'Portfolio': ['portfolio_header', 'portfolio_gallery'],
     'About': ['about_header', 'about_mission_image', 'about_values'],
-    'Services': ['services_header', 'services_section', 'services_cta']
+    'Services': ['services_header', 'services_section', 'services_cta'],
+    'Contact': ['contact_header']
   };
 
   return (
