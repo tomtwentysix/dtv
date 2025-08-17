@@ -14,8 +14,21 @@ import multer from "multer";
 
 // Configure multer for file uploads
 const uploadDir = process.env.UPLOADS_DIR || path.join(process.cwd(), "uploads");
+console.log(`📁 Upload directory configured at: ${uploadDir}`);
+
 if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
+  console.log(`📁 Creating uploads directory: ${uploadDir}`);
+  fs.mkdirSync(uploadDir, { recursive: true, mode: 0o755 });
+} else {
+  console.log(`📁 Upload directory exists: ${uploadDir}`);
+}
+
+// Ensure the directory is readable and writable
+try {
+  fs.accessSync(uploadDir, fs.constants.R_OK | fs.constants.W_OK);
+  console.log(`✅ Upload directory permissions verified`);
+} catch (error) {
+  console.error(`❌ Upload directory permission error:`, error);
 }
 
 const upload = multer({
@@ -47,6 +60,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
 
   // Serve uploaded files
+  console.log(`📁 Setting up static file serving from: ${uploadDir}`);
   app.use("/uploads", express.static(uploadDir));
 
   // API Routes
@@ -58,6 +72,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
       timestamp: new Date().toISOString(),
       environment: process.env.NODE_ENV || "development"
     });
+  });
+
+  // Debug endpoint to check uploads directory
+  app.get("/api/uploads/debug", (req, res) => {
+    try {
+      const stats = {
+        uploadDir,
+        exists: fs.existsSync(uploadDir),
+        isDirectory: false,
+        permissions: null as any,
+        contents: [] as string[]
+      };
+
+      if (stats.exists) {
+        const dirStats = fs.statSync(uploadDir);
+        stats.isDirectory = dirStats.isDirectory();
+        stats.permissions = {
+          readable: true,
+          writable: true
+        };
+
+        try {
+          fs.accessSync(uploadDir, fs.constants.R_OK);
+        } catch {
+          stats.permissions.readable = false;
+        }
+
+        try {
+          fs.accessSync(uploadDir, fs.constants.W_OK);
+        } catch {
+          stats.permissions.writable = false;
+        }
+
+        if (stats.isDirectory) {
+          try {
+            stats.contents = fs.readdirSync(uploadDir);
+          } catch (error) {
+            stats.contents = [`Error reading directory: ${error}`];
+          }
+        }
+      }
+
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Unknown error',
+        uploadDir 
+      });
+    }
   });
 
   // Contact form endpoint
@@ -385,6 +448,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const { title, tags, isFeatured, showInPortfolio, projectStage, notes, clientId } = req.body;
         const fileUrl = `/uploads/${mainFile.filename}`;
         const posterUrl = posterFile ? `/uploads/${posterFile.filename}` : null;
+        
+        console.log(`📤 File uploaded: ${mainFile.originalname} -> ${mainFile.filename}`);
+        console.log(`📤 File URL: ${fileUrl}`);
+        
+        // Verify the file exists after upload
+        const fullFilePath = path.join(uploadDir, mainFile.filename);
+        if (fs.existsSync(fullFilePath)) {
+          console.log(`✅ File saved successfully: ${fullFilePath}`);
+        } else {
+          console.error(`❌ File NOT found on disk: ${fullFilePath}`);
+        }
         
         const media = await storage.createMedia({
           title,
