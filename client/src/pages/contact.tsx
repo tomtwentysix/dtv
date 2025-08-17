@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Mail, Phone, MapPin, Instagram, Youtube, Linkedin } from "lucide-react";
 import { getBackgroundMedia, useWebsiteSettings } from "@/lib/background-utils";
@@ -17,6 +17,11 @@ export default function Contact() {
   const { toast } = useToast();
   const [scrollY, setScrollY] = useState(0);
   const { data: websiteSettings } = useWebsiteSettings();
+  
+  // Fetch contact information
+  const { data: contactInfo } = useQuery({
+    queryKey: ['/api/contact-info'],
+  });
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
@@ -109,8 +114,41 @@ export default function Contact() {
       </section>
 
       {/* Contact Section */}
-      <section className="py-20 bg-gray-50 dark:bg-gray-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="relative py-20 overflow-hidden">
+        {(() => {
+          const contactInfoMedia = getBackgroundMedia(websiteSettings || [], "contact_info");
+          if (!contactInfoMedia) return null;
+          
+          return contactInfoMedia.type === "video" ? (
+            <video
+              className="absolute inset-0 w-full h-full object-cover"
+              autoPlay
+              loop
+              muted
+              playsInline
+              src={contactInfoMedia.url}
+            />
+          ) : (
+            <div 
+              className="absolute inset-0 bg-cover bg-center"
+              style={{
+                backgroundImage: `url('${contactInfoMedia.url}')`,
+              }}
+            />
+          );
+        })()}
+        {getBackgroundMedia(websiteSettings || [], "contact_info") && (
+          <div className="absolute inset-0 hero-video-overlay" />
+        )}
+        <div 
+          className={`${getBackgroundMedia(websiteSettings || [], "contact_info") ? 'relative z-10' : ''} max-w-7xl mx-auto px-4 sm:px-6 lg:px-8`}
+          style={{
+            backgroundColor: getBackgroundMedia(websiteSettings || [], "contact_info") ? 'transparent' : undefined,
+          }}
+        >
+          {!getBackgroundMedia(websiteSettings || [], "contact_info") && (
+            <div className="absolute inset-0 bg-gray-50 dark:bg-gray-900" />
+          )}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             {/* Contact Form */}
             <Card className="cinematic-shadow">
@@ -202,7 +240,9 @@ export default function Contact() {
                     </div>
                     <div>
                       <p className="font-medium">Email</p>
-                      <p className="text-gray-600 dark:text-gray-400">hello@dt.visuals</p>
+                      <p className="text-gray-600 dark:text-gray-400">
+                        {(contactInfo as any)?.contactEmail || 'hello@dt.visuals'}
+                      </p>
                     </div>
                   </div>
                   
@@ -212,7 +252,9 @@ export default function Contact() {
                     </div>
                     <div>
                       <p className="font-medium">Phone</p>
-                      <p className="text-gray-600 dark:text-gray-400">+1 (555) 123-4567</p>
+                      <p className="text-gray-600 dark:text-gray-400">
+                        {(contactInfo as any)?.contactPhone || '+1 (555) 123-4567'}
+                      </p>
                     </div>
                   </div>
                   
@@ -222,7 +264,9 @@ export default function Contact() {
                     </div>
                     <div>
                       <p className="font-medium">Studio</p>
-                      <p className="text-gray-600 dark:text-gray-400">Los Angeles, CA</p>
+                      <p className="text-gray-600 dark:text-gray-400">
+                        {(contactInfo as any)?.contactAddress || 'Los Angeles, CA'}
+                      </p>
                     </div>
                   </div>
                 </div>
