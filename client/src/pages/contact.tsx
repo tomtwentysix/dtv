@@ -221,7 +221,7 @@ export default function Contact() {
                       <MapPin className="h-6 w-6 text-primary-foreground" />
                     </div>
                     <div>
-                      <p className="font-medium">Studio</p>
+                      <p className="font-medium">Location</p>
                       <p className="text-gray-600 dark:text-gray-400">Los Angeles, CA</p>
                     </div>
                   </div>
