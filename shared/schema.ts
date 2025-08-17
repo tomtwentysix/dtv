@@ -73,11 +73,12 @@ export const media = pgTable("media", {
   type: text("type").notNull(), // 'image' | 'video'
   url: text("url").notNull(),
   posterUrl: text("poster_url"), // For video poster frames
+  thumbnailUrl: text("thumbnail_url"), // For optimized thumbnails
   filename: text("filename").notNull(),
   fileSize: integer("file_size"),
   mimeType: text("mime_type"),
   isFeatured: boolean("is_featured").default(false),
-  showInPortfolio: boolean("show_in_portfolio").default(true), // Controls public visibility
+  showInPortfolio: boolean("show_in_portfolio").default(false), // Controls public visibility - changed default to false
   tags: text("tags").array(),
   projectStage: text("project_stage"), // 'concept', 'pre-production', 'production', 'post-production', 'completed', 'delivered'
   notes: text("notes"),

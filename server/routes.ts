@@ -11,9 +11,11 @@ import { users, media, mediaFeedback, mediaTimelineNotes, clientUsers, clients }
 import { requireAuth, requirePermission, requireRole, requireAnyRole } from "./middleware/rbac";
 import { requireClientAuth, loginClientUser, registerClientUser } from "./client-auth";
 import multer from "multer";
+import { generateThumbnail, getThumbnailPath, getThumbnailUrl } from "./media-processing";
 
 // Configure multer for file uploads
 const uploadDir = process.env.UPLOADS_DIR || path.join(process.cwd(), "uploads");
+const thumbnailDir = path.join(uploadDir, "thumbnails");
 console.log(`📁 Upload directory configured at: ${uploadDir}`);
 
 if (!fs.existsSync(uploadDir)) {
@@ -21,6 +23,13 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true, mode: 0o755 });
 } else {
   console.log(`📁 Upload directory exists: ${uploadDir}`);
+}
+
+if (!fs.existsSync(thumbnailDir)) {
+  console.log(`📁 Creating thumbnails directory: ${thumbnailDir}`);
+  fs.mkdirSync(thumbnailDir, { recursive: true, mode: 0o755 });
+} else {
+  console.log(`📁 Thumbnails directory exists: ${thumbnailDir}`);
 }
 
 // Ensure the directory is readable and writable
@@ -460,11 +469,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error(`❌ File NOT found on disk: ${fullFilePath}`);
         }
         
+        // Generate thumbnail
+        let thumbnailUrl: string | null = null;
+        try {
+          const thumbnailPath = getThumbnailPath(uploadDir, mainFile.filename);
+          await generateThumbnail(fullFilePath, thumbnailPath, mainFile.mimetype);
+          thumbnailUrl = getThumbnailUrl(thumbnailPath, uploadDir);
+          console.log(`📸 Thumbnail generated: ${thumbnailUrl}`);
+        } catch (thumbnailError) {
+          console.error(`⚠️  Failed to generate thumbnail:`, thumbnailError);
+          // Don't fail the upload if thumbnail generation fails
+        }
+        
         const media = await storage.createMedia({
           title,
           type: mainFile.mimetype.startsWith("video/") ? "video" : "image",
           url: fileUrl,
           posterUrl,
+          thumbnailUrl,
           filename: mainFile.originalname,
           fileSize: mainFile.size,
           mimeType: mainFile.mimetype,
