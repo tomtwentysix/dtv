@@ -77,31 +77,29 @@ The server setup automatically creates the following directory structure:
 ```
 /var/www/dtvisuals/
 ├── app/                    # Application code (git repository)
-├── uploads/
-│   ├── prod/              # Production uploads (persistent)
-│   └── dev/               # Development uploads (persistent)
+│   └── uploads/           # Media uploads (within app, git ignored)
 └── ecosystem.config.js    # PM2 configuration
 ```
 
 **Upload Directory Configuration:**
-- Production uploads: `/var/www/dtvisuals/uploads/prod`
-- Development uploads: `/var/www/dtvisuals/uploads/dev`
+- Uploads are stored in `./uploads` directory within the application
+- Files are automatically ignored by git (see .gitignore)
 - The application automatically uses `UPLOADS_DIR` environment variable
 - Files uploaded remain persistent across deployments
-- Proper permissions are set automatically (dtvisuals:www-data, 755)
+- Proper permissions are set automatically during deployment
 
 To verify upload directories:
 ```bash
 # Check directory structure
-ls -la /var/www/dtvisuals/
-ls -la /var/www/dtvisuals/uploads/
+ls -la /var/www/dtvisuals/app/
+ls -la /var/www/dtvisuals/app/uploads/
 
 # Check permissions
-ls -ld /var/www/dtvisuals/uploads/*
+ls -ld /var/www/dtvisuals/app/uploads/
 
 # Test upload directory access
-sudo -u dtvisuals touch /var/www/dtvisuals/uploads/prod/test.txt
-sudo -u dtvisuals rm /var/www/dtvisuals/uploads/prod/test.txt
+sudo -u dtvisuals touch /var/www/dtvisuals/app/uploads/test.txt
+sudo -u dtvisuals rm /var/www/dtvisuals/app/uploads/test.txt
 ```
 
 ### 3. Environment Configuration
@@ -127,7 +125,7 @@ PORT=5001
 DATABASE_URL=postgresql://dtvisuals:REPLACE_WITH_GENERATED_PASSWORD@localhost:5432/dtvisuals_prod
 SESSION_SECRET=GENERATE_64_CHAR_RANDOM_STRING
 DOMAIN=yourdomain.com
-UPLOADS_DIR=/var/www/dtvisuals/uploads/prod
+UPLOADS_DIR=./uploads
 ```
 
 ```bash
@@ -143,12 +141,7 @@ PORT=5002
 DATABASE_URL=postgresql://dtvisuals:REPLACE_WITH_GENERATED_PASSWORD@localhost:5432/dtvisuals_dev
 SESSION_SECRET=GENERATE_64_CHAR_RANDOM_STRING
 DOMAIN=dev.yourdomain.com
-UPLOADS_DIR=/var/www/dtvisuals/uploads/dev
-NODE_ENV=development
-PORT=5002
-DATABASE_URL=postgresql://dtvisuals:your-secure-password@localhost:5432/dtvisuals_dev
-SESSION_SECRET=your-64-char-random-string
-DOMAIN=dev.yourdomain.com
+UPLOADS_DIR=./uploads
 ```
 
 ### 4. SSL Setup
@@ -293,39 +286,37 @@ curl -I https://dev.yourdomain.com
 If uploads are not working or files disappear after deployment:
 
 ```bash
-# Check if upload directories exist
-ls -la /var/www/dtvisuals/uploads/
-ls -la /var/www/dtvisuals/uploads/prod/
-ls -la /var/www/dtvisuals/uploads/dev/
+# Check if upload directories exist within the app
+ls -la /var/www/dtvisuals/app/uploads/
 
 # Check permissions
-ls -ld /var/www/dtvisuals/uploads/*
+ls -ld /var/www/dtvisuals/app/uploads/
 # Should show: drwxr-xr-x dtvisuals www-data
 
 # Check environment variables in your .env files
 grep UPLOADS_DIR /var/www/dtvisuals/app/.env.prod
 grep UPLOADS_DIR /var/www/dtvisuals/app/.env.dev
-# Should show: UPLOADS_DIR=/var/www/dtvisuals/uploads/prod (or dev)
+# Should show: UPLOADS_DIR=./uploads
 
 # Test upload directory access
-sudo -u dtvisuals touch /var/www/dtvisuals/uploads/prod/test.txt
-sudo -u dtvisuals ls -la /var/www/dtvisuals/uploads/prod/test.txt
-sudo -u dtvisuals rm /var/www/dtvisuals/uploads/prod/test.txt
+sudo -u dtvisuals touch /var/www/dtvisuals/app/uploads/test.txt
+sudo -u dtvisuals ls -la /var/www/dtvisuals/app/uploads/test.txt
+sudo -u dtvisuals rm /var/www/dtvisuals/app/uploads/test.txt
 
 # Fix permissions if needed
-sudo chown -R dtvisuals:www-data /var/www/dtvisuals/uploads/
-sudo chmod -R 755 /var/www/dtvisuals/uploads/
+sudo chown -R dtvisuals:www-data /var/www/dtvisuals/app/uploads/
+sudo chmod -R 755 /var/www/dtvisuals/app/uploads/
 
-# Recreate directories if missing
-sudo mkdir -p /var/www/dtvisuals/uploads/{prod,dev}
-sudo chown -R dtvisuals:www-data /var/www/dtvisuals/uploads/
-sudo chmod -R 755 /var/www/dtvisuals/uploads/
+# Recreate directory if missing
+sudo -u dtvisuals mkdir -p /var/www/dtvisuals/app/uploads/
+sudo chown -R dtvisuals:www-data /var/www/dtvisuals/app/uploads/
+sudo chmod -R 755 /var/www/dtvisuals/app/uploads/
 ```
 
 **Common Upload Issues:**
-- Files disappear after deployment → Check UPLOADS_DIR in .env files points to persistent directory
+- Files disappear after deployment → Check UPLOADS_DIR in .env files is set to `./uploads`
 - Permission denied errors → Run the permission fix commands above  
-- 404 errors for uploaded files → Verify Nginx serves `/uploads` path correctly
+- 404 errors for uploaded files → Files are now served by the Node.js app at `/uploads` path
 - Large file uploads fail → Check `MAX_FILE_SIZE` in .env and Nginx client_max_body_size
 
 ### Common Issues

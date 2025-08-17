@@ -71,18 +71,6 @@ if [[ -d "/var/www/dtvisuals" ]]; then
     else
         echo "⚠️  /var/www/dtvisuals/app missing (clone your repo here)"
     fi
-    
-    if [[ -d "/var/www/dtvisuals/uploads/prod" ]]; then
-        echo "✅ /var/www/dtvisuals/uploads/prod exists"
-    else
-        echo "❌ /var/www/dtvisuals/uploads/prod missing"
-    fi
-    
-    if [[ -d "/var/www/dtvisuals/uploads/dev" ]]; then
-        echo "✅ /var/www/dtvisuals/uploads/dev exists"
-    else
-        echo "❌ /var/www/dtvisuals/uploads/dev missing"
-    fi
 else
     echo "❌ /var/www/dtvisuals doesn't exist"
 fi
@@ -155,15 +143,6 @@ if [[ -d "/var/www/dtvisuals" ]]; then
         echo "✅ /var/www/dtvisuals ownership: $OWNER"
     else
         echo "⚠️  /var/www/dtvisuals ownership: $OWNER (expected: dtvisuals:www-data)"
-    fi
-    
-    if [[ -d "/var/www/dtvisuals/uploads/prod" ]]; then
-        UPLOAD_OWNER=$(stat -c '%U:%G' /var/www/dtvisuals/uploads/prod)
-        if [[ "$UPLOAD_OWNER" == "dtvisuals:www-data" ]]; then
-            echo "✅ Upload directories ownership: $UPLOAD_OWNER"
-        else
-            echo "⚠️  Upload directories ownership: $UPLOAD_OWNER (expected: dtvisuals:www-data)"
-        fi
     fi
 fi
 
