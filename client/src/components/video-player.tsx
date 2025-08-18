@@ -26,18 +26,19 @@ export function VideoPlayer({ selectedVideo, isOpen, onClose, autoPlayOnOpen = t
     if (isOpen && selectedVideo?.type === "video" && autoPlayOnOpen) {
       setTimeout(() => {
         if (modalVideoRef.current) {
-          modalVideoRef.current.play().catch(() => {
-            console.log('Autoplay prevented');
-          });
-          
-          // On mobile, enter fullscreen using native controls
-          if (isMobile) {
-            if (modalVideoRef.current.requestFullscreen) {
-              modalVideoRef.current.requestFullscreen().catch(() => {});
-            } else if ((modalVideoRef.current as any).webkitEnterFullscreen) {
-              // Safari iOS fallback
-              (modalVideoRef.current as any).webkitEnterFullscreen();
-            }
+          // On desktop, just autoplay
+          if (!isMobile) {
+            modalVideoRef.current.play().catch(() => {
+              console.log('Autoplay prevented');
+            });
+          } else {
+            // On mobile, play and try to enter fullscreen using native controls
+            modalVideoRef.current.play().catch(() => {
+              console.log('Autoplay prevented on mobile');
+            });
+            
+            // Mobile fullscreen - let the native controls handle it
+            // The mobile video will have controls=true so user can tap fullscreen
           }
         }
       }, 100);
@@ -116,7 +117,11 @@ export function VideoPlayer({ selectedVideo, isOpen, onClose, autoPlayOnOpen = t
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="p-0 overflow-hidden bg-black/95 border-none w-[80vw] max-w-none max-h-[95vh] h-auto" aria-describedby="media-player-description">
+      <DialogContent className={`p-0 overflow-hidden bg-black/95 border-none ${
+        isMobile 
+          ? "w-full h-full max-w-none max-h-none m-0" 
+          : "w-[80vw] max-w-none max-h-[95vh] h-auto"
+      }`} aria-describedby="media-player-description">
         <DialogTitle className="sr-only">
           Media Player - {selectedVideo?.title}
         </DialogTitle>
@@ -143,7 +148,7 @@ export function VideoPlayer({ selectedVideo, isOpen, onClose, autoPlayOnOpen = t
               <video
                 ref={modalVideoRef}
                 src={selectedVideo.url}
-                className="block max-w-full max-h-full w-auto h-auto bg-black"
+                className="block max-w-full max-h-full w-auto h-auto bg-black modal-video"
                 style={{
                   filter: 'none',
                   mixBlendMode: 'normal',
