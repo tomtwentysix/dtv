@@ -204,7 +204,7 @@ export function VideoPlayer({ selectedVideo, isOpen, onClose, autoPlayOnOpen = t
               <video
                 ref={modalVideoRef}
                 src={selectedVideo.url}
-                className="block max-w-full max-h-full w-auto h-auto bg-black modal-video"
+                className="block max-w-full max-h-full w-auto h-auto bg-black modal-video relative z-0"
                 style={{
                   filter: 'none',
                   mixBlendMode: 'normal',
@@ -238,7 +238,7 @@ export function VideoPlayer({ selectedVideo, isOpen, onClose, autoPlayOnOpen = t
 
           {/* Desktop Custom Controls - Only show on desktop */}
           {selectedVideo?.type === "video" && !isMobile && (
-            <div className={`absolute inset-0 transition-opacity duration-300 ${
+            <div className={`absolute inset-0 z-10 transition-opacity duration-300 ${
               showControls ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
             }`}>
 
