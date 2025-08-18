@@ -249,7 +249,7 @@ export default function Home() {
               From brand stories and campaign films to live events and music videos, we bring a full spectrum approach, blending creative thinking, technical precision and an instinct for storytelling.
             </p>
             <p className="text-lg text-gray-600 dark:text-gray-400 max-w-4xl mx-auto">
-              Led by Dan, our team collaborates closely with every client to deliver work that's not just on brief, 
+              Our team collaborates closely with every client to deliver work that's not just on brief, 
               but ahead of it.
             </p>
           </div>
