@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Building, ImageIcon, Loader2, Plus, Save } from "lucide-react";
+import { Building, ImageIcon, Loader2, Plus, Save, Share } from "lucide-react";
 import { useBrandingSettings, useUpdateBrandingSettings } from "@/hooks/use-branding-settings";
 import * as React from "react";
 
@@ -34,10 +34,12 @@ export function BrandingManager() {
     logoLightImageId: null as string | null,
     logoDarkImageId: null as string | null,
     faviconImageId: null as string | null,
+    openGraphImageId: null as string | null,
   });
   const [logoLightDialogOpen, setLogoLightDialogOpen] = useState(false);
   const [logoDarkDialogOpen, setLogoDarkDialogOpen] = useState(false);
   const [faviconDialogOpen, setFaviconDialogOpen] = useState(false);
+  const [openGraphDialogOpen, setOpenGraphDialogOpen] = useState(false);
 
   // Fetch all media for logo/favicon selection
   const { data: allMedia = [], isLoading: isMediaLoading } = useQuery<MediaType[]>({
@@ -53,6 +55,7 @@ export function BrandingManager() {
         logoLightImageId: brandingSettings.logoLightImageId,
         logoDarkImageId: brandingSettings.logoDarkImageId,
         faviconImageId: brandingSettings.faviconImageId,
+        openGraphImageId: brandingSettings.openGraphImageId || null,
       });
     }
   }, [brandingSettings]);
@@ -273,6 +276,58 @@ export function BrandingManager() {
         </CardContent>
       </Card>
 
+      {/* Open Graph Image Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Share className="h-5 w-5" />
+            Open Graph Image
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Image displayed when sharing links to your site on social media (Discord, Facebook, Twitter, etc.)
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {brandingForm.openGraphImageId && getSelectedMedia(brandingForm.openGraphImageId) ? (
+            <div className="flex items-center gap-4 p-4 border rounded-lg bg-muted/50">
+              <img
+                src={getSelectedMedia(brandingForm.openGraphImageId)!.url}
+                alt="Open Graph Image"
+                className="w-24 h-12 object-cover rounded"
+              />
+              <div className="flex-1">
+                <p className="font-medium">{getSelectedMedia(brandingForm.openGraphImageId)!.title}</p>
+                <p className="text-sm text-muted-foreground">Current social media preview image</p>
+                <p className="text-xs text-muted-foreground mt-1">Recommended: 1200x630px for optimal display</p>
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => setBrandingForm(prev => ({ ...prev, openGraphImageId: null }))}
+                disabled={updateBrandingMutation.isPending}
+              >
+                Remove
+              </Button>
+            </div>
+          ) : (
+            <div className="p-8 border-2 border-dashed border-muted-foreground/25 rounded-lg text-center text-muted-foreground">
+              <Share className="h-12 w-12 mx-auto mb-2 opacity-50" />
+              <p className="text-lg font-medium mb-1">No Open Graph image set</p>
+              <p className="text-sm">Click "Select Social Media Image" to choose an image</p>
+              <p className="text-xs mt-2">Optimal size: 1200x630px</p>
+            </div>
+          )}
+          
+          <Button
+            onClick={() => setOpenGraphDialogOpen(true)}
+            disabled={updateBrandingMutation.isPending}
+            className="w-full"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Select Social Media Image
+          </Button>
+        </CardContent>
+      </Card>
+
       {/* Save Button */}
       <Button
         onClick={handleSubmit}
@@ -372,6 +427,41 @@ export function BrandingManager() {
                   onClick={() => {
                     setBrandingForm(prev => ({ ...prev, faviconImageId: media.id }));
                     setFaviconDialogOpen(false);
+                  }}
+                >
+                  <img
+                    src={media.url}
+                    alt={media.title}
+                    className="w-full h-32 object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <p className="text-white text-sm font-medium text-center px-2">{media.title}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Open Graph Image Selection Dialog */}
+      <Dialog open={openGraphDialogOpen} onOpenChange={setOpenGraphDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Select Social Media Preview Image</DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              Choose an image that represents your brand well when shared on social media. Recommended size: 1200x630px
+            </p>
+          </DialogHeader>
+          <div className="flex-1 overflow-hidden">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[60vh] overflow-y-auto p-1">
+              {allMedia.filter(media => media.type === 'image').map((media) => (
+                <div
+                  key={media.id}
+                  className="relative group cursor-pointer rounded-lg overflow-hidden border-2 border-transparent hover:border-primary transition-colors"
+                  onClick={() => {
+                    setBrandingForm(prev => ({ ...prev, openGraphImageId: media.id }));
+                    setOpenGraphDialogOpen(false);
                   }}
                 >
                   <img
