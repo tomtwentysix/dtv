@@ -98,27 +98,29 @@ export default function Portfolio() {
         </div>
       </section>
 
-      {/* Filters */}
-      <section className="py-8 bg-white dark:bg-black">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-wrap justify-center gap-4">
-            {categories.map((category) => (
-              <Button
-                key={category}
-                variant={activeCategory === category ? "default" : "outline"}
-                onClick={() => setActiveCategory(category)}
-                className={
-                  activeCategory === category
-                    ? "btn-primary"
-                    : "hover:border-primary hover:text-primary"
-                }
-              >
-                {category}
-              </Button>
-            ))}
+      {/* Filters: Only show if there are more than 12 items in the portfolio */}
+      {Array.isArray(media) && media.length > 12 && (
+        <section className="py-8 bg-white dark:bg-black">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-wrap justify-center gap-4">
+              {categories.map((category) => (
+                <Button
+                  key={category}
+                  variant={activeCategory === category ? "default" : "outline"}
+                  onClick={() => setActiveCategory(category)}
+                  className={
+                    activeCategory === category
+                      ? "btn-primary"
+                      : "hover:border-primary hover:text-primary"
+                  }
+                >
+                  {category}
+                </Button>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Portfolio Grid */}
       <section className="relative py-12 bg-white dark:bg-black overflow-hidden">
