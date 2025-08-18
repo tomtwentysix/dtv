@@ -65,7 +65,7 @@
 
   html {
     scroll-behavior: smooth;
-    font-size: 13px; /* Set base font size to 12px for better scaling */
+    font-size: 14px; /* Set base font size to 12px for better scaling */
   }
 }
 
@@ -111,7 +111,7 @@
     mix-blend-mode: difference;
     filter: contrast(2) brightness(1.5);
     /* Reduce font size by 2pt from original Tailwind sizes */
-    font-size: 3.625rem; /* 58px, reduced from text-6xl (60px) */
+    font-size: 3rem; /* 48px, reduced from text-6xl (60px) */
   }
   
   .hero-accent {
@@ -119,7 +119,7 @@
     mix-blend-mode: difference;
     filter: contrast(2) brightness(1.5);
     /* Same font size as hero-title for consistency */
-    font-size: 3.625rem; /* 58px, reduced from text-6xl (60px) */
+    font-size: 3rem; /* 48px, reduced from text-6xl (60px) */
   }
 
   .hero-subtitle {
