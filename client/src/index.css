@@ -523,6 +523,16 @@ video.hero-video::-webkit-media-controls-enclosure {
   background-color: transparent !important;
 }
 
+/* Hide any duplicate slider/progress elements that might be rendered globally */
+[data-radix-dialog-content] > *:not(.modal-video):not([role="dialog"]) [data-radix-slider-root] {
+  display: none !important;
+}
+
+/* Ensure no global progress bars or sliders appear over modal videos */
+[data-radix-dialog-overlay] ~ *:not([data-radix-dialog-content]) [data-radix-slider-root] {
+  display: none !important;
+}
+
 /* Remove any potential overlays from tab content containing videos */
 [data-state="active"] .modal-video {
   filter: none !important;

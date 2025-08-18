@@ -18,7 +18,7 @@ export function VideoPlayer({ selectedVideo, isOpen, onClose, autoPlayOnOpen = t
   const [isMuted, setIsMuted] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [showControls, setShowControls] = useState(true);
+  const [showControls, setShowControls] = useState(false); // Start hidden
   const modalVideoRef = useRef<HTMLVideoElement>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout>();
   const isMobile = useIsMobile();
@@ -28,16 +28,30 @@ export function VideoPlayer({ selectedVideo, isOpen, onClose, autoPlayOnOpen = t
     if (!isOpen) {
       setIsPlaying(false);
       setCurrentTime(0);
-      setShowControls(true);
+      setShowControls(false); // Start with controls hidden when modal opens
       if (controlsTimeoutRef.current) {
         clearTimeout(controlsTimeoutRef.current);
       }
     }
   }, [isOpen]);
 
+  // Show controls initially when modal opens, then auto-hide
+  useEffect(() => {
+    if (isOpen && !isMobile) {
+      setShowControls(true);
+      // Auto-hide after 3 seconds
+      controlsTimeoutRef.current = setTimeout(() => {
+        setShowControls(false);
+      }, 3000);
+    }
+  }, [isOpen, isMobile]);
+
   // Auto-hide controls after 3 seconds when playing
   useEffect(() => {
     if (isPlaying && showControls && !isMobile) {
+      if (controlsTimeoutRef.current) {
+        clearTimeout(controlsTimeoutRef.current);
+      }
       controlsTimeoutRef.current = setTimeout(() => {
         setShowControls(false);
       }, 3000);
