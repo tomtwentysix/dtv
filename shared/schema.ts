@@ -275,6 +275,11 @@ export const brandingSettingsRelations = relations(brandingSettings, ({ one }) =
     fields: [brandingSettings.faviconImageId],
     references: [media.id],
   }),
+  openGraphImage: one(media, {
+    fields: [brandingSettings.openGraphImageId],
+    references: [media.id],
+    relationName: "openGraphImage",
+  }),
   updater: one(users, {
     fields: [brandingSettings.updatedBy],
     references: [users.id],

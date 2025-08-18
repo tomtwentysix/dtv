@@ -736,10 +736,11 @@ export class DatabaseStorage implements IStorage {
     if (!settings) return undefined;
 
     // Fetch related media separately
-    const [logoLightImage, logoDarkImage, faviconImage] = await Promise.all([
+    const [logoLightImage, logoDarkImage, faviconImage, openGraphImage] = await Promise.all([
       settings.logoLightImageId ? this.getMedia(settings.logoLightImageId) : null,
       settings.logoDarkImageId ? this.getMedia(settings.logoDarkImageId) : null,
       settings.faviconImageId ? this.getMedia(settings.faviconImageId) : null,
+      settings.openGraphImageId ? this.getMedia(settings.openGraphImageId) : null,
     ]);
     
     return {
@@ -758,6 +759,11 @@ export class DatabaseStorage implements IStorage {
         id: faviconImage.id,
         url: faviconImage.url,
         title: faviconImage.title,
+      } : null,
+      openGraphImage: openGraphImage ? {
+        id: openGraphImage.id,
+        url: openGraphImage.url,
+        title: openGraphImage.title,
       } : null,
     } as BrandingSettings;
   }
