@@ -25,6 +25,8 @@ interface VideoPlayerProps {
   autoplay?: boolean;
   showTitle?: boolean;
   onLoadedMetadata?: () => void;
+  mode?: "modal" | "inline"; // New prop for different display modes
+  onPause?: (e: any) => void; // Allow custom pause handler for feedback functionality
 }
 
 export interface VideoPlayerHandle {
@@ -56,6 +58,8 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
     autoplay = false,
     showTitle = true,
     onLoadedMetadata,
+    mode = "modal",
+    onPause,
   }, ref) => {
     const videoRef = useRef<HTMLVideoElement>(null);
     const isMobile = useIsMobile();
@@ -105,7 +109,10 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
     };
 
     const handlePlay = () => setIsPlaying(true);
-    const handlePause = () => setIsPlaying(false);
+    const handlePause = (e?: any) => {
+      setIsPlaying(false);
+      if (onPause) onPause(e);
+    };
     const handleEnded = () => setIsPlaying(false);
 
     const togglePlay = () => {
@@ -203,6 +210,30 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
           controls
           playsInline
           preload="metadata"
+          onLoadedMetadata={handleLoadedMetadata}
+          onTimeUpdate={handleTimeUpdate}
+          onPlay={handlePlay}
+          onPause={handlePause}
+          onEnded={handleEnded}
+        />
+      );
+    }
+
+    // Inline mode: Simple video with native controls (for feedback/admin pages)
+    if (mode === "inline") {
+      return (
+        <video
+          ref={videoRef}
+          src={src}
+          poster={poster}
+          className={`w-full h-full ${className}`}
+          style={{
+            objectFit: 'contain',
+            ...style
+          }}
+          controls
+          preload="metadata"
+          playsInline
           onLoadedMetadata={handleLoadedMetadata}
           onTimeUpdate={handleTimeUpdate}
           onPlay={handlePlay}
