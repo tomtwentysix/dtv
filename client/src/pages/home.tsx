@@ -16,6 +16,8 @@ export default function Home() {
 
   const { data: websiteSettings } = useWebsiteSettings();
   const [scrollY, setScrollY] = useState(0);
+  const scrollYTarget = useRef(0);
+  const rafRef = useRef<number>();
   const [visibleSections, setVisibleSections] = useState<Record<string, boolean>>({});
   const [sectionOffsets, setSectionOffsets] = useState<Record<string, number>>({});
   const [selectedVideo, setSelectedVideo] = useState<any>(null);
@@ -28,10 +30,27 @@ export default function Home() {
   const workedWithRef = useRef<HTMLElement>(null);
   const connectRef = useRef<HTMLElement>(null);
 
+  // Smooth parallax scroll effect
   useEffect(() => {
-    const handleScroll = () => setScrollY(window.scrollY);
+    const lerp = (start: number, end: number, amt: number) => (1 - amt) * start + amt * end;
+    let running = true;
+    const animate = () => {
+      setScrollY(prev => {
+        const next = lerp(prev, scrollYTarget.current, 0.15);
+        return Math.abs(next - scrollYTarget.current) < 0.1 ? scrollYTarget.current : next;
+      });
+      if (running) rafRef.current = requestAnimationFrame(animate);
+    };
+    const handleScroll = () => {
+      scrollYTarget.current = window.scrollY;
+    };
     window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    rafRef.current = requestAnimationFrame(animate);
+    return () => {
+      running = false;
+      window.removeEventListener("scroll", handleScroll);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
   }, []);
 
   useEffect(() => {

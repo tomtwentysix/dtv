@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Navigation } from "@/components/navigation";
 import { Footer } from "@/components/footer";
 import { Card, CardContent } from "@/components/ui/card";
@@ -6,14 +6,33 @@ import { getBackgroundMedia, useWebsiteSettings } from "@/lib/background-utils";
 
 export default function About() {
   const [scrollY, setScrollY] = useState(0);
+  const scrollYTarget = useRef(0);
+  const rafRef = useRef<number>();
 
   // Get website settings for backgrounds
   const { data: websiteSettings } = useWebsiteSettings();
 
+  // Smooth parallax scroll effect
   useEffect(() => {
-    const handleScroll = () => setScrollY(window.scrollY);
+    const lerp = (start: number, end: number, amt: number) => (1 - amt) * start + amt * end;
+    let running = true;
+    const animate = () => {
+      setScrollY(prev => {
+        const next = lerp(prev, scrollYTarget.current, 0.15);
+        return Math.abs(next - scrollYTarget.current) < 0.1 ? scrollYTarget.current : next;
+      });
+      if (running) rafRef.current = requestAnimationFrame(animate);
+    };
+    const handleScroll = () => {
+      scrollYTarget.current = window.scrollY;
+    };
     window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    rafRef.current = requestAnimationFrame(animate);
+    return () => {
+      running = false;
+      window.removeEventListener("scroll", handleScroll);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
   }, []);
 
   return (
