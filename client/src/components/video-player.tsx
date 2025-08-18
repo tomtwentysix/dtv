@@ -44,33 +44,25 @@ export function VideoPlayer({ selectedVideo, isOpen, onClose, autoPlayOnOpen = t
         setShowControls(false);
       }, 3000);
     }
-  }, [isOpen, isMobile]);
-
-  // Auto-hide controls after 3 seconds when playing
-  useEffect(() => {
-    if (isPlaying && showControls && !isMobile) {
-      if (controlsTimeoutRef.current) {
-        clearTimeout(controlsTimeoutRef.current);
-      }
-      controlsTimeoutRef.current = setTimeout(() => {
-        setShowControls(false);
-      }, 3000);
-    }
 
     return () => {
       if (controlsTimeoutRef.current) {
         clearTimeout(controlsTimeoutRef.current);
       }
     };
-  }, [isPlaying, showControls, isMobile]);
+  }, [isOpen, isMobile]);
 
-  // Show controls on mouse movement
+  // Show controls on mouse movement and restart auto-hide timer
   const handleMouseMove = () => {
     if (!isMobile) {
       setShowControls(true);
       if (controlsTimeoutRef.current) {
         clearTimeout(controlsTimeoutRef.current);
       }
+      // Restart auto-hide timer
+      controlsTimeoutRef.current = setTimeout(() => {
+        setShowControls(false);
+      }, 3000);
     }
   };
 
