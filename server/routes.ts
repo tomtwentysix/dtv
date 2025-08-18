@@ -1080,7 +1080,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         showCompanyText: true,
         logoLightImageId: null,
         logoDarkImageId: null,
-        faviconImageId: null
+        faviconImageId: null,
+        openGraphImageId: null
       });
     } catch (error) {
       console.error("Error fetching branding settings:", error);
@@ -1090,7 +1091,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/branding-settings", requireAuth, requirePermission("edit:website"), async (req, res) => {
     try {
-      const { companyName, showCompanyText, logoLightImageId, logoDarkImageId, faviconImageId } = req.body;
+      const { companyName, showCompanyText, logoLightImageId, logoDarkImageId, faviconImageId, openGraphImageId } = req.body;
       const userId = req.user!.id;
       
       const updatedSettings = await storage.updateBrandingSettings({
@@ -1099,6 +1100,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         logoLightImageId,
         logoDarkImageId,
         faviconImageId,
+        openGraphImageId,
         updatedBy: userId,
       });
       
