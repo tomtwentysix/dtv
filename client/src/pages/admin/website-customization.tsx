@@ -17,7 +17,10 @@ import {
   Play,
   Contact,
   Building,
-  Save
+  Save,
+  Instagram,
+  Facebook,
+  Linkedin
 } from "lucide-react";
 import { BrandingManager } from "@/components/branding-manager";
 import { queryClient } from "@/lib/queryClient";
@@ -171,7 +174,10 @@ export default function WebsiteCustomization() {
   const [contactForm, setContactForm] = useState({
     contactEmail: '',
     contactPhone: '',
-    contactAddress: ''
+    contactAddress: '',
+    instagramUrl: '',
+    facebookUrl: '',
+    linkedinUrl: ''
   });
 
   // Initialize contact form when data loads
@@ -180,14 +186,17 @@ export default function WebsiteCustomization() {
       setContactForm({
         contactEmail: (contactInfo as any).contactEmail || '',
         contactPhone: (contactInfo as any).contactPhone || '',
-        contactAddress: (contactInfo as any).contactAddress || ''
+        contactAddress: (contactInfo as any).contactAddress || '',
+        instagramUrl: (contactInfo as any).instagramUrl || '',
+        facebookUrl: (contactInfo as any).facebookUrl || '',
+        linkedinUrl: (contactInfo as any).linkedinUrl || ''
       });
     }
   }, [contactInfo]);
 
   // Update contact information mutation
   const updateContactMutation = useMutation({
-    mutationFn: async (data: { contactEmail: string; contactPhone: string; contactAddress: string }) => {
+    mutationFn: async (data: { contactEmail: string; contactPhone: string; contactAddress: string; instagramUrl: string; facebookUrl: string; linkedinUrl: string }) => {
       const response = await fetch('/api/contact-info', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -456,10 +465,10 @@ export default function WebsiteCustomization() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Contact className="h-5 w-5" />
-                  Contact Information
+                  Contact Information & Social Links
                 </CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  Manage the contact information displayed in the footer and contact page
+                  Manage the contact information and social media links displayed in the footer and contact page
                 </p>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -497,6 +506,49 @@ export default function WebsiteCustomization() {
                       onChange={(e) => setContactForm(prev => ({ ...prev, contactAddress: e.target.value }))}
                       disabled={updateContactMutation.isPending}
                     />
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <h4 className="font-medium text-sm text-muted-foreground flex items-center gap-2">
+                      <Instagram className="h-4 w-4" />
+                      Social Media Links
+                    </h4>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="instagramUrl">Instagram URL</Label>
+                      <Input
+                        id="instagramUrl"
+                        type="url"
+                        placeholder="https://instagram.com/username"
+                        value={contactForm.instagramUrl}
+                        onChange={(e) => setContactForm(prev => ({ ...prev, instagramUrl: e.target.value }))}
+                        disabled={updateContactMutation.isPending}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="facebookUrl">Facebook URL</Label>
+                      <Input
+                        id="facebookUrl"
+                        type="url"
+                        placeholder="https://facebook.com/username"
+                        value={contactForm.facebookUrl}
+                        onChange={(e) => setContactForm(prev => ({ ...prev, facebookUrl: e.target.value }))}
+                        disabled={updateContactMutation.isPending}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="linkedinUrl">LinkedIn URL</Label>
+                      <Input
+                        id="linkedinUrl"
+                        type="url"
+                        placeholder="https://linkedin.com/in/username"
+                        value={contactForm.linkedinUrl}
+                        onChange={(e) => setContactForm(prev => ({ ...prev, linkedinUrl: e.target.value }))}
+                        disabled={updateContactMutation.isPending}
+                      />
+                    </div>
                   </div>
                   
                   <Button

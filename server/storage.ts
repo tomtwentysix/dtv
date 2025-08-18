@@ -122,7 +122,7 @@ export interface IStorage {
   
   // Contact information management
   getContactInfo(): Promise<WebsiteSettings | undefined>;
-  updateContactInfo(contactInfo: { contactEmail?: string; contactPhone?: string; contactAddress?: string; updatedBy: string }): Promise<WebsiteSettings>;
+  updateContactInfo(contactInfo: { contactEmail?: string; contactPhone?: string; contactAddress?: string; instagramUrl?: string; facebookUrl?: string; linkedinUrl?: string; updatedBy: string }): Promise<WebsiteSettings>;
   
   // Branding settings management
   getBrandingSettings(): Promise<BrandingSettings | undefined>;
@@ -686,7 +686,7 @@ export class DatabaseStorage implements IStorage {
     return contactSetting;
   }
 
-  async updateContactInfo(contactInfo: { contactEmail?: string; contactPhone?: string; contactAddress?: string; updatedBy: string }): Promise<WebsiteSettings> {
+  async updateContactInfo(contactInfo: { contactEmail?: string; contactPhone?: string; contactAddress?: string; instagramUrl?: string; facebookUrl?: string; linkedinUrl?: string; updatedBy: string }): Promise<WebsiteSettings> {
     const section = 'contact_info';
     
     // Try to update existing setting first
@@ -696,6 +696,9 @@ export class DatabaseStorage implements IStorage {
         contactEmail: contactInfo.contactEmail,
         contactPhone: contactInfo.contactPhone,
         contactAddress: contactInfo.contactAddress,
+        instagramUrl: contactInfo.instagramUrl,
+        facebookUrl: contactInfo.facebookUrl,
+        linkedinUrl: contactInfo.linkedinUrl,
         updatedBy: contactInfo.updatedBy,
         updatedAt: new Date() 
       })
@@ -711,6 +714,9 @@ export class DatabaseStorage implements IStorage {
           contactEmail: contactInfo.contactEmail,
           contactPhone: contactInfo.contactPhone,
           contactAddress: contactInfo.contactAddress,
+          instagramUrl: contactInfo.instagramUrl,
+          facebookUrl: contactInfo.facebookUrl,
+          linkedinUrl: contactInfo.linkedinUrl,
           updatedBy: contactInfo.updatedBy
         })
         .returning();

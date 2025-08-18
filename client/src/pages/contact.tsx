@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { Mail, Phone, MapPin, Instagram, Youtube, Linkedin } from "lucide-react";
+import { Mail, Phone, MapPin, Instagram, Youtube, Linkedin, Facebook } from "lucide-react";
 import { getBackgroundMedia, useWebsiteSettings } from "@/lib/background-utils";
 
 export default function Contact() {
@@ -276,24 +276,36 @@ export default function Contact() {
               <div>
                 <h4 className="text-lg font-semibold mb-4">Follow Our Work</h4>
                 <div className="flex space-x-4">
-                  <a 
-                    href="#" 
-                    className="w-12 h-12 bg-gray-200 dark:bg-gray-700 hover:bg-primary hover:text-primary-foreground rounded-lg flex items-center justify-center transition-colors duration-200"
-                  >
-                    <Instagram className="h-5 w-5" />
-                  </a>
-                  <a 
-                    href="#" 
-                    className="w-12 h-12 bg-gray-200 dark:bg-gray-700 hover:bg-primary hover:text-primary-foreground rounded-lg flex items-center justify-center transition-colors duration-200"
-                  >
-                    <Youtube className="h-5 w-5" />
-                  </a>
-                  <a 
-                    href="#" 
-                    className="w-12 h-12 bg-gray-200 dark:bg-gray-700 hover:bg-primary hover:text-primary-foreground rounded-lg flex items-center justify-center transition-colors duration-200"
-                  >
-                    <Linkedin className="h-5 w-5" />
-                  </a>
+                  {(contactInfo as any)?.instagramUrl && (
+                    <a 
+                      href={(contactInfo as any).instagramUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-black hover:bg-accent hover:text-white transition-all duration-200"
+                    >
+                      <Instagram className="h-5 w-5" />
+                    </a>
+                  )}
+                  {(contactInfo as any)?.facebookUrl && (
+                    <a 
+                      href={(contactInfo as any).facebookUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-black hover:bg-accent hover:text-white transition-all duration-200"
+                    >
+                      <Facebook className="h-5 w-5" />
+                    </a>
+                  )}
+                  {(contactInfo as any)?.linkedinUrl && (
+                    <a 
+                      href={(contactInfo as any).linkedinUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-black hover:bg-accent hover:text-white transition-all duration-200"
+                    >
+                      <Linkedin className="h-5 w-5" />
+                    </a>
+                  )}
                 </div>
               </div>
 
