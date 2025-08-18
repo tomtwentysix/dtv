@@ -103,6 +103,10 @@ export const websiteSettings = pgTable("website_settings", {
   contactEmail: text("contact_email"),
   contactPhone: text("contact_phone"),
   contactAddress: text("contact_address"),
+  // Social media links
+  instagramUrl: text("instagram_url"),
+  facebookUrl: text("facebook_url"),
+  linkedinUrl: text("linkedin_url"),
   updatedBy: varchar("updated_by").notNull().references(() => users.id),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

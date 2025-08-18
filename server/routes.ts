@@ -1038,7 +1038,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/contact-info", async (req, res) => {
     try {
       const contactInfo = await storage.getContactInfo();
-      res.json(contactInfo || { contactEmail: '', contactPhone: '', contactAddress: '' });
+      res.json(contactInfo || { 
+        contactEmail: '', 
+        contactPhone: '', 
+        contactAddress: '', 
+        instagramUrl: '', 
+        facebookUrl: '', 
+        linkedinUrl: '' 
+      });
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch contact information" });
     }
@@ -1046,12 +1053,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/contact-info", requireAuth, requirePermission("edit:website"), async (req, res) => {
     try {
-      const { contactEmail, contactPhone, contactAddress } = req.body;
+      const { contactEmail, contactPhone, contactAddress, instagramUrl, facebookUrl, linkedinUrl } = req.body;
       
       const contactInfo = await storage.updateContactInfo({
         contactEmail,
         contactPhone,
         contactAddress,
+        instagramUrl,
+        facebookUrl,
+        linkedinUrl,
         updatedBy: req.user!.id,
       });
       
