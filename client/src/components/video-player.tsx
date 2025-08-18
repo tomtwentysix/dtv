@@ -18,7 +18,9 @@ export function VideoPlayer({ selectedVideo, isOpen, onClose, autoPlayOnOpen = t
   const [isMuted, setIsMuted] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [showControls, setShowControls] = useState(true);
   const modalVideoRef = useRef<HTMLVideoElement>(null);
+  const controlsTimeoutRef = useRef<NodeJS.Timeout>();
   const isMobile = useIsMobile();
 
   // Reset state when modal closes
@@ -26,8 +28,37 @@ export function VideoPlayer({ selectedVideo, isOpen, onClose, autoPlayOnOpen = t
     if (!isOpen) {
       setIsPlaying(false);
       setCurrentTime(0);
+      setShowControls(true);
+      if (controlsTimeoutRef.current) {
+        clearTimeout(controlsTimeoutRef.current);
+      }
     }
   }, [isOpen]);
+
+  // Auto-hide controls after 3 seconds when playing
+  useEffect(() => {
+    if (isPlaying && showControls && !isMobile) {
+      controlsTimeoutRef.current = setTimeout(() => {
+        setShowControls(false);
+      }, 3000);
+    }
+
+    return () => {
+      if (controlsTimeoutRef.current) {
+        clearTimeout(controlsTimeoutRef.current);
+      }
+    };
+  }, [isPlaying, showControls, isMobile]);
+
+  // Show controls on mouse movement
+  const handleMouseMove = () => {
+    if (!isMobile) {
+      setShowControls(true);
+      if (controlsTimeoutRef.current) {
+        clearTimeout(controlsTimeoutRef.current);
+      }
+    }
+  };
 
   // Auto-play and auto-fullscreen on mobile when modal opens
   useEffect(() => {
@@ -137,7 +168,10 @@ export function VideoPlayer({ selectedVideo, isOpen, onClose, autoPlayOnOpen = t
           Full-screen media player for {selectedVideo?.title}
         </div>
 
-        <div className="relative group w-full h-full flex items-center justify-center">
+        <div 
+          className="relative group w-full h-full flex items-center justify-center"
+          onMouseMove={handleMouseMove}
+        >
           {/* Media Content */}
           {selectedVideo && (
             selectedVideo.type === "image" ? (
@@ -190,7 +224,9 @@ export function VideoPlayer({ selectedVideo, isOpen, onClose, autoPlayOnOpen = t
 
           {/* Desktop Custom Controls - Only show on desktop */}
           {selectedVideo?.type === "video" && !isMobile && (
-            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none group-hover:pointer-events-auto">
+            <div className={`absolute inset-0 transition-opacity duration-300 ${
+              showControls ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+            }`}>
 
             {/* Close button */}
             <Button

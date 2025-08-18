@@ -530,20 +530,38 @@ video.hero-video::-webkit-media-controls-enclosure {
   mix-blend-mode: normal !important;
 }
 
-.modal-video::-webkit-media-controls-panel {
-  display: flex !important;
-  opacity: 1 !important;
-  background-color: rgba(0, 0, 0, 0.8) !important;
+/* Hide native browser controls on desktop modal videos only - preserve mobile native controls */
+@media (min-width: 768px) {
+  .modal-video::-webkit-media-controls-panel {
+    display: none !important;
+  }
+
+  .modal-video::-webkit-media-controls-play-button,
+  .modal-video::-webkit-media-controls-current-time-display,
+  .modal-video::-webkit-media-controls-time-remaining-display,
+  .modal-video::-webkit-media-controls-timeline,
+  .modal-video::-webkit-media-controls-volume-slider,
+  .modal-video::-webkit-media-controls-fullscreen-button {
+    display: none !important;
+  }
 }
 
-.modal-video::-webkit-media-controls-play-button,
-.modal-video::-webkit-media-controls-current-time-display,
-.modal-video::-webkit-media-controls-time-remaining-display,
-.modal-video::-webkit-media-controls-timeline,
-.modal-video::-webkit-media-controls-volume-slider,
-.modal-video::-webkit-media-controls-fullscreen-button {
-  display: flex !important;
-  opacity: 1 !important;
+/* Ensure native controls work properly on mobile */
+@media (max-width: 767px) {
+  .modal-video::-webkit-media-controls-panel {
+    display: flex !important;
+    opacity: 1 !important;
+  }
+
+  .modal-video::-webkit-media-controls-play-button,
+  .modal-video::-webkit-media-controls-current-time-display,
+  .modal-video::-webkit-media-controls-time-remaining-display,
+  .modal-video::-webkit-media-controls-timeline,
+  .modal-video::-webkit-media-controls-volume-slider,
+  .modal-video::-webkit-media-controls-fullscreen-button {
+    display: flex !important;
+    opacity: 1 !important;
+  }
 }
 
 /* Ensure video shows frame when paused */
