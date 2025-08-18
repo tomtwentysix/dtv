@@ -97,6 +97,7 @@
     background: 
       linear-gradient(45deg, hsla(0, 0%, 0%, 0.4), hsla(25, 40%, 56%, 0.3)),
       radial-gradient(circle at center, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.6) 70%);
+    z-index: 1;
   }
 
   /* Parallax backgrounds */
@@ -473,11 +474,11 @@ video.modal-video {
 
 /* Ensure no dialog overlays cover the modal video */
 [data-radix-dialog-overlay] {
-  z-index: 50 !important;
+  z-index: 100 !important;
 }
 
 [data-radix-dialog-content] {
-  z-index: 51 !important;
+  z-index: 101 !important;
 }
 
 /* Video should be above everything in the dialog */
