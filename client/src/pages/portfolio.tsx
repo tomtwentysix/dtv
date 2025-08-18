@@ -52,7 +52,7 @@ export default function Portfolio() {
     queryKey: ["/api/media/portfolio"],
   });
 
-  const filteredMedia = (media || [])?.filter((item: any) => {
+  const filteredMedia = (media as any[] || []).filter((item: any) => {
     if (activeCategory === "All") return true;
     return item.tags?.includes(activeCategory.toLowerCase());
   });
@@ -169,9 +169,7 @@ export default function Portfolio() {
                       />
                     ) : (
                       <video 
-                        ref={(el) => {
-                          if (el) videoRef.current = el;
-                        }}
+                        ref={videoRef}
                         src={item.url}
                         className="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110"
                         muted

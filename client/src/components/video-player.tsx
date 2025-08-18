@@ -158,6 +158,8 @@ export function VideoPlayer({ selectedVideo, isOpen, onClose, autoPlayOnOpen = t
                 // Use native controls on mobile, custom controls on desktop
                 controls={isMobile}
                 playsInline={!isMobile}
+                poster={selectedVideo.posterUrl}
+                preload="metadata"
                 onLoadedMetadata={() => {
                   if (modalVideoRef.current) {
                     setDuration(modalVideoRef.current.duration);
