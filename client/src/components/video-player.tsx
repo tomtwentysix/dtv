@@ -226,9 +226,21 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
           ref={videoRef}
           src={src}
           poster={poster}
-          className={`w-full h-full ${className}`}
+          className={className}
           style={{
+            maxWidth: '100%',
+            height: 'auto',
             objectFit: 'contain',
+            display: 'block',
+            backgroundColor: 'transparent',
+            minHeight: isMobile ? '150px' : '200px',
+            maxHeight: isMobile ? '250px' : '400px',
+            borderRadius: '8px',
+            filter: 'none',
+            mixBlendMode: 'normal',
+            opacity: 1,
+            border: '1px solid #e5e7eb',
+            margin: '0 auto',
             ...style
           }}
           controls

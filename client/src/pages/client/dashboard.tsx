@@ -66,6 +66,7 @@ export default function ClientDashboard() {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const modalVideoRef = useRef<HTMLVideoElement>(null);
+  const modalVideoPlayerRef = useRef<VideoPlayerHandle>(null);
 
   // New state for enhanced functionality
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
