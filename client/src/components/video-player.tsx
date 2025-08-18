@@ -21,6 +21,14 @@ export function VideoPlayer({ selectedVideo, isOpen, onClose, autoPlayOnOpen = t
   const modalVideoRef = useRef<HTMLVideoElement>(null);
   const isMobile = useIsMobile();
 
+  // Reset state when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setIsPlaying(false);
+      setCurrentTime(0);
+    }
+  }, [isOpen]);
+
   // Auto-play and auto-fullscreen on mobile when modal opens
   useEffect(() => {
     if (isOpen && selectedVideo?.type === "video" && autoPlayOnOpen) {
@@ -158,7 +166,7 @@ export function VideoPlayer({ selectedVideo, isOpen, onClose, autoPlayOnOpen = t
                 // Use native controls on mobile, custom controls on desktop
                 controls={isMobile}
                 playsInline={!isMobile}
-                poster={selectedVideo.posterUrl}
+                poster={selectedVideo.posterUrl || undefined}
                 preload="metadata"
                 onLoadedMetadata={() => {
                   if (modalVideoRef.current) {
