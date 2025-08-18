@@ -580,8 +580,26 @@ export default function AdminMedia() {
 
   // Add mutation for updating media details in feedback modal
   const updateMediaDetailsMutation = useMutation({
-    mutationFn: async ({ mediaId, updates }: { mediaId: string; updates: any }) => {
-      return apiRequest("PUT", `/api/media/${mediaId}`, updates);
+    mutationFn: async ({ mediaId, updates, posterFile }: { mediaId: string; updates: any; posterFile?: File | null }) => {
+      if (posterFile) {
+        // Use FormData for poster file upload
+        const formData = new FormData();
+        formData.append("posterFile", posterFile);
+        
+        // Add other updates as form fields
+        Object.entries(updates).forEach(([key, value]) => {
+          if (key === 'tags' && Array.isArray(value)) {
+            formData.append(key, value.join(','));
+          } else {
+            formData.append(key, String(value));
+          }
+        });
+        
+        return apiRequest("PUT", `/api/media/${mediaId}`, formData);
+      } else {
+        // Regular JSON update
+        return apiRequest("PUT", `/api/media/${mediaId}`, updates);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/media"] });
@@ -634,6 +652,7 @@ export default function AdminMedia() {
     const titleInput = document.querySelector('#feedback-edit-title') as HTMLInputElement;
     const tagsInput = document.querySelector('#feedback-edit-tags') as HTMLInputElement;
     const notesTextarea = document.querySelector('#feedback-edit-notes') as HTMLTextAreaElement;
+    const posterInput = document.querySelector('#feedback-edit-poster') as HTMLInputElement;
 
     const updates: any = {};
     
@@ -650,10 +669,13 @@ export default function AdminMedia() {
       updates.notes = notesTextarea.value || '';
     }
 
-    if (Object.keys(updates).length > 0) {
+    const hasPosterFile = posterInput?.files && posterInput.files.length > 0;
+    
+    if (Object.keys(updates).length > 0 || hasPosterFile) {
       updateMediaDetailsMutation.mutate({
         mediaId: selectedMediaForFeedback.id,
         updates,
+        posterFile: hasPosterFile ? posterInput.files[0] : null,
       });
     } else {
       toast({
@@ -2107,6 +2129,17 @@ export default function AdminMedia() {
                           placeholder="Additional notes..."
                           rows={3}
                         />
+                      </div>
+                      <div className="col-span-2">
+                        <label className="block text-sm font-medium mb-2">Update Poster Frame (Optional)</label>
+                        <Input
+                          id="feedback-edit-poster"
+                          type="file"
+                          accept="image/*"
+                        />
+                        <p className="text-sm text-gray-500 mt-1">
+                          Upload a new custom poster/thumbnail for videos
+                        </p>
                       </div>
                     </div>
                     <div className="flex justify-end">
