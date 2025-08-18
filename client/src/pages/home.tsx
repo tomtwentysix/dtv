@@ -117,14 +117,7 @@ export default function Home() {
     
     const sectionTop = sectionOffsets[sectionName];
     const scrollProgress = scrollY - sectionTop;
-    
-    // Only apply parallax when the section is in the viewport area
-    if (scrollProgress < -window.innerHeight || scrollProgress > window.innerHeight * 2) {
-      return 'translateY(0px)';
-    }
-    
-    const maxMovement = window.innerHeight * 0.3; // Allow more movement
-    const movement = Math.max(-maxMovement, Math.min(scrollProgress * intensity, maxMovement));
+    const movement = scrollProgress * intensity;
     return `translateY(${movement}px)`;
   };
 
