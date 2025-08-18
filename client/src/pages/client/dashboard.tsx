@@ -11,6 +11,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
+import { VideoPlayer, VideoPlayerHandle } from "@/components/video-player";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -65,6 +66,7 @@ export default function ClientDashboard() {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const modalVideoRef = useRef<HTMLVideoElement>(null);
+  const modalVideoPlayerRef = useRef<VideoPlayerHandle>(null);
 
   // New state for enhanced functionality
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
