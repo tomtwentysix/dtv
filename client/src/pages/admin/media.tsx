@@ -88,6 +88,7 @@ interface MediaEditFormData {
   projectStage: string;
   notes: string;
   clientId: string;
+  posterFile?: FileList;
 }
 
 export default function AdminMedia() {
@@ -221,18 +222,35 @@ export default function AdminMedia() {
         throw new Error("No media selected for editing");
       }
 
-      const updateData = {
-        title: data.title,
-        projectStage: data.projectStage === "none" ? null : data.projectStage || null,
-        notes: data.notes || null,
-        clientId: data.clientId === "none" ? null : data.clientId || null,
-        tags: data.tags ? data.tags.split(",").map((tag: string) => tag.trim()) : [],
-        isFeatured: data.isFeatured,
-        showInPortfolio: data.showInPortfolio,
-      };
+      // If there's a poster file, use FormData for multipart upload
+      if (data.posterFile && data.posterFile[0]) {
+        const formData = new FormData();
+        formData.append("posterFile", data.posterFile[0]);
+        formData.append("title", data.title);
+        formData.append("projectStage", data.projectStage === "none" ? "" : data.projectStage || "");
+        formData.append("notes", data.notes || "");
+        formData.append("clientId", data.clientId === "none" ? "" : data.clientId || "");
+        formData.append("tags", data.tags ? data.tags.split(",").map((tag: string) => tag.trim()).join(",") : "");
+        formData.append("isFeatured", data.isFeatured.toString());
+        formData.append("showInPortfolio", data.showInPortfolio.toString());
 
-      const res = await apiRequest("PUT", `/api/media/${selectedMediaForEdit.id}`, updateData);
-      return res.json();
+        const res = await apiRequest("PUT", `/api/media/${selectedMediaForEdit.id}`, formData);
+        return res.json();
+      } else {
+        // Regular JSON update without poster file
+        const updateData = {
+          title: data.title,
+          projectStage: data.projectStage === "none" ? null : data.projectStage || null,
+          notes: data.notes || null,
+          clientId: data.clientId === "none" ? null : data.clientId || null,
+          tags: data.tags ? data.tags.split(",").map((tag: string) => tag.trim()) : [],
+          isFeatured: data.isFeatured,
+          showInPortfolio: data.showInPortfolio,
+        };
+
+        const res = await apiRequest("PUT", `/api/media/${selectedMediaForEdit.id}`, updateData);
+        return res.json();
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/media"] });
@@ -1050,6 +1068,19 @@ export default function AdminMedia() {
                       placeholder="Add project notes, client feedback, or production details..."
                       className="w-full min-h-[80px] px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800"
                     />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-posterFile">Update Poster Frame (Optional)</Label>
+                    <Input
+                      id="edit-posterFile"
+                      type="file"
+                      accept="image/*"
+                      {...editForm.register("posterFile")}
+                    />
+                    <p className="text-sm text-gray-500">
+                      Upload a new custom poster/thumbnail for videos
+                    </p>
                   </div>
 
                   <div className="space-y-2">
