@@ -11,13 +11,14 @@ import { users, media, mediaFeedback, mediaTimelineNotes, clientUsers, clients }
 import { requireAuth, requirePermission, requireRole, requireAnyRole } from "./middleware/rbac";
 import { requireClientAuth, loginClientUser, registerClientUser } from "./client-auth";
 import multer from "multer";
-import { generateThumbnail, getThumbnailPath, getThumbnailUrl } from "./media-processing";
-import { BackgroundOptimizationService } from "./background-optimization";
+import { generateThumbnail, getThumbnailPath, getThumbnailUrl, generateWebPThumbnailForMedia, getWebPThumbnailPath, getWebPThumbnailUrl } from "./media-processing";
+import { ImageOptimizationService } from "./image-optimization";
 import { emailService } from "./email";
 
 // Configure multer for file uploads
 const uploadDir = process.env.UPLOADS_DIR || path.join(process.cwd(), "uploads");
 const thumbnailDir = path.join(uploadDir, "thumbnails");
+const thumbnailWebpDir = path.join(uploadDir, "thumbnails", "webp");
 const webpDir = path.join(uploadDir, "webp");
 console.log(`📁 Upload directory configured at: ${uploadDir}`);
 
@@ -35,6 +36,13 @@ if (!fs.existsSync(thumbnailDir)) {
   console.log(`📁 Thumbnails directory exists: ${thumbnailDir}`);
 }
 
+if (!fs.existsSync(thumbnailWebpDir)) {
+  console.log(`📁 Creating WebP thumbnails directory: ${thumbnailWebpDir}`);
+  fs.mkdirSync(thumbnailWebpDir, { recursive: true, mode: 0o755 });
+} else {
+  console.log(`📁 WebP thumbnails directory exists: ${thumbnailWebpDir}`);
+}
+
 if (!fs.existsSync(webpDir)) {
   console.log(`📁 Creating WebP directory: ${webpDir}`);
   fs.mkdirSync(webpDir, { recursive: true, mode: 0o755 });
@@ -42,8 +50,8 @@ if (!fs.existsSync(webpDir)) {
   console.log(`📁 WebP directory exists: ${webpDir}`);
 }
 
-// Initialize background optimization service
-const backgroundOptimizer = new BackgroundOptimizationService(storage, uploadDir);
+// Initialize comprehensive image optimization service
+const imageOptimizer = new ImageOptimizationService(storage, uploadDir);
 
 // Ensure the directory is readable and writable
 try {
@@ -85,9 +93,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   console.log(`📁 Setting up static file serving from: ${uploadDir}`);
   app.use("/uploads", express.static(uploadDir));
 
-  // Run startup background optimization (async, don't block server startup)
-  backgroundOptimizer.optimizeAllBackgrounds().catch(error => {
-    console.error('Startup background optimization failed:', error);
+  // Run startup comprehensive image optimization (async, don't block server startup)
+  imageOptimizer.optimizeAllPublicImages().catch(error => {
+    console.error('Startup image optimization failed:', error);
   });
 
   // API Routes
@@ -533,6 +541,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           uploadedBy: req.user!.id,
         });
 
+        // Optimize media for public display (async - don't block response)
+        imageOptimizer.optimizeMediaItem(media.id).catch(error => {
+          console.error(`⚠️  Failed to optimize media ${media.id}:`, error);
+        });
+
         res.status(201).json(media);
       } catch (error) {
         console.error("Media upload error:", error);
@@ -544,10 +557,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/media/:id", requireAuth, requirePermission("upload:media"), async (req, res) => {
     try {
       console.log('Updating media:', req.params.id, req.body);
+      
+      // Get original media to check if public visibility is changing
+      const originalMedia = await storage.getMedia(req.params.id);
       const media = await storage.updateMedia(req.params.id, req.body);
       if (!media) {
         return res.status(404).json({ message: "Media not found" });
       }
+      
+      // If media is being marked as featured or for portfolio, optimize for public display
+      const isBecomingPublic = (
+        (req.body.isFeatured === true && !originalMedia?.isFeatured) ||
+        (req.body.showInPortfolio === true && !originalMedia?.showInPortfolio)
+      );
+      
+      if (isBecomingPublic) {
+        imageOptimizer.optimizeForPublicDisplay(media.id).catch(error => {
+          console.error(`⚠️  Failed to optimize media for public display ${media.id}:`, error);
+        });
+      }
+      
       res.json(media);
     } catch (error) {
       console.error('Media update error:', error);
@@ -1039,7 +1068,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Trigger WebP optimization for background images
       if (backgroundImageId) {
         // Run optimization in background, don't wait for it
-        backgroundOptimizer.optimizeOnSelection(backgroundImageId).catch(error => {
+        imageOptimizer.optimizeBackgroundImage(backgroundImageId).catch(error => {
           console.error(`Failed to optimize background image ${backgroundImageId}:`, error);
         });
       }

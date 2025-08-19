@@ -184,7 +184,7 @@ export default function Portfolio() {
                   <div className="relative">
                     {item.type === "image" ? (
                       <img 
-                        src={item.thumbnailUrl || item.url} 
+                        src={item.thumbnailWebpUrl || item.thumbnailUrl || item.url} 
                         alt={item.title}
                         className="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110"
                       />
@@ -205,7 +205,7 @@ export default function Portfolio() {
                             e.currentTarget.currentTime = 2;
                           }
                         }}
-                        poster={item.thumbnailUrl || item.posterUrl || undefined}
+                        poster={item.thumbnailWebpUrl || item.thumbnailUrl || item.posterUrl || undefined}
                       />
                     )}
 
