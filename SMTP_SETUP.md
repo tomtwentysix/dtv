@@ -2,6 +2,16 @@
 
 This document explains how to configure SMTP email sending for the contact form using Office 365/Exchange.
 
+> ⚠️ **Production Issues?** If you're experiencing "Email service not configured" errors in production, see [EMAIL_PRODUCTION_TROUBLESHOOTING.md](EMAIL_PRODUCTION_TROUBLESHOOTING.md) for comprehensive troubleshooting steps.
+
+## Quick Production Fix
+
+If the email service is not working in production, run the diagnostic script:
+
+```bash
+sudo ./scripts/fix-email-service.sh
+```
+
 ## Configuration
 
 To enable email sending for contact form submissions, add the following environment variables to your `.env.prod` or `.env.dev` file:

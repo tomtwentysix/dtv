@@ -160,6 +160,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Debug endpoint to check email service configuration
+  app.get("/api/email/debug", (req, res) => {
+    try {
+      const status = emailService.getServiceStatus();
+      const envVars = {
+        NODE_ENV: process.env.NODE_ENV,
+        SMTP_HOST: process.env.SMTP_HOST ? `${process.env.SMTP_HOST.substring(0, 20)}...` : 'NOT SET',
+        SMTP_PORT: process.env.SMTP_PORT || 'NOT SET',
+        SMTP_SECURE: process.env.SMTP_SECURE || 'NOT SET',
+        SMTP_REQUIRE_TLS: process.env.SMTP_REQUIRE_TLS || 'NOT SET',
+        SMTP_FROM: process.env.SMTP_FROM || 'NOT SET',
+        SMTP_TO: process.env.SMTP_TO || 'NOT SET',
+        SMTP_USER: process.env.SMTP_USER ? 'SET' : 'NOT SET',
+        SMTP_PASS: process.env.SMTP_PASS ? 'SET' : 'NOT SET',
+      };
+      
+      res.json({
+        status,
+        environmentVariables: envVars,
+        timestamp: new Date().toISOString(),
+        workingDirectory: process.cwd()
+      });
+    } catch (error) {
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Debug endpoint to reinitialize email service
+  app.post("/api/email/reinitialize", (req, res) => {
+    try {
+      console.log("Email service reinitialize requested");
+      emailService.reinitialize();
+      const status = emailService.getServiceStatus();
+      res.json({
+        message: "Email service reinitialized",
+        status,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Contact form endpoint
   app.post("/api/contact", async (req, res) => {
     try {

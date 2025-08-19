@@ -1,4 +1,5 @@
 import dotenv from "dotenv";
+import path from "path";
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { initializeDatabase } from "./init-database.js";
@@ -7,16 +8,61 @@ import { log, serveStatic } from "./utils.js";
 // Load environment variables from .env files
 // In production, PM2 handles env_file loading, but this ensures it works in all environments
 const nodeEnv = process.env.NODE_ENV || 'development';
-const envFile = nodeEnv === 'production' ? '.env.prod' : 
-                nodeEnv === 'test' ? '.env.test' : '.env.dev';
 
-console.log(`🔧 Loading environment from: ${envFile}`);
-dotenv.config({ path: envFile });
+console.log(`🔧 Environment: ${nodeEnv}`);
+console.log(`🔧 Current working directory: ${process.cwd()}`);
 
-// If .env.prod doesn't exist in development, fallback to .env
-if (nodeEnv !== 'production') {
-  dotenv.config({ path: '.env' });
+if (nodeEnv === 'production') {
+  // In production, PM2 loads environment via env_file parameter
+  // We just log what PM2 should have loaded
+  console.log(`ℹ️  Production mode - PM2 handles environment loading via ecosystem.config.js`);
+  console.log(`ℹ️  Expected env_file: /var/www/dtvisuals/app/.env.prod`);
+  
+  // As a fallback, try to load .env.prod if it exists locally
+  const envPath = path.resolve(process.cwd(), '.env.prod');
+  try {
+    const fs = await import('fs');
+    if (fs.existsSync(envPath)) {
+      console.log(`✅ Found local .env.prod, loading as backup: ${envPath}`);
+      dotenv.config({ path: '.env.prod' });
+    } else {
+      console.log(`ℹ️  No local .env.prod found at ${envPath} - relying on PM2 env_file`);
+    }
+  } catch (error) {
+    console.warn(`⚠️  Error checking for local .env.prod: ${error.message}`);
+  }
+} else {
+  // In development/test, load appropriate env file
+  const envFile = nodeEnv === 'test' ? '.env.test' : '.env.dev';
+  console.log(`🔧 Loading environment from: ${envFile}`);
+  
+  const envPath = path.resolve(process.cwd(), envFile);
+  try {
+    const fs = await import('fs');
+    if (fs.existsSync(envPath)) {
+      console.log(`✅ Environment file exists: ${envPath}`);
+      dotenv.config({ path: envFile });
+    } else {
+      console.warn(`⚠️  Environment file not found: ${envPath}`);
+      // Fallback to .env
+      dotenv.config({ path: '.env' });
+    }
+  } catch (error) {
+    console.warn(`⚠️  Error loading environment file: ${error.message}`);
+    // Fallback to .env
+    dotenv.config({ path: '.env' });
+  }
 }
+
+// Debug: Show critical environment variables after loading
+console.log(`🔍 Environment Variables Status:`, {
+  NODE_ENV: process.env.NODE_ENV || 'NOT SET',
+  PORT: process.env.PORT || 'NOT SET',
+  SMTP_HOST: process.env.SMTP_HOST ? `SET (${process.env.SMTP_HOST.substring(0, 20)}...)` : 'NOT SET',
+  SMTP_FROM: process.env.SMTP_FROM ? `SET (${process.env.SMTP_FROM})` : 'NOT SET',
+  SMTP_TO: process.env.SMTP_TO ? `SET (${process.env.SMTP_TO})` : 'NOT SET',
+  DATABASE_URL: process.env.DATABASE_URL ? 'SET' : 'NOT SET'
+});
 
 const app = express();
 

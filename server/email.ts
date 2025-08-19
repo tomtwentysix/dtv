@@ -15,6 +15,50 @@ class EmailService {
 
   constructor() {
     console.log('📧 Initializing EmailService...');
+    
+    // Debug: Show all SMTP-related environment variables
+    console.log('📧 Environment Variables Debug:', {
+      NODE_ENV: process.env.NODE_ENV,
+      SMTP_HOST: process.env.SMTP_HOST ? `${process.env.SMTP_HOST.substring(0, 20)}...` : 'NOT SET',
+      SMTP_PORT: process.env.SMTP_PORT || 'NOT SET',
+      SMTP_SECURE: process.env.SMTP_SECURE || 'NOT SET',
+      SMTP_REQUIRE_TLS: process.env.SMTP_REQUIRE_TLS || 'NOT SET',
+      SMTP_FROM: process.env.SMTP_FROM ? `${process.env.SMTP_FROM.substring(0, 10)}...` : 'NOT SET',
+      SMTP_TO: process.env.SMTP_TO ? `${process.env.SMTP_TO.substring(0, 10)}...` : 'NOT SET',
+      SMTP_USER: process.env.SMTP_USER ? 'SET' : 'NOT SET',
+      SMTP_PASS: process.env.SMTP_PASS ? 'SET' : 'NOT SET',
+    });
+    
+    // If in production and SMTP_HOST is not set, try to load .env.prod directly as a fallback
+    if (process.env.NODE_ENV === 'production' && !process.env.SMTP_HOST) {
+      console.log('⚠️  Production mode but SMTP_HOST not found - attempting fallback env loading');
+      try {
+        const dotenv = require('dotenv');
+        const path = require('path');
+        const fs = require('fs');
+        
+        // Try multiple possible locations for the .env.prod file
+        const possiblePaths = [
+          '.env.prod',
+          '/var/www/dtvisuals/app/.env.prod',
+          path.join(process.cwd(), '.env.prod')
+        ];
+        
+        for (const envPath of possiblePaths) {
+          if (fs.existsSync(envPath)) {
+            console.log(`🔧 Found .env.prod at ${envPath}, loading as fallback`);
+            dotenv.config({ path: envPath });
+            break;
+          }
+        }
+        
+        // Log the result
+        console.log('📧 After fallback loading - SMTP_HOST:', process.env.SMTP_HOST ? 'SET' : 'STILL NOT SET');
+      } catch (error) {
+        console.warn('⚠️  Fallback environment loading failed:', error.message);
+      }
+    }
+    
     this.from = process.env.SMTP_FROM || '';
     this.to = process.env.SMTP_TO || 'hello@dt.visuals';
     
@@ -34,6 +78,8 @@ class EmailService {
     if (!process.env.SMTP_HOST) {
       console.log('❌ SMTP host not configured - email sending disabled');
       console.log('   Required environment variable SMTP_HOST is missing');
+      console.log('   💡 Check that .env.prod file exists and is being loaded correctly by PM2');
+      console.log('   💡 Verify PM2 ecosystem.config.js env_file path is correct');
       return;
     }
 
@@ -81,6 +127,8 @@ class EmailService {
     if (!this.transporter) {
       console.log('❌ Email service not configured - skipping email send');
       console.log('   Transporter is null - check SMTP configuration');
+      console.log('   💡 This usually means SMTP_HOST environment variable is not set');
+      console.log('   💡 Check PM2 logs and environment file loading');
       return false;
     }
 
@@ -160,6 +208,15 @@ This email was sent from the dt.visuals contact form.
         hasAuth: !!(process.env.SMTP_USER && process.env.SMTP_PASS)
       }
     };
+  }
+  
+  // Method to reinitialize the service if environment variables were loaded later
+  reinitialize(): void {
+    console.log('🔄 Reinitializing Email Service...');
+    this.from = process.env.SMTP_FROM || '';
+    this.to = process.env.SMTP_TO || 'hello@dt.visuals';
+    this.transporter = null;
+    this.initializeTransporter();
   }
 }
 
