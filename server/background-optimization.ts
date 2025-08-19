@@ -32,9 +32,9 @@ export class BackgroundOptimizationService {
     }
 
     try {
-      // Generate WebP version
-      const originalPath = path.join(this.uploadDir, mediaItem.filename);
-      const webpPath = getWebPPath(this.uploadDir, mediaItem.filename);
+      // Generate WebP version - use actual stored file path from URL instead of original filename
+      const originalPath = path.join(this.uploadDir, path.basename(mediaItem.url));
+      const webpPath = getWebPPath(this.uploadDir, path.basename(mediaItem.url));
       
       // Ensure webp directory exists
       const webpDir = path.dirname(webpPath);
