@@ -264,7 +264,7 @@ export default function Home() {
                     <div className="relative">
                       {media.type === "image" ? (
                         <img 
-                          src={media.url} 
+                          src={media.thumbnailWebpUrl || media.thumbnailUrl || media.url} 
                           alt={media.title}
                           className="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110"
                         />
@@ -282,7 +282,7 @@ export default function Home() {
                               e.currentTarget.currentTime = 2;
                             }
                           }}
-                          poster={media.posterUrl || undefined}
+                          poster={media.thumbnailWebpUrl || media.thumbnailUrl || media.posterUrl || undefined}
                         />
                       )}
 

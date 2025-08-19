@@ -105,6 +105,7 @@ export interface IStorage {
   createMedia(media: InsertMedia): Promise<Media>;
   updateMedia(id: string, updates: Partial<InsertMedia>): Promise<Media | undefined>;
   updateMediaWebpUrl(id: string, webpUrl: string): Promise<Media | undefined>;
+  updateMediaThumbnailWebpUrl(id: string, thumbnailWebpUrl: string): Promise<Media | undefined>;
   deleteMedia(id: string): Promise<boolean>;
   
   // Media-Client associations
@@ -532,6 +533,15 @@ export class DatabaseStorage implements IStorage {
     const [updatedMedia] = await db
       .update(media)
       .set({ webpUrl })
+      .where(eq(media.id, id))
+      .returning();
+    return updatedMedia || undefined;
+  }
+
+  async updateMediaThumbnailWebpUrl(id: string, thumbnailWebpUrl: string): Promise<Media | undefined> {
+    const [updatedMedia] = await db
+      .update(media)
+      .set({ thumbnailWebpUrl })
       .where(eq(media.id, id))
       .returning();
     return updatedMedia || undefined;
