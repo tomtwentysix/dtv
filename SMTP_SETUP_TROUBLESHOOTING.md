@@ -1,5 +1,7 @@
 # Email Service Troubleshooting Guide
 
+> ⚠️ **Production Issues?** If you're experiencing "Email service not configured" errors in production, see [EMAIL_PRODUCTION_TROUBLESHOOTING.md](EMAIL_PRODUCTION_TROUBLESHOOTING.md) for comprehensive troubleshooting steps or run the diagnostic script: `sudo ./scripts/fix-email-service.sh`
+
 This document provides troubleshooting steps for email service issues in the DT Visuals application.
 
 ## Quick Diagnosis
