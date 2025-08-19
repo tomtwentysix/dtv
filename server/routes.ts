@@ -94,10 +94,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Health check endpoint for Docker
   app.get("/api/health", (req, res) => {
+    const emailStatus = emailService.getServiceStatus();
     res.status(200).json({ 
       status: "healthy", 
       timestamp: new Date().toISOString(),
-      environment: process.env.NODE_ENV || "development"
+      environment: process.env.NODE_ENV || "development",
+      email: emailStatus
     });
   });
 
@@ -177,6 +179,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Contact form error:", error);
       res.status(500).json({ message: "Failed to send message" });
+    }
+  });
+
+  // Email service test endpoint (admin only)
+  app.post("/api/admin/email/test", requireAuth, requirePermission("edit:settings"), async (req, res) => {
+    try {
+      console.log("Email service test requested by:", req.user?.username);
+      
+      const status = emailService.getServiceStatus();
+      const connectionTest = await emailService.testConnection();
+      
+      // Test with actual email send
+      const testResult = await emailService.sendContactFormEmail({
+        firstName: "Test",
+        lastName: "Admin",
+        email: req.user?.email || "admin@test.com",
+        projectType: "test",
+        message: "This is a test email from the admin panel to verify SMTP configuration."
+      });
+      
+      res.json({
+        status,
+        connectionTest,
+        emailSent: testResult,
+        message: testResult ? "Test email sent successfully" : "Test email failed to send"
+      });
+    } catch (error) {
+      console.error("Email test error:", error);
+      res.status(500).json({ 
+        message: "Email test failed", 
+        error: error.message,
+        status: emailService.getServiceStatus()
+      });
     }
   });
 
