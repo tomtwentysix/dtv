@@ -1,15 +1,5 @@
 import nodemailer from 'nodemailer';
 
-interface EmailConfig {
-  host: string;
-  port: number;
-  secure: boolean;
-  auth: {
-    user: string;
-    pass: string;
-  };
-}
-
 interface ContactFormData {
   firstName: string;
   lastName: string;
@@ -30,21 +20,33 @@ class EmailService {
   }
 
   private initializeTransporter(): void {
-    // Only initialize if all required SMTP environment variables are present
-    if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
-      console.log('SMTP configuration not found - email sending disabled');
+    // Only initialize if SMTP host is present
+    if (!process.env.SMTP_HOST) {
+      console.log('SMTP host not configured - email sending disabled');
       return;
     }
 
-    const config: EmailConfig = {
+    const port = parseInt(process.env.SMTP_PORT || '587', 10);
+    const secure = process.env.SMTP_SECURE === 'true';
+    const requireTLS = process.env.SMTP_REQUIRE_TLS === 'true';
+
+    const config: any = {
       host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT || '587', 10),
-      secure: false, // Use STARTTLS for port 587
-      auth: {
+      port: port,
+      secure: secure, // Use SSL/TLS if specified
+      requireTLS: requireTLS, // Force TLS if specified
+    };
+
+    // Add authentication only if both user and password are provided
+    if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+      config.auth = {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
-      },
-    };
+      };
+      console.log('SMTP configuration loaded with authentication');
+    } else {
+      console.log('SMTP configuration loaded without authentication (relay mode)');
+    }
 
     this.transporter = nodemailer.createTransport(config);
   }
