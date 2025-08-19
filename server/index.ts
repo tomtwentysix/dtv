@@ -1,7 +1,22 @@
+import dotenv from "dotenv";
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { initializeDatabase } from "./init-database.js";
 import { log, serveStatic } from "./utils.js";
+
+// Load environment variables from .env files
+// In production, PM2 handles env_file loading, but this ensures it works in all environments
+const nodeEnv = process.env.NODE_ENV || 'development';
+const envFile = nodeEnv === 'production' ? '.env.prod' : 
+                nodeEnv === 'test' ? '.env.test' : '.env.dev';
+
+console.log(`🔧 Loading environment from: ${envFile}`);
+dotenv.config({ path: envFile });
+
+// If .env.prod doesn't exist in development, fallback to .env
+if (nodeEnv !== 'production') {
+  dotenv.config({ path: '.env' });
+}
 
 const app = express();
 
