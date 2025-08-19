@@ -13,6 +13,7 @@ import { requireClientAuth, loginClientUser, registerClientUser } from "./client
 import multer from "multer";
 import { generateThumbnail, getThumbnailPath, getThumbnailUrl } from "./media-processing";
 import { BackgroundOptimizationService } from "./background-optimization";
+import { emailService } from "./email";
 
 // Configure multer for file uploads
 const uploadDir = process.env.UPLOADS_DIR || path.join(process.cwd(), "uploads");
@@ -154,11 +155,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { firstName, lastName, email, projectType, message } = req.body;
       
-      // Here you would typically send an email or save to database
+      // Log the submission for debugging
       console.log("Contact form submission:", { firstName, lastName, email, projectType, message });
       
-      res.json({ message: "Message sent successfully" });
+      // Attempt to send email via SMTP
+      const emailSent = await emailService.sendContactFormEmail({
+        firstName,
+        lastName,
+        email,
+        projectType,
+        message
+      });
+      
+      if (emailSent) {
+        res.json({ message: "Message sent successfully via email" });
+      } else {
+        // Email failed but we'll still report success to avoid exposing system details
+        console.warn("Email sending failed, but responding with success");
+        res.json({ message: "Message received successfully" });
+      }
     } catch (error) {
+      console.error("Contact form error:", error);
       res.status(500).json({ message: "Failed to send message" });
     }
   });
