@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "wouter";
 import { Check, Video, Film, Building2, Music, Tv, Scissors, Wine, AtSign } from "lucide-react";
 import { getBackgroundMedia, useWebsiteSettings } from "@/lib/background-utils";
+import { useServicesStructuredData } from "@/hooks/use-structured-data";
+import { useServicesSEO } from "@/hooks/use-seo-meta";
 
 const services = [
   {
@@ -83,6 +85,10 @@ const services = [
 ];
 
 export default function Services() {
+  // SEO and structured data
+  useServicesStructuredData();
+  useServicesSEO();
+  
   const [scrollY, setScrollY] = useState(0);
   const scrollYTarget = useRef(0);
   const rafRef = useRef<number>();

@@ -7,10 +7,15 @@ import { VideoPlayer } from "@/components/video-player";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, Play } from "lucide-react";
 import { getBackgroundMedia, useWebsiteSettings } from "@/lib/background-utils";
+import { usePortfolioStructuredData } from "@/hooks/use-structured-data";
+import { usePortfolioSEO } from "@/hooks/use-seo-meta";
 
 const categories = ["All", "Commercial", "Documentary", "Corporate", "Music Video"];
 
 export default function Portfolio() {
+  // SEO and structured data
+  usePortfolioStructuredData();
+  usePortfolioSEO();
   const [activeCategory, setActiveCategory] = useState("All");
   const [scrollY, setScrollY] = useState(0);
   const scrollYTarget = useRef(0);

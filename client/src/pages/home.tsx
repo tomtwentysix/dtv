@@ -8,8 +8,14 @@ import { useQuery } from "@tanstack/react-query";
 import { Loader2, Play } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { getBackgroundMedia, useWebsiteSettings } from "@/lib/background-utils";
+import { useHomePageStructuredData } from "@/hooks/use-structured-data";
+import { useHomePageSEO } from "@/hooks/use-seo-meta";
 
 export default function Home() {
+  // SEO and structured data
+  useHomePageStructuredData();
+  useHomePageSEO();
+
   const { data: featuredMedia, isLoading } = useQuery<any[]>({
     queryKey: ["/api/media/featured"],
   });
