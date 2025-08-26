@@ -3,8 +3,6 @@ import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { VideoPlayer } from "@/components/video-player";
-import { LazyBackgroundVideo } from "@/components/lazy-background-video";
-import { LazyBackgroundImage } from "@/components/lazy-background-image";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, Play } from "lucide-react";
@@ -12,7 +10,6 @@ import { useEffect, useState, useRef } from "react";
 import { getBackgroundMedia, useWebsiteSettings } from "@/lib/background-utils";
 import { useHomePageStructuredData } from "@/hooks/use-structured-data";
 import { useHomePageSEO } from "@/hooks/use-seo-meta";
-import { useProgressiveLoading } from "@/hooks/use-progressive-loading";
 
 export default function Home() {
   // SEO and structured data
@@ -22,12 +19,6 @@ export default function Home() {
   const { data: featuredMedia, isLoading } = useQuery<any[]>({
     queryKey: ["/api/media/featured"],
   });
-
-  // Progressive loading for featured media to improve LCP
-  const { visibleItems: visibleFeaturedMedia, isComplete } = useProgressiveLoading(
-    featuredMedia || [], 
-    { enabled: !isLoading, batchSize: 3, delay: 200 }
-  );
 
   const { data: websiteSettings } = useWebsiteSettings();
   const [scrollY, setScrollY] = useState(0);
@@ -45,34 +36,22 @@ export default function Home() {
   const workedWithRef = useRef<HTMLElement>(null);
   const connectRef = useRef<HTMLElement>(null);
 
-  // Smooth parallax scroll effect - optimized for performance
+  // Smooth parallax scroll effect
   useEffect(() => {
     const lerp = (start: number, end: number, amt: number) => (1 - amt) * start + amt * end;
     let running = true;
-    let ticking = false;
-    
     const animate = () => {
       setScrollY(prev => {
         const next = lerp(prev, scrollYTarget.current, 0.15);
         return Math.abs(next - scrollYTarget.current) < 0.1 ? scrollYTarget.current : next;
       });
-      ticking = false;
-      if (running && scrollYTarget.current !== scrollY) {
-        rafRef.current = requestAnimationFrame(animate);
-      }
+      if (running) rafRef.current = requestAnimationFrame(animate);
     };
-
     const handleScroll = () => {
       scrollYTarget.current = window.scrollY;
-      if (!ticking && running) {
-        ticking = true;
-        rafRef.current = requestAnimationFrame(animate);
-      }
     };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("scroll", handleScroll);
     rafRef.current = requestAnimationFrame(animate);
-    
     return () => {
       running = false;
       window.removeEventListener("scroll", handleScroll);
@@ -168,29 +147,32 @@ export default function Home() {
           if (!heroMedia) return null;
           
           return heroMedia?.type === "video" ? (
-            <LazyBackgroundVideo
-              src={heroMedia.url}
+            <video
               className="absolute inset-0 w-full object-cover parallax-bg"
               style={{
                 height: '180%',
                 top: '-40%',
                 transform: getParallaxTransform('hero', 0.4),
               }}
-              enabled={false} // Load immediately for hero section as it's likely LCP
+              src={heroMedia.url}
+              autoPlay
+              muted
+              loop
+              playsInline
+              disablePictureInPicture
+              controls={false}
             />
           ) : (
-            <LazyBackgroundImage
-              src={heroMedia.url}
-              alt={heroMedia.title}
+            <div 
               className="absolute bg-cover bg-center parallax-bg"
               style={{
+                backgroundImage: `url('${heroMedia.url}')`,
                 width: '100%',
                 height: '180%',
                 top: '-40%',
                 left: '0',
                 transform: getParallaxTransform('hero', 0.4),
               }}
-              enabled={false} // Load immediately for hero section as it's likely LCP
             />
           );
         })()}
@@ -224,21 +206,26 @@ export default function Home() {
           if (!whatWeDoMedia) return null;
           
           return whatWeDoMedia?.type === "video" ? (
-            <LazyBackgroundVideo
-              src={whatWeDoMedia.url}
+            <video
               className="absolute inset-0 w-full object-cover parallax-bg opacity-20"
               style={{
                 height: '200%',
                 top: '-50%',
                 transform: getParallaxTransform('what_we_do', 0.3),
               }}
+              src={whatWeDoMedia.url}
+              autoPlay
+              muted
+              loop
+              playsInline
+              disablePictureInPicture
+              controls={false}
             />
           ) : (
-            <LazyBackgroundImage
-              src={whatWeDoMedia.url}
-              alt={whatWeDoMedia.title}
+            <div 
               className="absolute bg-cover bg-center parallax-bg opacity-20"
               style={{
+                backgroundImage: `url('${whatWeDoMedia.url}')`,
                 width: '100%',
                 height: '200%',
                 top: '-50%',
@@ -269,14 +256,12 @@ export default function Home() {
           {/* Featured Work */}
           <div className="mt-16">
             {isLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="bg-gray-200 dark:bg-gray-800 rounded-lg h-64 animate-pulse" />
-                ))}
+              <div className="flex items-center justify-center min-h-[200px]">
+                <Loader2 className="h-8 w-8 animate-spin" />
               </div>
             ) : featuredMedia && featuredMedia.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-center mx-auto">
-                {visibleFeaturedMedia.map((media: any) => (
+                {featuredMedia.map((media: any) => (
                   <Card 
                     key={media.id} 
                     className="group cursor-pointer overflow-hidden glass-card"
@@ -288,7 +273,6 @@ export default function Home() {
                           src={media.thumbnailWebpUrl || media.thumbnailUrl || media.url} 
                           alt={media.title}
                           className="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110"
-                          loading="lazy" // Add lazy loading
                         />
                       ) : (
                         <video 
@@ -297,8 +281,7 @@ export default function Home() {
                           muted
                           loop
                           playsInline
-                          preload="none" // Change to none for better performance
-                          loading="lazy" // Add lazy loading
+                          preload="metadata"
                           onLoadedMetadata={(e) => {
                             // Set video to show a frame at 2 seconds for thumbnail if no poster
                             if (!media.posterUrl) {
@@ -350,21 +333,26 @@ export default function Home() {
           if (!whoWeWorkWithMedia) return null;
           
           return whoWeWorkWithMedia?.type === "video" ? (
-            <LazyBackgroundVideo
-              src={whoWeWorkWithMedia.url}
+            <video
               className="absolute inset-0 w-full object-cover parallax-bg opacity-10"
               style={{
                 height: '170%',
                 top: '-35%',
                 transform: getParallaxTransform('who_we_work_with', 0.25),
               }}
+              src={whoWeWorkWithMedia.url}
+              autoPlay
+              muted
+              loop
+              playsInline
+              disablePictureInPicture
+              controls={false}
             />
           ) : (
-            <LazyBackgroundImage
-              src={whoWeWorkWithMedia.url}
-              alt={whoWeWorkWithMedia.title}
+            <div 
               className="absolute bg-cover bg-center parallax-bg opacity-10"
               style={{
+                backgroundImage: `url('${whoWeWorkWithMedia.url}')`,
                 width: '100%',
                 height: '170%',
                 top: '-35%',
@@ -405,21 +393,26 @@ export default function Home() {
           if (!howWeWorkMedia) return null;
           
           return howWeWorkMedia?.type === "video" ? (
-            <LazyBackgroundVideo
-              src={howWeWorkMedia.url}
+            <video
               className="absolute inset-0 w-full object-cover parallax-bg opacity-10"
               style={{
                 height: '170%',
                 top: '-35%',
                 transform: getParallaxTransform('how_we_work', 0.25),
               }}
+              src={howWeWorkMedia.url}
+              autoPlay
+              muted
+              loop
+              playsInline
+              disablePictureInPicture
+              controls={false}
             />
           ) : (
-            <LazyBackgroundImage
-              src={howWeWorkMedia.url}
-              alt={howWeWorkMedia.title}
+            <div 
               className="absolute bg-cover bg-center parallax-bg opacity-10"
               style={{
+                backgroundImage: `url('${howWeWorkMedia.url}')`,
                 width: '100%',
                 height: '170%',
                 top: '-35%',
@@ -481,21 +474,26 @@ export default function Home() {
           if (!retainerMedia) return null;
           
           return retainerMedia?.type === "video" ? (
-            <LazyBackgroundVideo
-              src={retainerMedia.url}
+            <video
               className="absolute inset-0 w-full object-cover parallax-bg opacity-10"
               style={{
                 height: '170%',
                 top: '-35%',
                 transform: getParallaxTransform('retainer_partnerships', 0.25),
               }}
+              src={retainerMedia.url}
+              autoPlay
+              muted
+              loop
+              playsInline
+              disablePictureInPicture
+              controls={false}
             />
           ) : (
-            <LazyBackgroundImage
-              src={retainerMedia.url}
-              alt={retainerMedia.title}
+            <div 
               className="absolute bg-cover bg-center parallax-bg opacity-10"
               style={{
+                backgroundImage: `url('${retainerMedia.url}')`,
                 width: '100%',
                 height: '170%',
                 top: '-35%',
@@ -548,21 +546,26 @@ export default function Home() {
           if (!workedWithMedia) return null;
           
           return workedWithMedia?.type === "video" ? (
-            <LazyBackgroundVideo
-              src={workedWithMedia.url}
+            <video
               className="absolute inset-0 w-full object-cover parallax-bg opacity-10"
               style={{
                 height: '170%',
                 top: '-35%',
                 transform: getParallaxTransform('who_weve_worked_with', 0.25),
               }}
+              src={workedWithMedia.url}
+              autoPlay
+              muted
+              loop
+              playsInline
+              disablePictureInPicture
+              controls={false}
             />
           ) : (
-            <LazyBackgroundImage
-              src={workedWithMedia.url}
-              alt={workedWithMedia.title}
+            <div 
               className="absolute bg-cover bg-center parallax-bg opacity-10"
               style={{
+                backgroundImage: `url('${workedWithMedia.url}')`,
                 width: '100%',
                 height: '170%',
                 top: '-35%',
@@ -605,21 +608,26 @@ export default function Home() {
           if (!connectMedia) return null;
           
           return connectMedia?.type === "video" ? (
-            <LazyBackgroundVideo
-              src={connectMedia.url}
+            <video
               className="absolute inset-0 w-full object-cover parallax-bg opacity-10"
               style={{
                 height: '170%',
                 top: '-35%',
                 transform: getParallaxTransform('lets_connect', 0.25),
               }}
+              src={connectMedia.url}
+              autoPlay
+              muted
+              loop
+              playsInline
+              disablePictureInPicture
+              controls={false}
             />
           ) : (
-            <LazyBackgroundImage
-              src={connectMedia.url}
-              alt={connectMedia.title}
+            <div 
               className="absolute bg-cover bg-center parallax-bg opacity-10"
               style={{
+                backgroundImage: `url('${connectMedia.url}')`,
                 width: '100%',
                 height: '170%',
                 top: '-35%',
