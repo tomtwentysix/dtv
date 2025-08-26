@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { BrandingManager } from "@/components/branding-manager";
 import { queryClient } from "@/lib/queryClient";
+import { useSeoSettings, useUpdateSeoSettings } from "@/hooks/use-seo-settings";
 
 type MediaType = {
   id: string;
@@ -198,9 +199,10 @@ export default function WebsiteCustomization() {
   }, [contactInfo]);
 
   // Fetch SEO settings
-  const { data: seoSettings, isLoading: isSeoLoading } = useQuery({
-    queryKey: ['/api/seo-settings'],
-  });
+  const { data: seoSettings, isLoading: isSeoLoading } = useSeoSettings();
+
+  // SEO settings mutation
+  const updateSeoMutation = useUpdateSeoSettings();
 
   // SEO settings form state
   const [seoForm, setSeoForm] = useState({
@@ -235,31 +237,31 @@ export default function WebsiteCustomization() {
   React.useEffect(() => {
     if (seoSettings) {
       setSeoForm({
-        metaTitle: (seoSettings as any).metaTitle || '',
-        metaDescription: (seoSettings as any).metaDescription || '',
-        metaKeywords: (seoSettings as any).metaKeywords || '',
-        canonicalUrl: (seoSettings as any).canonicalUrl || '',
-        openGraphImageId: (seoSettings as any).openGraphImageId || '',
-        twitterImageId: (seoSettings as any).twitterImageId || '',
-        businessName: (seoSettings as any).businessName || '',
-        businessDescription: (seoSettings as any).businessDescription || '',
-        businessType: (seoSettings as any).businessType || '',
-        businessUrl: (seoSettings as any).businessUrl || '',
-        addressLocality: (seoSettings as any).addressLocality || '',
-        addressRegion: (seoSettings as any).addressRegion || '',
-        addressCountry: (seoSettings as any).addressCountry || '',
-        postalCode: (seoSettings as any).postalCode || '',
-        streetAddress: (seoSettings as any).streetAddress || '',
-        latitude: (seoSettings as any).latitude || '',
-        longitude: (seoSettings as any).longitude || '',
-        businessEmail: (seoSettings as any).businessEmail || '',
-        businessPhone: (seoSettings as any).businessPhone || '',
-        services: (seoSettings as any).services || '',
-        faqs: (seoSettings as any).faqs || '',
-        enableStructuredData: (seoSettings as any).enableStructuredData ?? true,
-        enableOpenGraph: (seoSettings as any).enableOpenGraph ?? true,
-        enableTwitterCards: (seoSettings as any).enableTwitterCards ?? true,
-        robotsDirective: (seoSettings as any).robotsDirective || ''
+        metaTitle: seoSettings.metaTitle || '',
+        metaDescription: seoSettings.metaDescription || '',
+        metaKeywords: seoSettings.metaKeywords || '',
+        canonicalUrl: seoSettings.canonicalUrl || '',
+        openGraphImageId: seoSettings.openGraphImageId || '',
+        twitterImageId: seoSettings.twitterImageId || '',
+        businessName: seoSettings.businessName || '',
+        businessDescription: seoSettings.businessDescription || '',
+        businessType: seoSettings.businessType || '',
+        businessUrl: seoSettings.businessUrl || '',
+        addressLocality: seoSettings.addressLocality || '',
+        addressRegion: seoSettings.addressRegion || '',
+        addressCountry: seoSettings.addressCountry || '',
+        postalCode: '', // Not in our SEO settings interface
+        streetAddress: '', // Not in our SEO settings interface  
+        latitude: seoSettings.latitude || '',
+        longitude: seoSettings.longitude || '',
+        businessEmail: seoSettings.businessEmail || '',
+        businessPhone: '', // Not in our SEO settings interface
+        services: seoSettings.services || '',
+        faqs: seoSettings.faqs || '',
+        enableStructuredData: seoSettings.enableStructuredData ?? true,
+        enableOpenGraph: true, // Not in our SEO settings interface
+        enableTwitterCards: true, // Not in our SEO settings interface
+        robotsDirective: '' // Not in our SEO settings interface
       });
     }
   }, [seoSettings]);
@@ -281,26 +283,6 @@ export default function WebsiteCustomization() {
     },
     onError: () => {
       toast({ title: "Failed to update contact information", variant: "destructive" });
-    },
-  });
-
-  // Update SEO settings mutation
-  const updateSeoMutation = useMutation({
-    mutationFn: async (data: any) => {
-      const response = await fetch('/api/seo-settings', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) throw new Error('Failed to update SEO settings');
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({ title: "SEO settings updated successfully" });
-      queryClient.invalidateQueries({ queryKey: ['/api/seo-settings'] });
-    },
-    onError: () => {
-      toast({ title: "Failed to update SEO settings", variant: "destructive" });
     },
   });
 

@@ -26,14 +26,25 @@ type ThemeProviderProps = {
   storageKey?: string;
 };
 
+// Check if current route is a public page
+const isPublicPage = () => {
+  const path = window.location.pathname;
+  const publicPaths = ['/', '/portfolio', '/about', '/services', '/contact'];
+  return publicPaths.includes(path);
+};
+
 export function ThemeProvider({
   children,
   defaultTheme = "system",
   storageKey = "dt-visuals-theme",
 }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(
-    () => (localStorage.getItem(storageKey) as Theme) || defaultTheme
-  );
+  const [theme, setTheme] = useState<Theme>(() => {
+    // For public pages, default to dark mode if no preference is stored
+    const storedTheme = localStorage.getItem(storageKey) as Theme;
+    if (storedTheme) return storedTheme;
+    
+    return isPublicPage() ? "dark" : defaultTheme;
+  });
 
   useEffect(() => {
     const root = window.document.documentElement;
