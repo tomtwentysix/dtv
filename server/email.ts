@@ -1,4 +1,7 @@
 import nodemailer from 'nodemailer';
+import dotenv from 'dotenv';
+import path from 'path';
+import fs from 'fs';
 
 interface ContactFormData {
   firstName: string;
@@ -33,10 +36,6 @@ class EmailService {
     if (process.env.NODE_ENV === 'production' && !process.env.SMTP_HOST) {
       console.log('⚠️  Production mode but SMTP_HOST not found - attempting fallback env loading');
       try {
-        const dotenv = require('dotenv');
-        const path = require('path');
-        const fs = require('fs');
-        
         // Try multiple possible locations for the .env.prod file
         const possiblePaths = [
           '.env.prod',
