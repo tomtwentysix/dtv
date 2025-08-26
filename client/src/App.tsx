@@ -7,6 +7,7 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { useDynamicFavicon } from "@/hooks/use-dynamic-favicon";
 import { useDynamicOpenGraph } from "@/hooks/use-dynamic-opengraph";
+import { useDynamicSeo } from "@/hooks/use-dynamic-seo";
 import { useStructuredData } from "@/hooks/use-structured-data";
 import { ProtectedRoute } from "@/lib/protected-route";
 import NotFound from "@/pages/not-found";
@@ -74,6 +75,12 @@ function StructuredDataManager() {
   return null;
 }
 
+// Component to handle dynamic SEO meta tag updates
+function SeoManager() {
+  useDynamicSeo();
+  return null;
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -83,6 +90,7 @@ function App() {
             <FaviconManager />
             <OpenGraphManager />
             <StructuredDataManager />
+            <SeoManager />
             <Toaster />
             <Router />
           </TooltipProvider>
