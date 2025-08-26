@@ -71,8 +71,10 @@
 
 @layer components {
   .glass-nav {
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    /* Reduced blur and removed saturate for better performance */
+    background: rgba(255, 255, 255, 0.1);
   }
   
   /* Smooth dialog resize animations - Higher specificity to override Radix */
@@ -100,33 +102,63 @@
     z-index: 1;
   }
 
-  /* Parallax backgrounds */
+  /* Parallax backgrounds - simplified for better performance */
   .parallax-bg {
     transform: translate3d(0, 0, 0);
-    transition: transform 0.1s ease-out;
+    will-change: transform;
+    backface-visibility: hidden;
+    /* Reduced transition time for better performance */
+    transition: transform 0.05s ease-out;
   }
 
-  /* Dynamic Text Contrast System */
+  /* Performance optimizations for videos and backgrounds */
+  .lazy-video-loading {
+    background-color: #1a1a1a;
+    background-image: linear-gradient(45deg, #1a1a1a 25%, transparent 25%), 
+                      linear-gradient(-45deg, #1a1a1a 25%, transparent 25%),
+                      linear-gradient(45deg, transparent 75%, #1a1a1a 75%), 
+                      linear-gradient(-45deg, transparent 75%, #1a1a1a 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+    animation: loading-pattern 2s linear infinite;
+  }
+
+  @keyframes loading-pattern {
+    0% { background-position: 0 0, 0 10px, 10px -10px, -10px 0px; }
+    100% { background-position: 20px 20px, 20px 30px, 30px 10px, 10px 20px; }
+  }
+
+  /* Optimize video performance */
+  video[preload="none"] {
+    content-visibility: auto;
+    contain-intrinsic-size: 0 400px;
+  }
+
+  /* Reduce repaints for background elements */
+  .hero-video-overlay {
+    will-change: auto;
+    transform: translateZ(0);
+  }
+
+  /* Dynamic Text Contrast System - Optimized for performance */
   .hero-title {
     color: white;
-    mix-blend-mode: difference;
-    filter: contrast(2) brightness(1.5);
+    /* Simplified effects for better LCP performance */
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
     /* Reduce font size by 2pt from original Tailwind sizes */
     font-size: 2.8rem; /* 48px, reduced from text-6xl (60px) */
   }
   
   .hero-accent {
     color: white;
-    mix-blend-mode: difference;
-    filter: contrast(2) brightness(1.5);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
     /* Same font size as hero-title for consistency */
     font-size: 2.8rem; /* 48px, reduced from text-6xl (60px) */
   }
 
   .hero-subtitle {
-    color: white;
-    mix-blend-mode: difference;
-    filter: contrast(1.8) brightness(1.3);
+    color: rgba(255, 255, 255, 0.95);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
     /* Reduce font size by 2pt from original Tailwind sizes */
     font-size: 1.125rem; /* 18px, reduced from text-xl (20px) */
   }
@@ -137,21 +169,21 @@
   }
 
 
-  /* Global Dynamic Text Contrast */
+  /* Global Dynamic Text Contrast - Simplified for performance */
   .text-dynamic {
-    mix-blend-mode: difference;
-    filter: contrast(2) brightness(1.2);
+    color: #333;
+    text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
   }
 
   .text-dynamic-subtle {
-    mix-blend-mode: difference;
-    filter: contrast(1.5) brightness(1.1);
+    color: #555;
+    text-shadow: 1px 1px 1px rgba(255, 255, 255, 0.6);
   }
 
-  /* Navigation text contrast */
+  /* Navigation text contrast - simplified */
   .nav-text-dynamic {
-    mix-blend-mode: difference;
-    filter: contrast(2) brightness(1.3);
+    color: #222;
+    text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.9);
   }
 
   /* Fallback for browsers that don't support mix-blend-mode */

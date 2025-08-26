@@ -4,6 +4,8 @@ import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { VideoPlayer } from "@/components/video-player";
+import { LazyBackgroundVideo } from "@/components/lazy-background-video";
+import { LazyBackgroundImage } from "@/components/lazy-background-image";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, Play } from "lucide-react";
 import { getBackgroundMedia, useWebsiteSettings } from "@/lib/background-utils";
@@ -26,22 +28,34 @@ export default function Portfolio() {
   // Get website settings for backgrounds
   const { data: websiteSettings } = useWebsiteSettings();
 
-  // Smooth parallax scroll effect
+  // Smooth parallax scroll effect - optimized for performance
   useEffect(() => {
     const lerp = (start: number, end: number, amt: number) => (1 - amt) * start + amt * end;
     let running = true;
+    let ticking = false;
+    
     const animate = () => {
       setScrollY(prev => {
         const next = lerp(prev, scrollYTarget.current, 0.15);
         return Math.abs(next - scrollYTarget.current) < 0.1 ? scrollYTarget.current : next;
       });
-      if (running) rafRef.current = requestAnimationFrame(animate);
+      ticking = false;
+      if (running && scrollYTarget.current !== scrollY) {
+        rafRef.current = requestAnimationFrame(animate);
+      }
     };
+
     const handleScroll = () => {
       scrollYTarget.current = window.scrollY;
+      if (!ticking && running) {
+        ticking = true;
+        rafRef.current = requestAnimationFrame(animate);
+      }
     };
-    window.addEventListener("scroll", handleScroll);
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
     rafRef.current = requestAnimationFrame(animate);
+    
     return () => {
       running = false;
       window.removeEventListener("scroll", handleScroll);
@@ -153,20 +167,17 @@ export default function Portfolio() {
           if (!portfolioGalleryMedia) return null;
           
           return portfolioGalleryMedia.type === "video" ? (
-            <video
+            <LazyBackgroundVideo
+              src={portfolioGalleryMedia.url}
               className="absolute inset-0 w-full h-full object-cover parallax-bg opacity-10"
               style={{ transform: `translateY(${scrollY * 0.2}px)` }}
-              autoPlay
-              loop
-              muted
-              playsInline
-              src={portfolioGalleryMedia.url}
             />
           ) : (
-            <div 
+            <LazyBackgroundImage
+              src={portfolioGalleryMedia.url}
+              alt={portfolioGalleryMedia.title}
               className="absolute inset-0 bg-cover bg-center parallax-bg opacity-10"
               style={{
-                backgroundImage: `url('${portfolioGalleryMedia.url}')`,
                 transform: `translateY(${scrollY * 0.2}px)`,
               }}
             />
@@ -192,6 +203,7 @@ export default function Portfolio() {
                         src={item.thumbnailWebpUrl || item.thumbnailUrl || item.url} 
                         alt={item.title}
                         className="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110"
+                        loading="lazy" // Add lazy loading
                       />
                     ) : (
                       <video 
@@ -201,7 +213,8 @@ export default function Portfolio() {
                         muted
                         loop
                         playsInline
-                        preload="metadata"
+                        preload="none" // Changed from metadata to none for better LCP
+                        loading="lazy" // Add lazy loading attribute
                         onMouseEnter={(e) => handleVideoHover(e.currentTarget)}
                         onMouseLeave={(e) => handleVideoLeave(e.currentTarget)}
                         onLoadedMetadata={(e) => {
