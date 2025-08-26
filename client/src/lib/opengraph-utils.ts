@@ -1,5 +1,5 @@
 // Utility functions for dynamic OpenGraph meta tag management
-export const updateOpenGraphImage = (imageUrl: string | null) => {
+export const updateOpenGraphImage = (openGraphImageUrl: string | null, twitterImageUrl?: string | null) => {
   // Update og:image meta tag
   let ogImageMeta = document.querySelector('meta[property="og:image"]');
   if (!ogImageMeta) {
@@ -8,8 +8,8 @@ export const updateOpenGraphImage = (imageUrl: string | null) => {
     document.head.appendChild(ogImageMeta);
   }
   
-  if (imageUrl) {
-    ogImageMeta.setAttribute('content', imageUrl);
+  if (openGraphImageUrl) {
+    ogImageMeta.setAttribute('content', openGraphImageUrl);
   } else {
     ogImageMeta.setAttribute('content', '');
   }
@@ -22,8 +22,9 @@ export const updateOpenGraphImage = (imageUrl: string | null) => {
     document.head.appendChild(twitterImageMeta);
   }
   
-  if (imageUrl) {
-    twitterImageMeta.setAttribute('content', imageUrl);
+  const finalTwitterImageUrl = twitterImageUrl || openGraphImageUrl;
+  if (finalTwitterImageUrl) {
+    twitterImageMeta.setAttribute('content', finalTwitterImageUrl);
   } else {
     twitterImageMeta.setAttribute('content', '');
   }

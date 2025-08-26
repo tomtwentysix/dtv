@@ -1,37 +1,42 @@
 import { useEffect } from "react";
-import { useBrandingSettings } from "./use-branding-settings";
+import { useSeoSettings } from "./use-seo-settings";
 import { updateOpenGraphImage, validateOpenGraphImageUrl } from "@/lib/opengraph-utils";
 
 export const useDynamicOpenGraph = () => {
-  const { data: brandingSettings, isLoading } = useBrandingSettings();
+  const { data: seoSettings, isLoading } = useSeoSettings();
 
   useEffect(() => {
-    if (isLoading || !brandingSettings) return;
+    if (isLoading || !seoSettings) return;
 
     const applyOpenGraphImage = async () => {
-      const openGraphImageUrl = brandingSettings.openGraphImage?.url;
+      const openGraphImageUrl = seoSettings.openGraphImage?.url;
+      const twitterImageUrl = seoSettings.twitterImage?.url;
       
-      if (openGraphImageUrl) {
-        // Validate the OpenGraph image URL before applying
-        const isValid = await validateOpenGraphImageUrl(openGraphImageUrl);
+      // Use OpenGraph image for both og:image and twitter:image if twitter image is not set
+      const finalImageUrl = openGraphImageUrl || twitterImageUrl;
+      
+      if (finalImageUrl) {
+        // Validate the image URL before applying
+        const isValid = await validateOpenGraphImageUrl(finalImageUrl);
         if (isValid) {
-          updateOpenGraphImage(openGraphImageUrl);
+          updateOpenGraphImage(finalImageUrl, twitterImageUrl || finalImageUrl);
         } else {
           // Fallback to empty if image fails to load
-          updateOpenGraphImage(null);
-          console.warn("Failed to load OpenGraph image, using fallback");
+          updateOpenGraphImage(null, null);
+          console.warn("Failed to load OpenGraph/Twitter image, using fallback");
         }
       } else {
-        // No OpenGraph image set, use empty
-        updateOpenGraphImage(null);
+        // No OpenGraph or Twitter image set, use empty
+        updateOpenGraphImage(null, null);
       }
     };
 
     applyOpenGraphImage();
-  }, [brandingSettings, isLoading]);
+  }, [seoSettings, isLoading]);
 
   return {
-    openGraphImageUrl: brandingSettings?.openGraphImage?.url || null,
+    openGraphImageUrl: seoSettings?.openGraphImage?.url || null,
+    twitterImageUrl: seoSettings?.twitterImage?.url || null,
     isLoading
   };
 };
