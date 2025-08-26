@@ -12,18 +12,24 @@ export const useDynamicOpenGraph = () => {
       const openGraphImageUrl = seoSettings.openGraphImage?.url;
       const twitterImageUrl = seoSettings.twitterImage?.url;
       
-      // Use OpenGraph image for both og:image and twitter:image if twitter image is not set
-      const finalImageUrl = openGraphImageUrl || twitterImageUrl;
+      // Use OpenGraph image preferentially, but fall back to Twitter image if OG is not set
+      const finalOpenGraphUrl = openGraphImageUrl || twitterImageUrl || null;
+      const finalTwitterUrl = twitterImageUrl || openGraphImageUrl || null;
       
-      if (finalImageUrl) {
-        // Validate the image URL before applying
-        const isValid = await validateOpenGraphImageUrl(finalImageUrl);
-        if (isValid) {
-          updateOpenGraphImage(finalImageUrl, twitterImageUrl || finalImageUrl);
+      if (finalOpenGraphUrl || finalTwitterUrl) {
+        // Validate the primary image URL before applying
+        const primaryUrl = finalOpenGraphUrl || finalTwitterUrl;
+        if (primaryUrl) {
+          const isValid = await validateOpenGraphImageUrl(primaryUrl);
+          if (isValid) {
+            updateOpenGraphImage(finalOpenGraphUrl, finalTwitterUrl);
+          } else {
+            // Fallback to empty if image fails to load
+            updateOpenGraphImage(null, null);
+            console.warn("Failed to load OpenGraph/Twitter image, using fallback");
+          }
         } else {
-          // Fallback to empty if image fails to load
           updateOpenGraphImage(null, null);
-          console.warn("Failed to load OpenGraph/Twitter image, using fallback");
         }
       } else {
         // No OpenGraph or Twitter image set, use empty
