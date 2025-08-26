@@ -111,7 +111,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Serve sitemap.xml with proper content type
+  // Serve sitemap.xml with proper content type for search engines
+  // This ensures the sitemap is served with application/xml instead of text/html
   app.get("/sitemap.xml", (req, res) => {
     const sitemapPath = path.join(process.cwd(), "dist", "public", "sitemap.xml");
     
