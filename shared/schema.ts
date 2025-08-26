@@ -97,7 +97,7 @@ export const mediaClients = pgTable("media_clients", {
 
 export const websiteSettings = pgTable("website_settings", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  section: text("section").notNull().unique(), // 'hero', 'what_we_do', 'who_we_work_with', 'how_we_work', 'retainer_partnerships', 'who_weve_worked_with', 'lets_connect', 'portfolio_header', 'portfolio_gallery', 'about_header', 'about_values', 'services_header', 'services_section', 'services_cta', 'contact_info'
+  section: text("section").notNull().unique(), // 'hero', 'what_we_do', 'who_we_work_with', 'how_we_work', 'retainer_partnerships', 'who_weve_worked_with', 'lets_connect', 'portfolio_header', 'portfolio_gallery', 'about_header', 'about_values', 'services_header', 'services_section', 'services_cta', 'contact_info', 'seo_settings'
   backgroundImageId: varchar("background_image_id").references(() => media.id),
   backgroundVideoId: varchar("background_video_id").references(() => media.id),
   // Contact information fields
@@ -108,6 +108,15 @@ export const websiteSettings = pgTable("website_settings", {
   instagramUrl: text("instagram_url"),
   facebookUrl: text("facebook_url"),
   linkedinUrl: text("linkedin_url"),
+  // SEO Settings fields
+  seoTitle: text("seo_title"),
+  seoDescription: text("seo_description"),
+  seoKeywords: text("seo_keywords"),
+  seoAuthor: text("seo_author"),
+  seoRobots: text("seo_robots"),
+  seoCanonicalUrl: text("seo_canonical_url"),
+  seoOgImageUrl: text("seo_og_image_url"),
+  seoTwitterImageUrl: text("seo_twitter_image_url"),
   updatedBy: varchar("updated_by").notNull().references(() => users.id),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

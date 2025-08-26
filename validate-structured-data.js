@@ -138,7 +138,7 @@ console.log(`   ${geoTags ? '✅' : '❌'} Geographic location data: ${geoTags ?
 
 console.log(`\n🚀 Google Rich Results Test Instructions:`);
 console.log(`   1. Visit: https://search.google.com/test/rich-results`);
-console.log(`   2. Enter URL: https://dt-visuals.com`);
+console.log(`   2. Enter URL: https://dtvisuals.com`);
 console.log(`   3. Or paste the HTML content from: ${htmlPath}`);
 console.log(`   4. Check for LocalBusiness and FAQPage rich results`);
 

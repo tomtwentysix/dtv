@@ -89,9 +89,9 @@ export function generateOrganizationSchema(): OrganizationSchema {
     "@type": "LocalBusiness",
     name: "DT Visuals",
     description: "UK-based video production team creating cinematic content for luxury events, artists, brands and agencies. Based in Leicestershire, working UK-wide.",
-    url: "https://dt-visuals.com",
+    url: "https://dtvisuals.com",
     telephone: "+44-XXX-XXX-XXXX", // Will be dynamically populated from website settings
-    email: "info@dt-visuals.com", // Will be dynamically populated from website settings
+    email: "info@dtvisuals.com", // Will be dynamically populated from website settings
     address: {
       "@type": "PostalAddress",
       addressLocality: "Leicestershire",
@@ -198,7 +198,7 @@ export function generateVideoObjectSchema(video: {
  */
 export function generateBreadcrumbSchema(path: string): BreadcrumbListSchema {
   const breadcrumbs: Array<{ "@type": "ListItem"; position: number; name: string; item: string }> = [
-    { "@type": "ListItem", position: 1, name: "Home", item: "https://dt-visuals.com/" }
+    { "@type": "ListItem", position: 1, name: "Home", item: "https://dtvisuals.com/" }
   ];
 
   const pathSegments = path.split('/').filter(Boolean);
@@ -215,7 +215,7 @@ export function generateBreadcrumbSchema(path: string): BreadcrumbListSchema {
 
     pathSegments.forEach((segment, index) => {
       const name = pageNames[segment] || segment.charAt(0).toUpperCase() + segment.slice(1);
-      const item = `https://dt-visuals.com/${pathSegments.slice(0, index + 1).join('/')}`;
+      const item = `https://dtvisuals.com/${pathSegments.slice(0, index + 1).join('/')}`;
       breadcrumbs.push({
         "@type": "ListItem",
         position: index + 2,
