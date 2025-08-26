@@ -1252,6 +1252,110 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // SEO Settings Routes
+  app.get("/api/seo-settings", async (req, res) => {
+    try {
+      const seoSettings = await storage.getSeoSettings();
+      res.json(seoSettings || {
+        metaTitle: "Video Production Company | Luxury Events, Music & Brands | DT Visuals UK",
+        metaDescription: "DT Visuals is a UK-based video production team creating cinematic content for luxury events, artists, brands and agencies. Based in Leicestershire, working UK-wide.",
+        metaKeywords: "video production company UK, cinematic video production, luxury event videographer, corporate video production, music video production UK, video production Leicestershire, creative video agency, branded content production, monthly video retainer UK",
+        canonicalUrl: "https://dtvisuals.com/",
+        businessName: "DT Visuals",
+        businessDescription: "Professional video production company specializing in luxury events, music videos, and branded content",
+        businessType: "VideoProductionService",
+        businessUrl: "https://dtvisuals.com",
+        addressLocality: "Leicestershire",
+        addressRegion: "England", 
+        addressCountry: "GB",
+        latitude: "52.6369",
+        longitude: "-1.1398",
+        businessEmail: "hello@dtvisuals.com",
+        services: '["Luxury Event Videography","Corporate Video Production","Music Video Production","Creative Direction","Post-Production Services"]',
+        faqs: '[]',
+        enableStructuredData: true,
+        enableOpenGraph: true,
+        enableTwitterCards: true,
+        robotsDirective: "index, follow",
+      });
+    } catch (error) {
+      console.error("Error fetching SEO settings:", error);
+      res.status(500).json({ message: "Failed to fetch SEO settings" });
+    }
+  });
+
+  app.put("/api/seo-settings", requireAuth, requirePermission("edit:website"), async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const updates = { ...req.body, updatedBy: userId };
+      
+      const updatedSettings = await storage.updateSeoSettings(updates);
+      res.json(updatedSettings);
+    } catch (error) {
+      console.error("Error updating SEO settings:", error);
+      res.status(500).json({ message: "Failed to update SEO settings" });
+    }
+  });
+
+  // Generate Sitemap
+  app.post("/api/generate-sitemap", requireAuth, requirePermission("edit:website"), async (req, res) => {
+    try {
+      const seoSettings = await storage.getSeoSettings();
+      const baseUrl = seoSettings?.businessUrl || "https://dtvisuals.com";
+      
+      // Get all media for videos in sitemap
+      const allMedia = await storage.getAllMedia();
+      const videos = allMedia.filter(m => m.type === 'video' && m.showInPortfolio);
+      
+      // Static pages
+      const staticPages = [
+        { url: '/', priority: '1.0', changefreq: 'weekly' },
+        { url: '/portfolio', priority: '0.9', changefreq: 'weekly' },
+        { url: '/about', priority: '0.8', changefreq: 'monthly' },
+        { url: '/services', priority: '0.9', changefreq: 'monthly' },
+        { url: '/contact', priority: '0.7', changefreq: 'monthly' },
+      ];
+      
+      // Generate XML sitemap
+      let sitemap = '<?xml version="1.0" encoding="UTF-8"?>\n';
+      sitemap += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">\n';
+      
+      // Add static pages
+      for (const page of staticPages) {
+        sitemap += `  <url>\n    <loc>${baseUrl}${page.url}</loc>\n    <priority>${page.priority}</priority>\n    <changefreq>${page.changefreq}</changefreq>\n  </url>\n`;
+      }
+      
+      // Add video pages
+      for (const video of videos) {
+        sitemap += `  <url>\n    <loc>${baseUrl}/portfolio</loc>\n`;
+        sitemap += `    <video:video>\n`;
+        sitemap += `      <video:thumbnail_loc>${video.posterUrl || video.url}</video:thumbnail_loc>\n`;
+        sitemap += `      <video:title>${video.title}</video:title>\n`;
+        sitemap += `      <video:description>${video.notes || video.title}</video:description>\n`;
+        sitemap += `      <video:content_loc>${video.url}</video:content_loc>\n`;
+        sitemap += `    </video:video>\n`;
+        sitemap += `  </url>\n`;
+      }
+      
+      sitemap += '</urlset>';
+      
+      // Write sitemap to public directory
+      const fs = require('fs');
+      const path = require('path');
+      const sitemapPath = path.join(process.cwd(), 'client', 'public', 'sitemap.xml');
+      fs.writeFileSync(sitemapPath, sitemap);
+      
+      res.json({ 
+        message: "Sitemap generated successfully", 
+        pages: staticPages.length, 
+        videos: videos.length 
+      });
+    } catch (error) {
+      console.error("Error generating sitemap:", error);
+      res.status(500).json({ message: "Failed to generate sitemap" });
+    }
+  });
+
   // Dashboard stats
   app.get("/api/stats", requireAuth, requireAnyRole(["Admin", "Staff"]), async (req, res) => {
     try {

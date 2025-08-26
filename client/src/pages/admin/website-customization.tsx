@@ -20,7 +20,10 @@ import {
   Save,
   Instagram,
   Facebook,
-  Linkedin
+  Linkedin,
+  Globe,
+  FileText,
+  RefreshCcw
 } from "lucide-react";
 import { BrandingManager } from "@/components/branding-manager";
 import { queryClient } from "@/lib/queryClient";
@@ -194,6 +197,73 @@ export default function WebsiteCustomization() {
     }
   }, [contactInfo]);
 
+  // Fetch SEO settings
+  const { data: seoSettings, isLoading: isSeoLoading } = useQuery({
+    queryKey: ['/api/seo-settings'],
+  });
+
+  // SEO settings form state
+  const [seoForm, setSeoForm] = useState({
+    metaTitle: '',
+    metaDescription: '',
+    metaKeywords: '',
+    canonicalUrl: '',
+    openGraphImageId: '',
+    twitterImageId: '',
+    businessName: '',
+    businessDescription: '',
+    businessType: '',
+    businessUrl: '',
+    addressLocality: '',
+    addressRegion: '',
+    addressCountry: '',
+    postalCode: '',
+    streetAddress: '',
+    latitude: '',
+    longitude: '',
+    businessEmail: '',
+    businessPhone: '',
+    services: '',
+    faqs: '',
+    enableStructuredData: true,
+    enableOpenGraph: true,
+    enableTwitterCards: true,
+    robotsDirective: ''
+  });
+
+  // Initialize SEO form when data loads
+  React.useEffect(() => {
+    if (seoSettings) {
+      setSeoForm({
+        metaTitle: (seoSettings as any).metaTitle || '',
+        metaDescription: (seoSettings as any).metaDescription || '',
+        metaKeywords: (seoSettings as any).metaKeywords || '',
+        canonicalUrl: (seoSettings as any).canonicalUrl || '',
+        openGraphImageId: (seoSettings as any).openGraphImageId || '',
+        twitterImageId: (seoSettings as any).twitterImageId || '',
+        businessName: (seoSettings as any).businessName || '',
+        businessDescription: (seoSettings as any).businessDescription || '',
+        businessType: (seoSettings as any).businessType || '',
+        businessUrl: (seoSettings as any).businessUrl || '',
+        addressLocality: (seoSettings as any).addressLocality || '',
+        addressRegion: (seoSettings as any).addressRegion || '',
+        addressCountry: (seoSettings as any).addressCountry || '',
+        postalCode: (seoSettings as any).postalCode || '',
+        streetAddress: (seoSettings as any).streetAddress || '',
+        latitude: (seoSettings as any).latitude || '',
+        longitude: (seoSettings as any).longitude || '',
+        businessEmail: (seoSettings as any).businessEmail || '',
+        businessPhone: (seoSettings as any).businessPhone || '',
+        services: (seoSettings as any).services || '',
+        faqs: (seoSettings as any).faqs || '',
+        enableStructuredData: (seoSettings as any).enableStructuredData ?? true,
+        enableOpenGraph: (seoSettings as any).enableOpenGraph ?? true,
+        enableTwitterCards: (seoSettings as any).enableTwitterCards ?? true,
+        robotsDirective: (seoSettings as any).robotsDirective || ''
+      });
+    }
+  }, [seoSettings]);
+
   // Update contact information mutation
   const updateContactMutation = useMutation({
     mutationFn: async (data: { contactEmail: string; contactPhone: string; contactAddress: string; instagramUrl: string; facebookUrl: string; linkedinUrl: string }) => {
@@ -211,6 +281,47 @@ export default function WebsiteCustomization() {
     },
     onError: () => {
       toast({ title: "Failed to update contact information", variant: "destructive" });
+    },
+  });
+
+  // Update SEO settings mutation
+  const updateSeoMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const response = await fetch('/api/seo-settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error('Failed to update SEO settings');
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: "SEO settings updated successfully" });
+      queryClient.invalidateQueries({ queryKey: ['/api/seo-settings'] });
+    },
+    onError: () => {
+      toast({ title: "Failed to update SEO settings", variant: "destructive" });
+    },
+  });
+
+  // Generate sitemap mutation
+  const generateSitemapMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch('/api/generate-sitemap', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (!response.ok) throw new Error('Failed to generate sitemap');
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({ 
+        title: "Sitemap generated successfully",
+        description: `Generated sitemap with ${data.pages} pages and ${data.videos} videos`
+      });
+    },
+    onError: () => {
+      toast({ title: "Failed to generate sitemap", variant: "destructive" });
     },
   });
 
@@ -341,12 +452,13 @@ export default function WebsiteCustomization() {
         </div>
 
         <Tabs defaultValue="Homepage" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="Homepage">Homepage</TabsTrigger>
             <TabsTrigger value="Portfolio">Portfolio</TabsTrigger>
             <TabsTrigger value="About">About</TabsTrigger>
             <TabsTrigger value="Services">Services</TabsTrigger>
             <TabsTrigger value="Branding">Branding</TabsTrigger>
+            <TabsTrigger value="SEO">SEO</TabsTrigger>
             <TabsTrigger value="Contact">Contact Info</TabsTrigger>
           </TabsList>
 
@@ -457,6 +569,314 @@ export default function WebsiteCustomization() {
           {/* Branding Tab */}
           <TabsContent value="Branding" className="space-y-6">
             <BrandingManager />
+          </TabsContent>
+
+          {/* SEO Tab */}
+          <TabsContent value="SEO" className="space-y-6">
+            <Card className="w-full">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Globe className="h-5 w-5" />
+                  Search Engine Optimization
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Configure SEO settings, structured data, and search engine optimization
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <Tabs defaultValue="basic" className="w-full">
+                  <TabsList className="grid w-full grid-cols-4">
+                    <TabsTrigger value="basic">Basic SEO</TabsTrigger>
+                    <TabsTrigger value="social">Social Media</TabsTrigger>
+                    <TabsTrigger value="business">Business Data</TabsTrigger>
+                    <TabsTrigger value="advanced">Advanced</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="basic" className="space-y-4">
+                    <div className="grid gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="metaTitle">Meta Title</Label>
+                        <Input
+                          id="metaTitle"
+                          placeholder="Video Production Company | Luxury Events, Music & Brands | DT Visuals UK"
+                          value={seoForm.metaTitle}
+                          onChange={(e) => setSeoForm(prev => ({ ...prev, metaTitle: e.target.value }))}
+                          disabled={updateSeoMutation.isPending}
+                        />
+                        <p className="text-xs text-muted-foreground">{seoForm.metaTitle.length}/60 characters (recommended)</p>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="metaDescription">Meta Description</Label>
+                        <textarea
+                          id="metaDescription"
+                          placeholder="DT Visuals is a UK-based video production team creating cinematic content for luxury events, artists, brands and agencies. Based in Leicestershire, working UK-wide."
+                          value={seoForm.metaDescription}
+                          onChange={(e) => setSeoForm(prev => ({ ...prev, metaDescription: e.target.value }))}
+                          disabled={updateSeoMutation.isPending}
+                          className="w-full min-h-[100px] p-3 border border-input bg-background rounded-md text-sm resize-y"
+                        />
+                        <p className="text-xs text-muted-foreground">{seoForm.metaDescription.length}/160 characters (recommended)</p>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="metaKeywords">Meta Keywords</Label>
+                        <Input
+                          id="metaKeywords"
+                          placeholder="video production company UK, luxury event videographer, corporate video production"
+                          value={seoForm.metaKeywords}
+                          onChange={(e) => setSeoForm(prev => ({ ...prev, metaKeywords: e.target.value }))}
+                          disabled={updateSeoMutation.isPending}
+                        />
+                        <p className="text-xs text-muted-foreground">Separate keywords with commas</p>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="canonicalUrl">Canonical URL</Label>
+                        <Input
+                          id="canonicalUrl"
+                          type="url"
+                          placeholder="https://dtvisuals.com/"
+                          value={seoForm.canonicalUrl}
+                          onChange={(e) => setSeoForm(prev => ({ ...prev, canonicalUrl: e.target.value }))}
+                          disabled={updateSeoMutation.isPending}
+                        />
+                      </div>
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="social" className="space-y-4">
+                    <div className="grid gap-4">
+                      <div className="space-y-2">
+                        <Label>Open Graph Image</Label>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setOpenDialog('og-image')}
+                            disabled={updateSeoMutation.isPending}
+                          >
+                            {seoForm.openGraphImageId ? 'Change Image' : 'Select Image'}
+                          </Button>
+                          {seoForm.openGraphImageId && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setSeoForm(prev => ({ ...prev, openGraphImageId: '' }))}
+                            >
+                              Remove
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label>Twitter Card Image</Label>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setOpenDialog('twitter-image')}
+                            disabled={updateSeoMutation.isPending}
+                          >
+                            {seoForm.twitterImageId ? 'Change Image' : 'Select Image'}
+                          </Button>
+                          {seoForm.twitterImageId && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setSeoForm(prev => ({ ...prev, twitterImageId: '' }))}
+                            >
+                              Remove
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="business" className="space-y-4">
+                    <div className="grid gap-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="businessName">Business Name</Label>
+                          <Input
+                            id="businessName"
+                            placeholder="DT Visuals"
+                            value={seoForm.businessName}
+                            onChange={(e) => setSeoForm(prev => ({ ...prev, businessName: e.target.value }))}
+                            disabled={updateSeoMutation.isPending}
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor="businessUrl">Business URL</Label>
+                          <Input
+                            id="businessUrl"
+                            type="url"
+                            placeholder="https://dtvisuals.com"
+                            value={seoForm.businessUrl}
+                            onChange={(e) => setSeoForm(prev => ({ ...prev, businessUrl: e.target.value }))}
+                            disabled={updateSeoMutation.isPending}
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="businessDescription">Business Description</Label>
+                        <textarea
+                          id="businessDescription"
+                          placeholder="Professional video production company specializing in luxury events, music videos, and branded content"
+                          value={seoForm.businessDescription}
+                          onChange={(e) => setSeoForm(prev => ({ ...prev, businessDescription: e.target.value }))}
+                          disabled={updateSeoMutation.isPending}
+                          className="w-full min-h-[80px] p-3 border border-input bg-background rounded-md text-sm resize-y"
+                        />
+                      </div>
+                      
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="addressLocality">City/Locality</Label>
+                          <Input
+                            id="addressLocality"
+                            placeholder="Leicestershire"
+                            value={seoForm.addressLocality}
+                            onChange={(e) => setSeoForm(prev => ({ ...prev, addressLocality: e.target.value }))}
+                            disabled={updateSeoMutation.isPending}
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor="addressRegion">Region/State</Label>
+                          <Input
+                            id="addressRegion"
+                            placeholder="England"
+                            value={seoForm.addressRegion}
+                            onChange={(e) => setSeoForm(prev => ({ ...prev, addressRegion: e.target.value }))}
+                            disabled={updateSeoMutation.isPending}
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor="addressCountry">Country Code</Label>
+                          <Input
+                            id="addressCountry"
+                            placeholder="GB"
+                            value={seoForm.addressCountry}
+                            onChange={(e) => setSeoForm(prev => ({ ...prev, addressCountry: e.target.value }))}
+                            disabled={updateSeoMutation.isPending}
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="services">Services (JSON Array)</Label>
+                        <textarea
+                          id="services"
+                          placeholder='["Luxury Event Videography","Corporate Video Production","Music Video Production"]'
+                          value={seoForm.services}
+                          onChange={(e) => setSeoForm(prev => ({ ...prev, services: e.target.value }))}
+                          disabled={updateSeoMutation.isPending}
+                          className="w-full min-h-[80px] p-3 border border-input bg-background rounded-md text-sm font-mono resize-y"
+                        />
+                        <p className="text-xs text-muted-foreground">JSON array of services for structured data</p>
+                      </div>
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="advanced" className="space-y-4">
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="enableStructuredData"
+                          checked={seoForm.enableStructuredData}
+                          onChange={(e) => setSeoForm(prev => ({ ...prev, enableStructuredData: e.target.checked }))}
+                          className="rounded"
+                        />
+                        <Label htmlFor="enableStructuredData">Enable Structured Data (JSON-LD)</Label>
+                      </div>
+                      
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="enableOpenGraph"
+                          checked={seoForm.enableOpenGraph}
+                          onChange={(e) => setSeoForm(prev => ({ ...prev, enableOpenGraph: e.target.checked }))}
+                          className="rounded"
+                        />
+                        <Label htmlFor="enableOpenGraph">Enable Open Graph Tags</Label>
+                      </div>
+                      
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="enableTwitterCards"
+                          checked={seoForm.enableTwitterCards}
+                          onChange={(e) => setSeoForm(prev => ({ ...prev, enableTwitterCards: e.target.checked }))}
+                          className="rounded"
+                        />
+                        <Label htmlFor="enableTwitterCards">Enable Twitter Cards</Label>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label>Sitemap Generator</Label>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => generateSitemapMutation.mutate()}
+                            disabled={generateSitemapMutation.isPending}
+                            className="flex items-center gap-2"
+                          >
+                            {generateSitemapMutation.isPending ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <RefreshCcw className="h-4 w-4" />
+                            )}
+                            Regenerate Sitemap
+                          </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground">Generate updated sitemap including pages and video content</p>
+                      </div>
+                    </div>
+                  </TabsContent>
+                </Tabs>
+                
+                <div className="pt-4 border-t">
+                  <Button
+                    onClick={() => updateSeoMutation.mutate(seoForm)}
+                    disabled={updateSeoMutation.isPending}
+                    className="w-full"
+                  >
+                    {updateSeoMutation.isPending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Updating SEO Settings...
+                      </>
+                    ) : (
+                      'Update SEO Settings'
+                    )}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Media Selection Dialog for SEO Images */}
+            <MediaSelectionDialog
+              section="SEO Images"
+              onSelect={(mediaId, mediaType) => {
+                if (openDialog === 'og-image') {
+                  setSeoForm(prev => ({ ...prev, openGraphImageId: mediaId }));
+                } else if (openDialog === 'twitter-image') {
+                  setSeoForm(prev => ({ ...prev, twitterImageId: mediaId }));
+                }
+              }}
+              isOpen={openDialog === 'og-image' || openDialog === 'twitter-image'}
+              onOpenChange={(open) => setOpenDialog(open ? openDialog : null)}
+            />
           </TabsContent>
 
           {/* Contact Information Tab */}

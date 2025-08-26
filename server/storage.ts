@@ -10,6 +10,7 @@ import {
   mediaClients,
   websiteSettings,
   brandingSettings,
+  seoSettings,
   mediaFeedback,
   mediaTimelineNotes,
   type User, 
@@ -29,7 +30,9 @@ import {
   type WebsiteSettings,
   type InsertWebsiteSettings,
   type BrandingSettings,
-  type InsertBrandingSettings
+  type InsertBrandingSettings,
+  type SeoSettings,
+  type InsertSeoSettings
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, inArray, sql } from "drizzle-orm";
@@ -128,6 +131,10 @@ export interface IStorage {
   // Branding settings management
   getBrandingSettings(): Promise<BrandingSettings | undefined>;
   updateBrandingSettings(updates: Partial<InsertBrandingSettings>): Promise<BrandingSettings>;
+  
+  // SEO settings management
+  getSeoSettings(): Promise<SeoSettings | undefined>;
+  updateSeoSettings(updates: Partial<InsertSeoSettings>): Promise<SeoSettings>;
   
   // Client feedback and timeline notes (now using clientUserId)
   createMediaFeedback(feedback: { mediaId: string; clientUserId: string; feedbackText: string; rating: number }): Promise<any>;
@@ -795,6 +802,65 @@ export class DatabaseStorage implements IStorage {
       const [created] = await db
         .insert(brandingSettings)
         .values(updates as InsertBrandingSettings)
+        .returning();
+      return created;
+    }
+  }
+
+  // SEO settings management
+  async getSeoSettings(): Promise<SeoSettings | undefined> {
+    const [settings] = await db
+      .select()
+      .from(seoSettings)
+      .limit(1);
+    
+    if (!settings) {
+      return undefined;
+    }
+
+    // Get related media
+    const openGraphImage = settings.openGraphImageId 
+      ? await this.getMedia(settings.openGraphImageId)
+      : null;
+      
+    const twitterImage = settings.twitterImageId 
+      ? await this.getMedia(settings.twitterImageId)
+      : null;
+
+    return {
+      ...settings,
+      openGraphImage: openGraphImage ? {
+        id: openGraphImage.id,
+        url: openGraphImage.url,
+        type: openGraphImage.type,
+        title: openGraphImage.title,
+      } : null,
+      twitterImage: twitterImage ? {
+        id: twitterImage.id,
+        url: twitterImage.url,
+        type: twitterImage.type,
+        title: twitterImage.title,
+      } : null,
+    } as SeoSettings;
+  }
+
+  async updateSeoSettings(updates: Partial<InsertSeoSettings>): Promise<SeoSettings> {
+    // First try to get existing settings
+    const existing = await this.getSeoSettings();
+    
+    if (existing) {
+      // Update existing settings
+      const [updated] = await db
+        .update(seoSettings)
+        .set({ ...updates, updatedAt: new Date() })
+        .where(eq(seoSettings.id, existing.id))
+        .returning();
+      return updated;
+    } else {
+      // Create new settings if none exist
+      const [created] = await db
+        .insert(seoSettings)
+        .values(updates as InsertSeoSettings)
         .returning();
       return created;
     }

@@ -9,4 +9,4 @@ Disallow: /admin/
 Disallow: /client/
 Disallow: /auth
 
-Sitemap: https://dt-visuals.com/sitemap.xml
+Sitemap: https://dtvisuals.com/sitemap.xml
