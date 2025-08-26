@@ -124,6 +124,53 @@ export const brandingSettings = pgTable("branding_settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const seoSettings = pgTable("seo_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  // Basic SEO
+  metaTitle: text("meta_title").default("Video Production Company | Luxury Events, Music & Brands | DT Visuals UK"),
+  metaDescription: text("meta_description").default("DT Visuals is a UK-based video production team creating cinematic content for luxury events, artists, brands and agencies. Based in Leicestershire, working UK-wide."),
+  metaKeywords: text("meta_keywords").default("video production company UK, cinematic video production, luxury event videographer, corporate video production, music video production UK, video production Leicestershire, creative video agency, branded content production, monthly video retainer UK"),
+  canonicalUrl: text("canonical_url").default("https://dtvisuals.com/"),
+  
+  // Open Graph & Twitter
+  openGraphImageId: varchar("open_graph_image_id").references(() => media.id),
+  twitterImageId: varchar("twitter_image_id").references(() => media.id),
+  
+  // Business Info for Structured Data
+  businessName: text("business_name").default("DT Visuals"),
+  businessDescription: text("business_description").default("Professional video production company specializing in luxury events, music videos, and branded content"),
+  businessType: text("business_type").default("VideoProductionService"),
+  businessUrl: text("business_url").default("https://dtvisuals.com"),
+  
+  // Location Data
+  addressLocality: text("address_locality").default("Leicestershire"),
+  addressRegion: text("address_region").default("England"),
+  addressCountry: text("address_country").default("GB"),
+  postalCode: text("postal_code"),
+  streetAddress: text("street_address"),
+  latitude: text("latitude").default("52.6369"),
+  longitude: text("longitude").default("-1.1398"),
+  
+  // Contact for Structured Data
+  businessEmail: text("business_email").default("hello@dtvisuals.com"),
+  businessPhone: text("business_phone"),
+  
+  // Services for Structured Data (JSON array as text)
+  services: text("services").default('["Luxury Event Videography","Corporate Video Production","Music Video Production","Creative Direction","Post-Production Services"]'),
+  
+  // FAQ Data (JSON array as text)
+  faqs: text("faqs").default('[]'),
+  
+  // Other SEO Settings
+  enableStructuredData: boolean("enable_structured_data").default(true),
+  enableOpenGraph: boolean("enable_open_graph").default(true),
+  enableTwitterCards: boolean("enable_twitter_cards").default(true),
+  robotsDirective: text("robots_directive").default("index, follow"),
+  
+  updatedBy: varchar("updated_by").notNull().references(() => users.id),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const mediaFeedback = pgTable("media_feedback", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   mediaId: varchar("media_id").notNull().references(() => media.id, { onDelete: "cascade" }),
@@ -330,6 +377,15 @@ export const insertBrandingSettingsSchema = createInsertSchema(brandingSettings)
 // Types
 export type BrandingSettings = typeof brandingSettings.$inferSelect;
 export type InsertBrandingSettings = typeof insertBrandingSettingsSchema._type;
+
+export const insertSeoSettingsSchema = createInsertSchema(seoSettings).omit({
+  id: true,
+  updatedAt: true,
+});
+
+// Types  
+export type SeoSettings = typeof seoSettings.$inferSelect;
+export type InsertSeoSettings = typeof insertSeoSettingsSchema._type;
 
 export const insertWebsiteSettingsSchema = createInsertSchema(websiteSettings).omit({
   id: true,

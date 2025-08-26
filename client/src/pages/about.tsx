@@ -3,8 +3,13 @@ import { Navigation } from "@/components/navigation";
 import { Footer } from "@/components/footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { getBackgroundMedia, useWebsiteSettings } from "@/lib/background-utils";
+import { useAboutStructuredData } from "@/hooks/use-structured-data";
+import { useAboutSEO } from "@/hooks/use-seo-meta";
 
 export default function About() {
+  // SEO and structured data
+  useAboutStructuredData();
+  useAboutSEO();
   const [scrollY, setScrollY] = useState(0);
   const scrollYTarget = useRef(0);
   const rafRef = useRef<number>();

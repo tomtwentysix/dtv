@@ -12,8 +12,13 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Mail, Phone, MapPin, Instagram, Youtube, Linkedin, Facebook } from "lucide-react";
 import { getBackgroundMedia, useWebsiteSettings } from "@/lib/background-utils";
+import { useContactStructuredData } from "@/hooks/use-structured-data";
+import { useContactSEO } from "@/hooks/use-seo-meta";
 
 export default function Contact() {
+  // SEO and structured data
+  useContactStructuredData();
+  useContactSEO();
   const { toast } = useToast();
   const [scrollY, setScrollY] = useState(0);
   const scrollYTarget = useRef(0);
