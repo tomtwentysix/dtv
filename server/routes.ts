@@ -111,6 +111,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Serve sitemap.xml with proper content type for search engines
+  // This ensures the sitemap is served with application/xml instead of text/html
+  app.get("/sitemap.xml", (req, res) => {
+    const sitemapPath = path.join(process.cwd(), "dist", "public", "sitemap.xml");
+    
+    if (fs.existsSync(sitemapPath)) {
+      res.set('Content-Type', 'application/xml');
+      res.sendFile(sitemapPath);
+    } else {
+      res.status(404).send('Sitemap not found');
+    }
+  });
+
   // Debug endpoint to check uploads directory
   app.get("/api/uploads/debug", (req, res) => {
     try {
