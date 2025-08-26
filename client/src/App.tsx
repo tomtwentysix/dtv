@@ -23,6 +23,7 @@ import AdminMedia from "@/pages/admin/media";
 import AdminWebsiteCustomization from "@/pages/admin/website-customization";
 import ClientDashboard from "@/pages/client/dashboard";
 import ClientLoginPage from "@/pages/client-login";
+import { CookieBanner } from "@/components/cookie-banner";
 
 function Router() {
   return (
@@ -77,6 +78,7 @@ function App() {
             <OpenGraphManager />
             <Toaster />
             <Router />
+            <CookieBanner />
           </TooltipProvider>
         </AuthProvider>
       </ThemeProvider>
