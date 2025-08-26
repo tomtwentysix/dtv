@@ -7,6 +7,7 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { useDynamicFavicon } from "@/hooks/use-dynamic-favicon";
 import { useDynamicOpenGraph } from "@/hooks/use-dynamic-opengraph";
+import { useStructuredData } from "@/hooks/use-structured-data";
 import { ProtectedRoute } from "@/lib/protected-route";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
@@ -68,6 +69,12 @@ function OpenGraphManager() {
   return null;
 }
 
+// Component to handle structured data injection for SEO rich results
+function StructuredDataManager() {
+  useStructuredData();
+  return null;
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -76,6 +83,7 @@ function App() {
           <TooltipProvider>
             <FaviconManager />
             <OpenGraphManager />
+            <StructuredDataManager />
             <Toaster />
             <Router />
             <CookieBanner />
