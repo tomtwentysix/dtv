@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
 import path from "path";
+import fs from "fs";
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { initializeDatabase } from "./init-database.js";
@@ -21,7 +22,6 @@ if (nodeEnv === 'production') {
   // As a fallback, try to load .env.prod if it exists locally
   const envPath = path.resolve(process.cwd(), '.env.prod');
   try {
-    const fs = await import('fs');
     if (fs.existsSync(envPath)) {
       console.log(`✅ Found local .env.prod, loading as backup: ${envPath}`);
       dotenv.config({ path: '.env.prod' });
@@ -38,7 +38,6 @@ if (nodeEnv === 'production') {
   
   const envPath = path.resolve(process.cwd(), envFile);
   try {
-    const fs = await import('fs');
     if (fs.existsSync(envPath)) {
       console.log(`✅ Environment file exists: ${envPath}`);
       dotenv.config({ path: envFile });

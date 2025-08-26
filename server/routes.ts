@@ -1340,8 +1340,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       sitemap += '</urlset>';
       
       // Write sitemap to public directory
-      const fs = require('fs');
-      const path = require('path');
       const sitemapPath = path.join(process.cwd(), 'client', 'public', 'sitemap.xml');
       fs.writeFileSync(sitemapPath, sitemap);
       
