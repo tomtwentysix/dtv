@@ -81,7 +81,7 @@ export function Footer() {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-white">Contact</h3>
             <ul className="space-y-2 text-sm text-gray-400">
-              <li>{(contactInfo as any)?.contactEmail || 'hello@dt-visuals.com'}</li>
+              <li>{(contactInfo as any)?.contactEmail || 'hello@dtvisuals.com'}</li>
               <li>{(contactInfo as any)?.contactPhone || '+1 (555) 123-4567'}</li>
               <li>{(contactInfo as any)?.contactAddress || 'Los Angeles, CA'}</li>
             </ul>

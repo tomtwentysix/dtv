@@ -129,6 +129,10 @@ export interface IStorage {
   getBrandingSettings(): Promise<BrandingSettings | undefined>;
   updateBrandingSettings(updates: Partial<InsertBrandingSettings>): Promise<BrandingSettings>;
   
+  // SEO settings management  
+  getSeoSettings(): Promise<WebsiteSettings | undefined>;
+  updateSeoSettings(seoSettings: { seoTitle?: string; seoDescription?: string; seoKeywords?: string; seoAuthor?: string; seoRobots?: string; seoCanonicalUrl?: string; seoOgImageUrl?: string; seoTwitterImageUrl?: string; updatedBy: string }): Promise<WebsiteSettings>;
+  
   // Client feedback and timeline notes (now using clientUserId)
   createMediaFeedback(feedback: { mediaId: string; clientUserId: string; feedbackText: string; rating: number }): Promise<any>;
   getClientUserFeedback(clientUserId: string): Promise<any[]>;
@@ -795,6 +799,60 @@ export class DatabaseStorage implements IStorage {
       const [created] = await db
         .insert(brandingSettings)
         .values(updates as InsertBrandingSettings)
+        .returning();
+      return created;
+    }
+  }
+
+  async getSeoSettings(): Promise<WebsiteSettings | undefined> {
+    const [seoSettings] = await db
+      .select()
+      .from(websiteSettings)
+      .where(eq(websiteSettings.section, 'seo_settings'))
+      .limit(1);
+
+    return seoSettings;
+  }
+
+  async updateSeoSettings(seoInfo: { seoTitle?: string; seoDescription?: string; seoKeywords?: string; seoAuthor?: string; seoRobots?: string; seoCanonicalUrl?: string; seoOgImageUrl?: string; seoTwitterImageUrl?: string; updatedBy: string }): Promise<WebsiteSettings> {
+    // First try to get existing SEO settings
+    const existing = await this.getSeoSettings();
+    
+    if (existing) {
+      // Update existing SEO settings
+      const [updated] = await db
+        .update(websiteSettings)
+        .set({
+          seoTitle: seoInfo.seoTitle,
+          seoDescription: seoInfo.seoDescription,
+          seoKeywords: seoInfo.seoKeywords,
+          seoAuthor: seoInfo.seoAuthor,
+          seoRobots: seoInfo.seoRobots,
+          seoCanonicalUrl: seoInfo.seoCanonicalUrl,
+          seoOgImageUrl: seoInfo.seoOgImageUrl,
+          seoTwitterImageUrl: seoInfo.seoTwitterImageUrl,
+          updatedBy: seoInfo.updatedBy,
+          updatedAt: new Date()
+        })
+        .where(eq(websiteSettings.id, existing.id))
+        .returning();
+      return updated;
+    } else {
+      // Create new SEO settings if none exist
+      const [created] = await db
+        .insert(websiteSettings)
+        .values({
+          section: 'seo_settings',
+          seoTitle: seoInfo.seoTitle,
+          seoDescription: seoInfo.seoDescription,
+          seoKeywords: seoInfo.seoKeywords,
+          seoAuthor: seoInfo.seoAuthor,
+          seoRobots: seoInfo.seoRobots,
+          seoCanonicalUrl: seoInfo.seoCanonicalUrl,
+          seoOgImageUrl: seoInfo.seoOgImageUrl,
+          seoTwitterImageUrl: seoInfo.seoTwitterImageUrl,
+          updatedBy: seoInfo.updatedBy,
+        } as InsertWebsiteSettings)
         .returning();
       return created;
     }

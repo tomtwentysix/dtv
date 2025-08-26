@@ -1212,6 +1212,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // SEO settings routes
+  app.get("/api/seo-settings", async (req, res) => {
+    try {
+      const seoSettings = await storage.getSeoSettings();
+      res.json(seoSettings || {
+        seoTitle: "Video Production Company | Luxury Events, Music & Brands | DT Visuals UK",
+        seoDescription: "DT Visuals is a UK-based video production team creating cinematic content for luxury events, artists, brands and agencies. Based in Leicestershire, working UK-wide.",
+        seoKeywords: "video production company UK, cinematic video production, luxury event videographer, corporate video production, music video production UK, video production Leicestershire, creative video agency, branded content production, monthly video retainer UK",
+        seoAuthor: "DT Visuals",
+        seoRobots: "index, follow",
+        seoCanonicalUrl: "https://dtvisuals.com/",
+        seoOgImageUrl: "",
+        seoTwitterImageUrl: ""
+      });
+    } catch (error) {
+      console.error("Error fetching SEO settings:", error);
+      res.status(500).json({ message: "Failed to fetch SEO settings" });
+    }
+  });
+
+  app.put("/api/seo-settings", requireAuth, requirePermission("edit:website"), async (req, res) => {
+    try {
+      const { 
+        seoTitle, 
+        seoDescription, 
+        seoKeywords, 
+        seoAuthor, 
+        seoRobots, 
+        seoCanonicalUrl, 
+        seoOgImageUrl, 
+        seoTwitterImageUrl 
+      } = req.body;
+      
+      const seoSettings = await storage.updateSeoSettings({
+        seoTitle,
+        seoDescription,
+        seoKeywords,
+        seoAuthor,
+        seoRobots,
+        seoCanonicalUrl,
+        seoOgImageUrl,
+        seoTwitterImageUrl,
+        updatedBy: req.user!.id,
+      });
+      
+      res.json(seoSettings);
+    } catch (error) {
+      console.error("Error updating SEO settings:", error);
+      res.status(500).json({ message: "Failed to update SEO settings" });
+    }
+  });
+
   // Branding settings routes
   app.get("/api/branding-settings", async (req, res) => {
     try {

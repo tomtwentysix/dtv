@@ -170,6 +170,11 @@ export default function WebsiteCustomization() {
     queryKey: ['/api/contact-info'],
   });
 
+  // Fetch SEO settings
+  const { data: seoSettings, isLoading: isSeoLoading } = useQuery({
+    queryKey: ['/api/seo-settings'],
+  });
+
   // Contact info form state
   const [contactForm, setContactForm] = useState({
     contactEmail: '',
@@ -178,6 +183,18 @@ export default function WebsiteCustomization() {
     instagramUrl: '',
     facebookUrl: '',
     linkedinUrl: ''
+  });
+
+  // SEO settings form state
+  const [seoForm, setSeoForm] = useState({
+    seoTitle: '',
+    seoDescription: '',
+    seoKeywords: '',
+    seoAuthor: '',
+    seoRobots: '',
+    seoCanonicalUrl: '',
+    seoOgImageUrl: '',
+    seoTwitterImageUrl: ''
   });
 
   // Initialize contact form when data loads
@@ -193,6 +210,22 @@ export default function WebsiteCustomization() {
       });
     }
   }, [contactInfo]);
+
+  // Initialize SEO form when data loads
+  React.useEffect(() => {
+    if (seoSettings) {
+      setSeoForm({
+        seoTitle: (seoSettings as any).seoTitle || '',
+        seoDescription: (seoSettings as any).seoDescription || '',
+        seoKeywords: (seoSettings as any).seoKeywords || '',
+        seoAuthor: (seoSettings as any).seoAuthor || '',
+        seoRobots: (seoSettings as any).seoRobots || '',
+        seoCanonicalUrl: (seoSettings as any).seoCanonicalUrl || '',
+        seoOgImageUrl: (seoSettings as any).seoOgImageUrl || '',
+        seoTwitterImageUrl: (seoSettings as any).seoTwitterImageUrl || ''
+      });
+    }
+  }, [seoSettings]);
 
   // Update contact information mutation
   const updateContactMutation = useMutation({
@@ -211,6 +244,26 @@ export default function WebsiteCustomization() {
     },
     onError: () => {
       toast({ title: "Failed to update contact information", variant: "destructive" });
+    },
+  });
+
+  // Update SEO settings mutation
+  const updateSeoMutation = useMutation({
+    mutationFn: async (data: { seoTitle: string; seoDescription: string; seoKeywords: string; seoAuthor: string; seoRobots: string; seoCanonicalUrl: string; seoOgImageUrl: string; seoTwitterImageUrl: string }) => {
+      const response = await fetch('/api/seo-settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error('Failed to update SEO settings');
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: "SEO settings updated successfully" });
+      queryClient.invalidateQueries({ queryKey: ['/api/seo-settings'] });
+    },
+    onError: () => {
+      toast({ title: "Failed to update SEO settings", variant: "destructive" });
     },
   });
 
@@ -341,13 +394,14 @@ export default function WebsiteCustomization() {
         </div>
 
         <Tabs defaultValue="Homepage" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="Homepage">Homepage</TabsTrigger>
             <TabsTrigger value="Portfolio">Portfolio</TabsTrigger>
             <TabsTrigger value="About">About</TabsTrigger>
             <TabsTrigger value="Services">Services</TabsTrigger>
             <TabsTrigger value="Branding">Branding</TabsTrigger>
             <TabsTrigger value="Contact">Contact Info</TabsTrigger>
+            <TabsTrigger value="SEO">SEO Settings</TabsTrigger>
           </TabsList>
 
           {Object.entries(pageGroups).map(([pageName, sections]) => (
@@ -566,6 +620,142 @@ export default function WebsiteCustomization() {
                     )}
                   </Button>
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* SEO Settings Tab */}
+          <TabsContent value="SEO" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Search className="h-5 w-5" />
+                  SEO Meta Tags & Settings
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Configure how your website appears in search engines and social media.
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="seoTitle">Page Title</Label>
+                    <Input
+                      id="seoTitle"
+                      placeholder="Video Production Company | Your Business Name"
+                      value={seoForm.seoTitle}
+                      onChange={(e) => setSeoForm(prev => ({ ...prev, seoTitle: e.target.value }))}
+                      disabled={updateSeoMutation.isPending}
+                    />
+                    <p className="text-xs text-muted-foreground">Appears in search results and browser tabs. Keep under 60 characters.</p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="seoDescription">Meta Description</Label>
+                    <textarea
+                      id="seoDescription"
+                      placeholder="Brief description of your video production services..."
+                      value={seoForm.seoDescription}
+                      onChange={(e) => setSeoForm(prev => ({ ...prev, seoDescription: e.target.value }))}
+                      disabled={updateSeoMutation.isPending}
+                      className="w-full min-h-[80px] px-3 py-2 text-sm rounded-md border border-input bg-background ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      rows={3}
+                    />
+                    <p className="text-xs text-muted-foreground">Appears in search results. Keep under 160 characters.</p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="seoKeywords">Keywords</Label>
+                    <Input
+                      id="seoKeywords"
+                      placeholder="video production, cinematic content, corporate videos"
+                      value={seoForm.seoKeywords}
+                      onChange={(e) => setSeoForm(prev => ({ ...prev, seoKeywords: e.target.value }))}
+                      disabled={updateSeoMutation.isPending}
+                    />
+                    <p className="text-xs text-muted-foreground">Comma-separated keywords relevant to your business.</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="seoAuthor">Author</Label>
+                      <Input
+                        id="seoAuthor"
+                        placeholder="Your Company Name"
+                        value={seoForm.seoAuthor}
+                        onChange={(e) => setSeoForm(prev => ({ ...prev, seoAuthor: e.target.value }))}
+                        disabled={updateSeoMutation.isPending}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="seoRobots">Robots</Label>
+                      <Input
+                        id="seoRobots"
+                        placeholder="index, follow"
+                        value={seoForm.seoRobots}
+                        onChange={(e) => setSeoForm(prev => ({ ...prev, seoRobots: e.target.value }))}
+                        disabled={updateSeoMutation.isPending}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="seoCanonicalUrl">Canonical URL</Label>
+                    <Input
+                      id="seoCanonicalUrl"
+                      type="url"
+                      placeholder="https://dtvisuals.com/"
+                      value={seoForm.seoCanonicalUrl}
+                      onChange={(e) => setSeoForm(prev => ({ ...prev, seoCanonicalUrl: e.target.value }))}
+                      disabled={updateSeoMutation.isPending}
+                    />
+                    <p className="text-xs text-muted-foreground">The preferred version of your website URL.</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="seoOgImageUrl">Open Graph Image URL</Label>
+                      <Input
+                        id="seoOgImageUrl"
+                        type="url"
+                        placeholder="https://dtvisuals.com/images/og-image.jpg"
+                        value={seoForm.seoOgImageUrl}
+                        onChange={(e) => setSeoForm(prev => ({ ...prev, seoOgImageUrl: e.target.value }))}
+                        disabled={updateSeoMutation.isPending}
+                      />
+                      <p className="text-xs text-muted-foreground">Image shown when shared on Facebook, LinkedIn, etc.</p>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="seoTwitterImageUrl">Twitter Image URL</Label>
+                      <Input
+                        id="seoTwitterImageUrl"
+                        type="url"
+                        placeholder="https://dtvisuals.com/images/twitter-image.jpg"
+                        value={seoForm.seoTwitterImageUrl}
+                        onChange={(e) => setSeoForm(prev => ({ ...prev, seoTwitterImageUrl: e.target.value }))}
+                        disabled={updateSeoMutation.isPending}
+                      />
+                      <p className="text-xs text-muted-foreground">Image shown when shared on Twitter/X.</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <Button
+                  onClick={() => updateSeoMutation.mutate(seoForm)}
+                  disabled={updateSeoMutation.isPending}
+                  className="w-full"
+                >
+                  {updateSeoMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Updating...
+                    </>
+                  ) : (
+                    'Update SEO Settings'
+                  )}
+                </Button>
               </CardContent>
             </Card>
           </TabsContent>
