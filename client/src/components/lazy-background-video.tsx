@@ -37,7 +37,7 @@ export const LazyBackgroundVideo: React.FC<LazyBackgroundVideoProps> = ({
     <div ref={elementRef} className="relative">
       {shouldLoad && !hasError ? (
         <video
-          className={`${className} ${isLoaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-1000`}
+          className={`${className} ${isLoaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-500`}
           style={style}
           src={src}
           poster={poster}
@@ -48,7 +48,7 @@ export const LazyBackgroundVideo: React.FC<LazyBackgroundVideoProps> = ({
           disablePictureInPicture
           controls={false}
           preload="metadata" // Changed from "none" to "metadata" for better UX
-          onLoadedData={handleVideoLoad}
+          onCanPlayThrough={handleVideoLoad} // Changed to onCanPlayThrough for better loading detection
           onError={handleVideoError}
         />
       ) : (

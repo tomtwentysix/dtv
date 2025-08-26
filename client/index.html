@@ -37,6 +37,45 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <meta name="format-detection" content="telephone=no">
     
+    <!-- Critical CSS for faster LCP -->
+    <style>
+      /* Critical styles for LCP element */
+      body { 
+        margin: 0; 
+        font-family: system-ui, -apple-system, sans-serif; 
+        background: #000;
+      }
+      
+      #root { 
+        min-height: 100vh; 
+      }
+      
+      /* Hero section critical styles */
+      .hero-title {
+        color: white;
+        font-size: 3.625rem;
+        font-weight: 900;
+        line-height: 1.1;
+      }
+      
+      @media (min-width: 768px) {
+        .hero-title {
+          font-size: 5.875rem;
+        }
+      }
+      
+      /* Reduce layout shift */
+      .hero-content {
+        opacity: 0;
+        animation: fade-in-fast 0.3s ease-out 0.1s forwards;
+      }
+      
+      @keyframes fade-in-fast {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+    </style>
+    
     <!-- Dynamic favicon will be managed by JavaScript -->
   </head>
   <body>

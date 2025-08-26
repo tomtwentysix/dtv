@@ -12,6 +12,7 @@ import { useEffect, useState, useRef } from "react";
 import { getBackgroundMedia, useWebsiteSettings } from "@/lib/background-utils";
 import { useHomePageStructuredData } from "@/hooks/use-structured-data";
 import { useHomePageSEO } from "@/hooks/use-seo-meta";
+import { useProgressiveLoading } from "@/hooks/use-progressive-loading";
 
 export default function Home() {
   // SEO and structured data
@@ -21,6 +22,12 @@ export default function Home() {
   const { data: featuredMedia, isLoading } = useQuery<any[]>({
     queryKey: ["/api/media/featured"],
   });
+
+  // Progressive loading for featured media to improve LCP
+  const { visibleItems: visibleFeaturedMedia, isComplete } = useProgressiveLoading(
+    featuredMedia || [], 
+    { enabled: !isLoading, batchSize: 3, delay: 200 }
+  );
 
   const { data: websiteSettings } = useWebsiteSettings();
   const [scrollY, setScrollY] = useState(0);
@@ -262,12 +269,14 @@ export default function Home() {
           {/* Featured Work */}
           <div className="mt-16">
             {isLoading ? (
-              <div className="flex items-center justify-center min-h-[200px]">
-                <Loader2 className="h-8 w-8 animate-spin" />
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="bg-gray-200 dark:bg-gray-800 rounded-lg h-64 animate-pulse" />
+                ))}
               </div>
             ) : featuredMedia && featuredMedia.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-center mx-auto">
-                {featuredMedia.map((media: any) => (
+                {visibleFeaturedMedia.map((media: any) => (
                   <Card 
                     key={media.id} 
                     className="group cursor-pointer overflow-hidden glass-card"
