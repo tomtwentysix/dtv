@@ -100,10 +100,42 @@
     z-index: 1;
   }
 
-  /* Parallax backgrounds */
+  /* Parallax backgrounds - simplified for better performance */
   .parallax-bg {
     transform: translate3d(0, 0, 0);
-    transition: transform 0.1s ease-out;
+    will-change: transform;
+    backface-visibility: hidden;
+    /* Reduced transition time for better performance */
+    transition: transform 0.05s ease-out;
+  }
+
+  /* Performance optimizations for videos and backgrounds */
+  .lazy-video-loading {
+    background-color: #1a1a1a;
+    background-image: linear-gradient(45deg, #1a1a1a 25%, transparent 25%), 
+                      linear-gradient(-45deg, #1a1a1a 25%, transparent 25%),
+                      linear-gradient(45deg, transparent 75%, #1a1a1a 75%), 
+                      linear-gradient(-45deg, transparent 75%, #1a1a1a 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+    animation: loading-pattern 2s linear infinite;
+  }
+
+  @keyframes loading-pattern {
+    0% { background-position: 0 0, 0 10px, 10px -10px, -10px 0px; }
+    100% { background-position: 20px 20px, 20px 30px, 30px 10px, 10px 20px; }
+  }
+
+  /* Optimize video performance */
+  video[preload="none"] {
+    content-visibility: auto;
+    contain-intrinsic-size: 0 400px;
+  }
+
+  /* Reduce repaints for background elements */
+  .hero-video-overlay {
+    will-change: auto;
+    transform: translateZ(0);
   }
 
   /* Dynamic Text Contrast System */
