@@ -5,7 +5,7 @@
 
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import type { SeoSettings } from '@/lib/structured-data-utils';
+import type { SeoSettings } from '@/hooks/use-seo-settings';
 
 interface SEOMetaOptions {
   title?: string;
@@ -67,9 +67,9 @@ export function useSEOMeta(options: SEOMetaOptions = {}) {
       updateMetaTag('property', 'og:type', options.type || 'website');
       
       // Update Open Graph image
-      if (options.image || (seoSettings.openGraphImage?.url)) {
+      if (options.image || seoSettings.openGraphImageUrl || (seoSettings.openGraphImage?.url)) {
         updateMetaTag('property', 'og:image', 
-          options.image || seoSettings.openGraphImage?.url || ''
+          options.image || seoSettings.openGraphImageUrl || seoSettings.openGraphImage?.url || ''
         );
       }
     }
@@ -85,9 +85,9 @@ export function useSEOMeta(options: SEOMetaOptions = {}) {
       );
       
       // Update Twitter image
-      if (options.image || (seoSettings.twitterImage?.url)) {
+      if (options.image || seoSettings.twitterImageUrl || (seoSettings.twitterImage?.url)) {
         updateMetaTag('name', 'twitter:image', 
-          options.image || seoSettings.twitterImage?.url || ''
+          options.image || seoSettings.twitterImageUrl || seoSettings.twitterImage?.url || ''
         );
       }
     }

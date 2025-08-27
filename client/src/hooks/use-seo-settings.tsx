@@ -36,6 +36,9 @@ export interface SeoSettings {
     type: string;
     title: string;
   } | null;
+  // Generated social image URLs
+  openGraphImageUrl?: string | null;
+  twitterImageUrl?: string | null;
 }
 
 export function useSeoSettings() {

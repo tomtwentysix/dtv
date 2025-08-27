@@ -13,6 +13,7 @@ import { requireClientAuth, loginClientUser, registerClientUser } from "./client
 import multer from "multer";
 import { generateThumbnail, getThumbnailPath, getThumbnailUrl, generateWebPThumbnailForMedia, getWebPThumbnailPath, getWebPThumbnailUrl } from "./media-processing";
 import { ImageOptimizationService } from "./image-optimization";
+import { SocialImageService } from "./social-image-service";
 import { emailService } from "./email";
 
 // Configure multer for file uploads
@@ -50,9 +51,6 @@ if (!fs.existsSync(webpDir)) {
   console.log(`📁 WebP directory exists: ${webpDir}`);
 }
 
-// Initialize comprehensive image optimization service
-const imageOptimizer = new ImageOptimizationService(storage, uploadDir);
-
 // Ensure the directory is readable and writable
 try {
   fs.accessSync(uploadDir, fs.constants.R_OK | fs.constants.W_OK);
@@ -84,6 +82,10 @@ const upload = multer({
     }
   },
 });
+
+// Initialize services
+const imageOptimizer = new ImageOptimizationService(storage, uploadDir);
+const socialImageService = new SocialImageService(storage, uploadDir);
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
@@ -1256,27 +1258,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/seo-settings", async (req, res) => {
     try {
       const seoSettings = await storage.getSeoSettings();
-      res.json(seoSettings || {
-        metaTitle: "Video Production Company | Luxury Events, Music & Brands | DT Visuals UK",
-        metaDescription: "DT Visuals is a UK-based video production team creating cinematic content for luxury events, artists, brands and agencies. Based in Leicestershire, working UK-wide.",
-        metaKeywords: "video production company UK, cinematic video production, luxury event videographer, corporate video production, music video production UK, video production Leicestershire, creative video agency, branded content production, monthly video retainer UK",
-        canonicalUrl: "https://dtvisuals.com/",
-        businessName: "DT Visuals",
-        businessDescription: "Professional video production company specializing in luxury events, music videos, and branded content",
-        businessType: "VideoProductionService",
-        businessUrl: "https://dtvisuals.com",
-        addressLocality: "Leicestershire",
-        addressRegion: "England", 
-        addressCountry: "GB",
-        latitude: "52.6369",
-        longitude: "-1.1398",
-        businessEmail: "hello@dtvisuals.com",
-        services: '["Luxury Event Videography","Corporate Video Production","Music Video Production","Creative Direction","Post-Production Services"]',
-        faqs: '[]',
-        enableStructuredData: true,
-        enableOpenGraph: true,
-        enableTwitterCards: true,
-        robotsDirective: "index, follow",
+      const socialImageUrls = socialImageService.getSocialImageUrls();
+      
+      res.json({
+        ...(seoSettings || {
+          metaTitle: "Video Production Company | Luxury Events, Music & Brands | DT Visuals UK",
+          metaDescription: "DT Visuals is a UK-based video production team creating cinematic content for luxury events, artists, brands and agencies. Based in Leicestershire, working UK-wide.",
+          metaKeywords: "video production company UK, cinematic video production, luxury event videographer, corporate video production, music video production UK, video production Leicestershire, creative video agency, branded content production, monthly video retainer UK",
+          canonicalUrl: "https://dtvisuals.com/",
+          businessName: "DT Visuals",
+          businessDescription: "Professional video production company specializing in luxury events, music videos, and branded content",
+          businessType: "VideoProductionService",
+          businessUrl: "https://dtvisuals.com",
+          addressLocality: "Leicestershire",
+          addressRegion: "England", 
+          addressCountry: "GB",
+          latitude: "52.6369",
+          longitude: "-1.1398",
+          businessEmail: "hello@dtvisuals.com",
+          services: '["Luxury Event Videography","Corporate Video Production","Music Video Production","Creative Direction","Post-Production Services"]',
+          faqs: '[]',
+          enableStructuredData: true,
+          enableOpenGraph: true,
+          enableTwitterCards: true,
+          robotsDirective: "index, follow",
+        }),
+        ...socialImageUrls
       });
     } catch (error) {
       console.error("Error fetching SEO settings:", error);
@@ -1287,10 +1294,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/seo-settings", requireAuth, requirePermission("edit:website"), async (req, res) => {
     try {
       const userId = req.user!.id;
-      const updates = { ...req.body, updatedBy: userId };
+      const { openGraphImageId, twitterImageId, ...otherUpdates } = req.body;
+      
+      // Update social images if image IDs are provided
+      let socialImageUrls = { openGraphImageUrl: null, twitterImageUrl: null };
+      if (openGraphImageId !== undefined || twitterImageId !== undefined) {
+        socialImageUrls = await socialImageService.updateSocialImages(
+          openGraphImageId || null,
+          twitterImageId || null
+        );
+      }
+      
+      const updates = { 
+        ...otherUpdates,
+        openGraphImageId: openGraphImageId || null,
+        twitterImageId: twitterImageId || null,
+        updatedBy: userId 
+      };
       
       const updatedSettings = await storage.updateSeoSettings(updates);
-      res.json(updatedSettings);
+      
+      // Return the updated settings with social image URLs
+      res.json({
+        ...updatedSettings,
+        ...socialImageUrls
+      });
     } catch (error) {
       console.error("Error updating SEO settings:", error);
       res.status(500).json({ message: "Failed to update SEO settings" });
