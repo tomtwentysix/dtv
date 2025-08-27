@@ -4,14 +4,57 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
     
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-6N0EJRPGLF"></script>
+    <!-- Google tag (gtag.js) with error handling -->
     <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
+      // Only load Google Analytics if not blocked and in appropriate environment
+      (function() {
+        try {
+          // Check if we should load analytics (avoid loading in development unless explicitly enabled)
+          const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+          const shouldLoadAnalytics = !isDevelopment || window.localStorage.getItem('enableAnalytics') === 'true';
+          
+          if (!shouldLoadAnalytics) {
+            console.log('Google Analytics disabled in development environment');
+            return;
+          }
 
-      gtag('config', 'G-6N0EJRPGLF');
+          // Initialize dataLayer first
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          window.gtag = gtag; // Make gtag globally available
+          gtag('js', new Date());
+
+          // Load gtag script with error handling
+          const script = document.createElement('script');
+          script.async = true;
+          script.src = 'https://www.googletagmanager.com/gtag/js?id=G-6N0EJRPGLF';
+          
+          script.onload = function() {
+            try {
+              gtag('config', 'G-6N0EJRPGLF');
+              console.log('Google Analytics loaded successfully');
+            } catch (error) {
+              console.warn('Google Analytics config failed:', error.message);
+            }
+          };
+          
+          script.onerror = function() {
+            console.warn('Google Analytics script blocked or failed to load');
+            // Provide fallback gtag function to prevent errors
+            window.gtag = function() {
+              console.log('Analytics call (blocked):', Array.from(arguments));
+            };
+          };
+          
+          document.head.appendChild(script);
+        } catch (error) {
+          console.warn('Google Analytics initialization failed:', error.message);
+          // Provide fallback gtag function
+          window.gtag = function() {
+            console.log('Analytics call (fallback):', Array.from(arguments));
+          };
+        }
+      })();
     </script>
     
     <title>Video Production Company | Luxury Events, Music & Brands | DT Visuals UK</title>
