@@ -57,12 +57,14 @@ function MediaSelectionDialog({
   section, 
   onSelect, 
   isOpen, 
-  onOpenChange 
+  onOpenChange,
+  mediaTypeFilter
 }: { 
   section: string;
   onSelect: (mediaId: string, mediaType: 'image' | 'video') => void;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
+  mediaTypeFilter?: 'image' | 'video' | 'all';
 }) {
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -71,11 +73,15 @@ function MediaSelectionDialog({
     queryKey: ['/api/media'],
   });
 
-  // Filter media based on search query
-  const filteredMedia = allMedia.filter(media => 
-    media.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    media.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  // Filter media based on search query and media type
+  const filteredMedia = allMedia.filter(media => {
+    const matchesSearch = media.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (media.tags && media.tags.some((tag: string) => tag.toLowerCase().includes(searchQuery.toLowerCase())));
+    
+    const matchesType = !mediaTypeFilter || mediaTypeFilter === 'all' || media.type === mediaTypeFilter;
+    
+    return matchesSearch && matchesType;
+  });
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -540,6 +546,7 @@ export default function WebsiteCustomization() {
                   onSelect={(mediaId, mediaType) => handleMediaSelect(section, mediaId, mediaType)}
                   isOpen={openDialog === section}
                   onOpenChange={(open) => setOpenDialog(open ? section : null)}
+                  mediaTypeFilter="all"
                 />
               </Card>
             );
@@ -628,51 +635,99 @@ export default function WebsiteCustomization() {
                   </TabsContent>
                   
                   <TabsContent value="social" className="space-y-4">
-                    <div className="grid gap-4">
-                      <div className="space-y-2">
+                    <div className="grid gap-6">
+                      <div className="space-y-3">
                         <Label>Open Graph Image</Label>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => setOpenDialog('og-image')}
-                            disabled={updateSeoMutation.isPending}
-                          >
-                            {seoForm.openGraphImageId ? 'Change Image' : 'Select Image'}
-                          </Button>
-                          {seoForm.openGraphImageId && (
+                        <p className="text-sm text-muted-foreground">
+                          This image will appear when your website is shared on Facebook, LinkedIn, and other social platforms. Recommended size: 1200x630 pixels.
+                        </p>
+                        <div className="flex items-start gap-4">
+                          <div className="flex flex-col gap-2">
                             <Button
                               type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setSeoForm(prev => ({ ...prev, openGraphImageId: '' }))}
+                              variant="outline"
+                              onClick={() => setOpenDialog('og-image')}
+                              disabled={updateSeoMutation.isPending}
                             >
-                              Remove
+                              {seoForm.openGraphImageId ? 'Change Image' : 'Select Image'}
                             </Button>
+                            {seoForm.openGraphImageId && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setSeoForm(prev => ({ ...prev, openGraphImageId: '' }))}
+                              >
+                                Remove
+                              </Button>
+                            )}
+                          </div>
+                          {(seoSettings?.openGraphImage || seoSettings?.openGraphImageUrl) && (
+                            <div className="flex flex-col gap-2">
+                              <div className="relative border rounded-lg overflow-hidden bg-muted/50">
+                                <img
+                                  src={seoSettings?.openGraphImageUrl || seoSettings?.openGraphImage?.url}
+                                  alt="Open Graph preview"
+                                  className="w-48 h-25 object-cover"
+                                />
+                                <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                                  <span className="text-white text-xs font-medium bg-black/50 px-2 py-1 rounded">
+                                    Preview
+                                  </span>
+                                </div>
+                              </div>
+                              <p className="text-xs text-muted-foreground">
+                                Current: {seoSettings?.openGraphImage?.title || 'Social sharing image'}
+                              </p>
+                            </div>
                           )}
                         </div>
                       </div>
                       
-                      <div className="space-y-2">
+                      <div className="space-y-3">
                         <Label>Twitter Card Image</Label>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => setOpenDialog('twitter-image')}
-                            disabled={updateSeoMutation.isPending}
-                          >
-                            {seoForm.twitterImageId ? 'Change Image' : 'Select Image'}
-                          </Button>
-                          {seoForm.twitterImageId && (
+                        <p className="text-sm text-muted-foreground">
+                          This image will appear when your website is shared on Twitter/X. Recommended size: 1200x630 pixels for large cards.
+                        </p>
+                        <div className="flex items-start gap-4">
+                          <div className="flex flex-col gap-2">
                             <Button
                               type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setSeoForm(prev => ({ ...prev, twitterImageId: '' }))}
+                              variant="outline"
+                              onClick={() => setOpenDialog('twitter-image')}
+                              disabled={updateSeoMutation.isPending}
                             >
-                              Remove
+                              {seoForm.twitterImageId ? 'Change Image' : 'Select Image'}
                             </Button>
+                            {seoForm.twitterImageId && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setSeoForm(prev => ({ ...prev, twitterImageId: '' }))}
+                              >
+                                Remove
+                              </Button>
+                            )}
+                          </div>
+                          {(seoSettings?.twitterImage || seoSettings?.twitterImageUrl) && (
+                            <div className="flex flex-col gap-2">
+                              <div className="relative border rounded-lg overflow-hidden bg-muted/50">
+                                <img
+                                  src={seoSettings?.twitterImageUrl || seoSettings?.twitterImage?.url}
+                                  alt="Twitter Card preview"
+                                  className="w-48 h-25 object-cover"
+                                />
+                                <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                                  <span className="text-white text-xs font-medium bg-black/50 px-2 py-1 rounded">
+                                    Preview
+                                  </span>
+                                </div>
+                              </div>
+                              <p className="text-xs text-muted-foreground">
+                                Current: {seoSettings?.twitterImage?.title || 'Social sharing image'}
+                              </p>
+                            </div>
                           )}
                         </div>
                       </div>
@@ -858,6 +913,7 @@ export default function WebsiteCustomization() {
               }}
               isOpen={openDialog === 'og-image' || openDialog === 'twitter-image'}
               onOpenChange={(open) => setOpenDialog(open ? openDialog : null)}
+              mediaTypeFilter="image"
             />
           </TabsContent>
 
