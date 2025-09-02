@@ -710,14 +710,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create the client first
       const client = await storage.createClient({ ...clientData, createdBy: req.user!.id });
       
-      // Hash the password for the client user using the client auth format (salt:hash)
+      // Hash the password for the client user using the same format as auth.ts (hash.salt)
       const { scrypt, randomBytes } = await import("crypto");
       const { promisify } = await import("util");
       const scryptAsync = promisify(scrypt);
       
       const salt = randomBytes(16).toString("hex");
       const buf = (await scryptAsync(password, salt, 64)) as Buffer;
-      const hashedPassword = `${salt}:${buf.toString("hex")}`;
+      const hashedPassword = `${buf.toString("hex")}.${salt}`;
       
       // Create the client user for authentication
       await storage.createClientUser({
@@ -780,14 +780,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Client user not found" });
       }
 
-      // Hash the new password using the client auth format (salt:hash)
+      // Hash the new password using the same format as auth.ts (hash.salt)
       const { scrypt, randomBytes } = await import("crypto");
       const { promisify } = await import("util");
       const scryptAsync = promisify(scrypt);
       
       const salt = randomBytes(16).toString("hex");
       const buf = (await scryptAsync(password, salt, 64)) as Buffer;
-      const hashedPassword = `${salt}:${buf.toString("hex")}`;
+      const hashedPassword = `${buf.toString("hex")}.${salt}`;
 
       // Update the client user's password
       await storage.updateClientUser(clientUser.id, { password: hashedPassword });
