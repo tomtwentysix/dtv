@@ -6,6 +6,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu, Moon, Sun, User, LogOut } from "lucide-react";
 import { useTheme } from "@/hooks/use-theme";
 import { useAuth } from "@/hooks/use-auth";
+import { useClientAuth } from "@/hooks/use-client-auth";
 import { useBrandingSettings } from "@/hooks/use-branding-settings";
 import {
   DropdownMenu,
@@ -49,20 +50,32 @@ export function Navigation() {
   const [location] = useLocation();
   const { theme, setTheme } = useTheme();
   const { user, logoutMutation } = useAuth();
+  const { clientUser, isAuthenticated: isClientAuthenticated, logout: clientLogout } = useClientAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const { data: brandingSettings } = useBrandingSettings();
 
-  // Fetch user roles to determine dashboard destination
+  // Determine if we're in client mode
+  const isClientMode = isClientAuthenticated && clientUser;
+  const currentUser = isClientMode ? clientUser : user;
+
+  // Fetch user roles to determine dashboard destination (only for regular users)
   const { data: userRoles } = useQuery({
     queryKey: ["/api/user/roles"],
-    enabled: !!user,
+    enabled: !!user && !isClientMode,
   });
 
   const handleLogout = () => {
-    logoutMutation.mutate();
+    if (isClientMode) {
+      clientLogout();
+    } else {
+      logoutMutation.mutate();
+    }
   };
 
   const getUserDashboardPath = () => {
+    if (isClientMode) {
+      return "/client/dashboard";
+    }
     return user ? getDashboardPath(userRoles as any[]) : "/auth";
   };
 
@@ -110,24 +123,35 @@ export function Navigation() {
             </div>
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:block">
-            <div className="ml-10 flex items-baseline space-x-8">
-              {navItems.map((item) => (
-                <Link key={item.name} href={item.href}>
-                  <span
-                    className={`cursor-pointer transition-colors duration-200 ${
-                      location === item.href
-                        ? "nav-text-dynamic font-semibold"
-                        : "nav-text-dynamic hover:text-[hsl(184,65%,18%)] dark:hover:text-[hsla(184, 66%, 43%, 1.00)]"
-                    }`}
-                  >
-                    {item.name}
-                  </span>
-                </Link>
-              ))}
+          {/* Desktop Navigation - Hide main nav items in client mode */}
+          {!isClientMode && (
+            <div className="hidden md:block">
+              <div className="ml-10 flex items-baseline space-x-8">
+                {navItems.map((item) => (
+                  <Link key={item.name} href={item.href}>
+                    <span
+                      className={`cursor-pointer transition-colors duration-200 ${
+                        location === item.href
+                          ? "nav-text-dynamic font-semibold"
+                          : "nav-text-dynamic hover:text-[hsl(184,65%,18%)] dark:hover:text-[hsla(184, 66%, 43%, 1.00)]"
+                      }`}
+                    >
+                      {item.name}
+                    </span>
+                  </Link>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* Client Portal Title - Show when in client mode */}
+          {isClientMode && (
+            <div className="hidden md:block">
+              <h1 className="text-xl font-semibold nav-text-dynamic">
+                Client Portal
+              </h1>
+            </div>
+          )}
 
           {/* Controls */}
           <div className="flex items-center space-x-4">
@@ -144,7 +168,7 @@ export function Navigation() {
             </Button>
 
             {/* User Menu */}
-            {user ? (
+            {currentUser ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -160,10 +184,10 @@ export function Navigation() {
                   className="w-56 glass-nav bg-white/10 dark:bg-black/30 border border-white/20 backdrop-blur-md"
                 >
                   <div className="px-2 py-1.5 text-sm font-medium">
-                    {user.username}
+                    {currentUser.username}
                   </div>
                   <div className="px-2 py-1.5 text-xs nav-text-dynamic opacity-90">
-                    {user.email}
+                    {currentUser.email}
                   </div>
                   <DropdownMenuSeparator className="bg-white/20" />
                   <DropdownMenuItem
@@ -204,7 +228,8 @@ export function Navigation() {
                 </SheetTrigger>
                 <SheetContent side="right" className="w-[300px] sm:w-[400px]">
                   <div className="flex flex-col space-y-4 mt-8">
-                    {navItems.map((item) => (
+                    {/* Show main navigation only for non-client users */}
+                    {!isClientMode && navItems.map((item) => (
                       <Link key={item.name} href={item.href}>
                         <span
                           className="block text-lg cursor-pointer text-black dark:text-white hover:text-[hsl(184,65%,18%)] dark:hover:text-[hsl(184,65%,18%)] transition-colors"
@@ -214,7 +239,7 @@ export function Navigation() {
                         </span>
                       </Link>
                     ))}
-                    {user && (
+                    {currentUser && (
                       <>
                         <hr className="my-4" />
                         <Link href={getUserDashboardPath()}>
