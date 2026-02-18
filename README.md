@@ -1,6 +1,5 @@
 # DT Visuals - Production Deployment System
 
-> Clean, production-ready dual-environment deployment for cinematic media production company
 
 ## Quick Start
 
