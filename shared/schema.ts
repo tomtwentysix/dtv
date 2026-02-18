@@ -120,6 +120,7 @@ export const brandingSettings = pgTable("branding_settings", {
   logoDarkImageId: varchar("logo_dark_image_id").references(() => media.id),
   faviconImageId: varchar("favicon_image_id").references(() => media.id),
   openGraphImageId: varchar("open_graph_image_id").references(() => media.id),
+  showTradingDetails: boolean("show_trading_details").notNull().default(false),
   updatedBy: varchar("updated_by").notNull().references(() => users.id),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

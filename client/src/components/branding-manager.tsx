@@ -31,6 +31,7 @@ export function BrandingManager() {
   const [brandingForm, setBrandingForm] = useState({
     companyName: "",
     showCompanyText: true,
+    showTradingDetails: false,
     logoLightImageId: null as string | null,
     logoDarkImageId: null as string | null,
     faviconImageId: null as string | null,
@@ -52,6 +53,7 @@ export function BrandingManager() {
       setBrandingForm({
         companyName: brandingSettings.companyName || "dt.visuals",
         showCompanyText: brandingSettings.showCompanyText ?? true,
+        showTradingDetails: brandingSettings.showTradingDetails ?? false,
         logoLightImageId: brandingSettings.logoLightImageId,
         logoDarkImageId: brandingSettings.logoDarkImageId,
         faviconImageId: brandingSettings.faviconImageId,
@@ -122,6 +124,16 @@ export function BrandingManager() {
               disabled={updateBrandingMutation.isPending}
             />
             <Label htmlFor="showCompanyText">Show company name text in navigation</Label>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="showTradingDetails"
+              checked={brandingForm.showTradingDetails}
+              onCheckedChange={(checked) => setBrandingForm(prev => ({ ...prev, showTradingDetails: checked }))}
+              disabled={updateBrandingMutation.isPending}
+            />
+            <Label htmlFor="showTradingDetails">Show trading details in footer</Label>
           </div>
         </CardContent>
       </Card>

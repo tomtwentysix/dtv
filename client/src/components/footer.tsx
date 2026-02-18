@@ -141,6 +141,18 @@ export function Footer() {
             </Link>
           </div>
         </div>
+
+        {brandingSettings?.showTradingDetails && (
+          <>
+            <Separator className="my-6 bg-gray-800/50" />
+            <div className="text-center space-y-1 text-xs text-gray-500">
+              <p>dt. visuals is a trading name of Eleven Eighty Seven Ltd. Registered in England and Wales.</p>
+              <p>Company Number: 17039209 | Registered Office Address: 24 Mill Field Close, South Kilworth, Lutterworth, LE176FE</p>
+              <p>Contact: Dan@dtvisuals.com · +447877492478</p>
+              <p>© {currentYear} Eleven Eighty Seven Limited. All rights reserved.</p>
+            </div>
+          </>
+        )}
       </div>
     </footer>
   );
