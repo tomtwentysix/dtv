@@ -114,13 +114,13 @@ export function Footer() {
                 Registered in England and Wales · Company Number: 17039209
               </p>
               <p>
-                Registered Office: 24 Mill Field Close, South Kilworth, Lutterworth, LE176FE
+                Registered Office: 24 Mill Field Close, South Kilworth, Lutterworth, LE17 6FE
               </p>
               <p>
                 Contact: <a href="mailto:Dan@dtvisuals.com" className="hover:text-gray-400 transition-colors">Dan@dtvisuals.com</a> · <a href="tel:+447877492478" className="hover:text-gray-400 transition-colors">+44 7877 492478</a>
               </p>
               <p className="pt-2 text-gray-600">
-                © {currentYear} Eleven Eighty Seven Limited. All rights reserved.
+                © {currentYear} Eleven Eighty Seven Ltd. All rights reserved.
               </p>
             </div>
           </>
