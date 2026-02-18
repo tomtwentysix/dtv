@@ -1012,6 +1012,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(brandingSettings || {
         companyName: "dt.visuals",
         showCompanyText: true,
+        showTradingInfo: false,
         logoLightImageId: null,
         logoDarkImageId: null,
         faviconImageId: null
@@ -1024,12 +1025,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/branding-settings", requireAuth, requirePermission("edit:website"), async (req, res) => {
     try {
-      const { companyName, showCompanyText, logoLightImageId, logoDarkImageId, faviconImageId } = req.body;
+      const { companyName, showCompanyText, showTradingInfo, logoLightImageId, logoDarkImageId, faviconImageId } = req.body;
       const userId = req.user!.id;
       
       const updatedSettings = await storage.updateBrandingSettings({
         companyName,
         showCompanyText,
+        showTradingInfo,
         logoLightImageId,
         logoDarkImageId,
         faviconImageId,

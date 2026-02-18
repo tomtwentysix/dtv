@@ -109,6 +109,7 @@ export const brandingSettings = pgTable("branding_settings", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   companyName: text("company_name").notNull().default("dt.visuals"),
   showCompanyText: boolean("show_company_text").notNull().default(true),
+  showTradingInfo: boolean("show_trading_info").notNull().default(false),
   logoLightImageId: varchar("logo_light_image_id").references(() => media.id),
   logoDarkImageId: varchar("logo_dark_image_id").references(() => media.id),
   faviconImageId: varchar("favicon_image_id").references(() => media.id),

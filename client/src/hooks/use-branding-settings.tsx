@@ -5,6 +5,7 @@ export interface BrandingSettings {
   id?: string;
   companyName: string;
   showCompanyText: boolean;
+  showTradingInfo: boolean;
   logoLightImageId: string | null;
   logoDarkImageId: string | null;
   faviconImageId: string | null;

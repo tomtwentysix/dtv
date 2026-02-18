@@ -315,6 +315,7 @@ async function createBasicSchema() {
       id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
       company_name TEXT DEFAULT 'dt.visuals' NOT NULL,
       show_company_text BOOLEAN DEFAULT true NOT NULL,
+      show_trading_info BOOLEAN DEFAULT false NOT NULL,
       logo_light_image_id VARCHAR,
       logo_dark_image_id VARCHAR,
       favicon_image_id VARCHAR,

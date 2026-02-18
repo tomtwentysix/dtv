@@ -101,6 +101,30 @@ export function Footer() {
             </Link>
           </div>
         </div>
+
+        {/* Trading Information Section */}
+        {brandingSettings?.showTradingInfo && (
+          <>
+            <Separator className="my-6 bg-gray-800" />
+            <div className="text-center text-xs text-gray-500 space-y-1">
+              <p>
+                <span className="text-gray-400">{brandingSettings?.companyName || "dt.visuals"}</span> is a trading name of Eleven Eighty Seven Ltd.
+              </p>
+              <p>
+                Registered in England and Wales · Company Number: 17039209
+              </p>
+              <p>
+                Registered Office: 24 Mill Field Close, South Kilworth, Lutterworth, LE176FE
+              </p>
+              <p>
+                Contact: <a href="mailto:Dan@dtvisuals.com" className="hover:text-gray-400 transition-colors">Dan@dtvisuals.com</a> · <a href="tel:+447877492478" className="hover:text-gray-400 transition-colors">+44 7877 492478</a>
+              </p>
+              <p className="pt-2 text-gray-600">
+                © {currentYear} Eleven Eighty Seven Limited. All rights reserved.
+              </p>
+            </div>
+          </>
+        )}
       </div>
     </footer>
   );
