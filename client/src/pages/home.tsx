@@ -2,30 +2,31 @@ import { Navigation } from "@/components/navigation";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { Slider } from "@/components/ui/slider";
+import { VideoPlayer } from "@/components/video-player";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, Play, Pause, Volume2, VolumeX, Maximize, SkipBack, SkipForward, X } from "lucide-react";
+import { Loader2, Play } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { getBackgroundMedia, useWebsiteSettings } from "@/lib/background-utils";
+import { useHomePageStructuredData } from "@/hooks/use-structured-data";
+import { useHomePageSEO } from "@/hooks/use-seo-meta";
 
 export default function Home() {
+  // SEO and structured data
+  useHomePageStructuredData();
+  useHomePageSEO();
+
   const { data: featuredMedia, isLoading } = useQuery<any[]>({
     queryKey: ["/api/media/featured"],
   });
 
   const { data: websiteSettings } = useWebsiteSettings();
   const [scrollY, setScrollY] = useState(0);
+  const scrollYTarget = useRef(0);
+  const rafRef = useRef<number>();
   const [visibleSections, setVisibleSections] = useState<Record<string, boolean>>({});
   const [sectionOffsets, setSectionOffsets] = useState<Record<string, number>>({});
   const [selectedVideo, setSelectedVideo] = useState<any>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [volume, setVolume] = useState(1);
-  const [isMuted, setIsMuted] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const modalVideoRef = useRef<HTMLVideoElement>(null);
   
   const heroRef = useRef<HTMLElement>(null);
   const whatWeDoRef = useRef<HTMLElement>(null);
@@ -35,10 +36,27 @@ export default function Home() {
   const workedWithRef = useRef<HTMLElement>(null);
   const connectRef = useRef<HTMLElement>(null);
 
+  // Smooth parallax scroll effect
   useEffect(() => {
-    const handleScroll = () => setScrollY(window.scrollY);
+    const lerp = (start: number, end: number, amt: number) => (1 - amt) * start + amt * end;
+    let running = true;
+    const animate = () => {
+      setScrollY(prev => {
+        const next = lerp(prev, scrollYTarget.current, 0.15);
+        return Math.abs(next - scrollYTarget.current) < 0.1 ? scrollYTarget.current : next;
+      });
+      if (running) rafRef.current = requestAnimationFrame(animate);
+    };
+    const handleScroll = () => {
+      scrollYTarget.current = window.scrollY;
+    };
     window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    rafRef.current = requestAnimationFrame(animate);
+    return () => {
+      running = false;
+      window.removeEventListener("scroll", handleScroll);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
   }, []);
 
   useEffect(() => {
@@ -105,90 +123,17 @@ export default function Home() {
     
     const sectionTop = sectionOffsets[sectionName];
     const scrollProgress = scrollY - sectionTop;
-    
-    // Only apply parallax when the section is in the viewport area
-    if (scrollProgress < -window.innerHeight || scrollProgress > window.innerHeight * 2) {
-      return 'translateY(0px)';
-    }
-    
-    const maxMovement = window.innerHeight * 0.3; // Allow more movement
-    const movement = Math.max(-maxMovement, Math.min(scrollProgress * intensity, maxMovement));
+    const movement = scrollProgress * intensity;
     return `translateY(${movement}px)`;
   };
 
   // Modal functions
   const openVideoModal = (item: any) => {
     setSelectedVideo(item);
-    setIsPlaying(false);
-    setCurrentTime(0);
   };
 
   const closeVideoModal = () => {
     setSelectedVideo(null);
-    setIsPlaying(false);
-    if (modalVideoRef.current) {
-      modalVideoRef.current.pause();
-    }
-  };
-
-  const togglePlay = () => {
-    if (modalVideoRef.current) {
-      if (isPlaying) {
-        modalVideoRef.current.pause();
-      } else {
-        modalVideoRef.current.play();
-      }
-      setIsPlaying(!isPlaying);
-    }
-  };
-
-  const toggleMute = () => {
-    if (modalVideoRef.current) {
-      modalVideoRef.current.muted = !isMuted;
-      setIsMuted(!isMuted);
-    }
-  };
-
-  const handleVolumeChange = (value: number[]) => {
-    const newVolume = value[0];
-    setVolume(newVolume);
-    if (modalVideoRef.current) {
-      modalVideoRef.current.volume = newVolume;
-    }
-  };
-
-  const handleSeek = (value: number[]) => {
-    const newTime = value[0];
-    setCurrentTime(newTime);
-    if (modalVideoRef.current) {
-      modalVideoRef.current.currentTime = newTime;
-    }
-  };
-
-  const skipBackward = () => {
-    if (modalVideoRef.current) {
-      modalVideoRef.current.currentTime = Math.max(0, modalVideoRef.current.currentTime - 10);
-    }
-  };
-
-  const skipForward = () => {
-    if (modalVideoRef.current) {
-      modalVideoRef.current.currentTime = Math.min(duration, modalVideoRef.current.currentTime + 10);
-    }
-  };
-
-  const requestFullscreen = () => {
-    if (modalVideoRef.current) {
-      if (modalVideoRef.current.requestFullscreen) {
-        modalVideoRef.current.requestFullscreen();
-      }
-    }
-  };
-
-  const formatTime = (time: number) => {
-    const minutes = Math.floor(time / 60);
-    const seconds = Math.floor(time % 60);
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
   return (
@@ -303,7 +248,8 @@ export default function Home() {
               From brand stories and campaign films to live events and music videos, we bring a full spectrum approach, blending creative thinking, technical precision and an instinct for storytelling.
             </p>
             <p className="text-lg text-gray-600 dark:text-gray-400 max-w-4xl mx-auto">
-              Led by Dan, our team collaborates closely with every client to deliver work that's not just on brief, but ahead of it.
+              Our team collaborates closely with every client to deliver work that's not just on brief, 
+              but ahead of it.
             </p>
           </div>
 
@@ -314,7 +260,7 @@ export default function Home() {
                 <Loader2 className="h-8 w-8 animate-spin" />
               </div>
             ) : featuredMedia && featuredMedia.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-center mx-auto">
                 {featuredMedia.map((media: any) => (
                   <Card 
                     key={media.id} 
@@ -324,7 +270,7 @@ export default function Home() {
                     <div className="relative">
                       {media.type === "image" ? (
                         <img 
-                          src={media.url} 
+                          src={media.thumbnailWebpUrl || media.thumbnailUrl || media.url} 
                           alt={media.title}
                           className="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110"
                         />
@@ -342,7 +288,7 @@ export default function Home() {
                               e.currentTarget.currentTime = 2;
                             }
                           }}
-                          poster={media.posterUrl || undefined}
+                          poster={media.thumbnailWebpUrl || media.thumbnailUrl || media.posterUrl || undefined}
                         />
                       )}
 
@@ -515,7 +461,7 @@ export default function Home() {
               </Card>
             </div>
             <p className="text-xl text-gray-600 dark:text-gray-400">
-              We move fast, think ahead, and deliver with polish.
+              We move fast, think ahead, and deliver.
             </p>
           </div>
         </div>
@@ -574,7 +520,7 @@ export default function Home() {
               <h3 className="text-2xl font-bold mb-6">You get:</h3>
               <ul className="text-lg text-gray-600 dark:text-gray-400 space-y-4">
                 <li>• Priority scheduling</li>
-                <li>• 1–2 shoot days per month</li>
+                <li>• Dedicated shoot days per month</li>
                 <li>• Post-production and delivery</li>
                 <li>• Strategic input & idea generation</li>
                 <li>• A trusted creative partner who grows with your vision</li>
@@ -711,227 +657,12 @@ export default function Home() {
       </section>
 
 
-      {/* Full-screen Media Player Modal */}
-      <Dialog open={!!selectedVideo} onOpenChange={closeVideoModal}>
-        <DialogContent className="p-0 overflow-hidden bg-black/95 border-none w-[80vw] max-w-none max-h-[95vh] h-auto" aria-describedby="media-player-description">
-          <DialogTitle className="sr-only">
-            Media Player - {selectedVideo?.title}
-          </DialogTitle>
-          <div id="media-player-description" className="sr-only">
-            Full-screen media player for {selectedVideo?.title}
-          </div>
-
-          <div className="relative group w-full h-full flex items-center justify-center">
-            {/* Media Content */}
-            {selectedVideo && (
-              selectedVideo.type === "image" ? (
-                <img
-                  src={selectedVideo.url}
-                  alt={selectedVideo.title}
-                  className="block max-w-full max-h-full w-auto h-auto bg-black"
-                  style={{
-                    filter: 'none',
-                    mixBlendMode: 'normal',
-                    opacity: 1,
-                    objectFit: 'contain'
-                  }}
-                />
-              ) : (
-                <video
-                  ref={modalVideoRef}
-                  src={selectedVideo.url}
-                  className="block max-w-full max-h-full w-auto h-auto bg-black"
-                  style={{
-                    filter: 'none',
-                    mixBlendMode: 'normal',
-                    opacity: 1,
-                    objectFit: 'contain'
-                  }}
-                  onLoadedMetadata={() => {
-                    if (modalVideoRef.current) {
-                      setDuration(modalVideoRef.current.duration);
-                      modalVideoRef.current.volume = volume;
-                      modalVideoRef.current.muted = isMuted;
-                    }
-                  }}
-                  onTimeUpdate={() => {
-                    if (modalVideoRef.current) {
-                      setCurrentTime(modalVideoRef.current.currentTime);
-                    }
-                  }}
-                  onPlay={() => setIsPlaying(true)}
-                  onPause={() => setIsPlaying(false)}
-                  onEnded={() => setIsPlaying(false)}
-                  onClick={(e) => {
-                    if (e.target === modalVideoRef.current) {
-                      togglePlay();
-                    }
-                  }}
-                />
-              )
-            )}
-
-            {/* Floating Controls - Show on hover (only for videos) */}
-            {selectedVideo?.type === "video" && (
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none group-hover:pointer-events-auto">
-
-              {/* Close button */}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  closeVideoModal();
-                }}
-                className="absolute top-4 right-4 z-30 text-white bg-black/50 hover:bg-black/70 rounded-full w-10 h-10 pointer-events-auto"
-              >
-                <X className="h-5 w-5" />
-              </Button>
-
-              {/* Video title overlay */}
-              <div className="absolute top-4 left-4 z-20 pointer-events-auto">
-                <div className="bg-black/70 rounded-lg px-4 py-2 backdrop-blur-sm">
-                  <h3 className="text-white font-semibold text-lg">{selectedVideo?.title}</h3>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {selectedVideo?.tags?.map((tag: string) => (
-                      <span key={tag} className="text-xs bg-white/20 text-white px-2 py-1 rounded">
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Center play/pause button */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-auto">
-                <Button
-                  variant="ghost"
-                  size="lg"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    togglePlay();
-                  }}
-                  className="text-white bg-black/50 hover:bg-black/70 rounded-full w-20 h-20 backdrop-blur-sm transition-all duration-200"
-                >
-                  {isPlaying ? (
-                    <Pause className="h-10 w-10" />
-                  ) : (
-                    <Play className="h-10 w-10 ml-1" />
-                  )}
-                </Button>
-              </div>
-
-              {/* Bottom controls bar */}
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent p-4 pointer-events-auto" onClick={(e) => e.stopPropagation()}>
-                <div className="space-y-3">
-                  {/* Progress bar */}
-                  <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
-                    <Slider
-                      value={[currentTime]}
-                      max={duration}
-                      step={0.1}
-                      onValueChange={handleSeek}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-sm text-gray-300">
-                      <span>{formatTime(currentTime)}</span>
-                      <span>{formatTime(duration)}</span>
-                    </div>
-                  </div>
-
-                  {/* Control buttons */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      {/* Skip backward */}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          skipBackward();
-                        }}
-                        className="text-white hover:bg-white/20 rounded-full w-10 h-10"
-                      >
-                        <SkipBack className="h-5 w-5" />
-                      </Button>
-
-                      {/* Skip forward */}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          skipForward();
-                        }}
-                        className="text-white hover:bg-white/20 rounded-full w-10 h-10"
-                      >
-                        <SkipForward className="h-5 w-5" />
-                      </Button>
-
-                      {/* Volume control */}
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleMute();
-                          }}
-                          className="text-white hover:bg-white/20 rounded-full w-10 h-10"
-                        >
-                          {isMuted ? (
-                            <VolumeX className="h-5 w-5" />
-                          ) : (
-                            <Volume2 className="h-5 w-5" />
-                          )}
-                        </Button>
-                        <div className="w-20" onClick={(e) => e.stopPropagation()}>
-                          <Slider
-                            value={[isMuted ? 0 : volume]}
-                            max={1}
-                            step={0.01}
-                            onValueChange={handleVolumeChange}
-                            disabled={isMuted}
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Fullscreen button */}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        requestFullscreen();
-                      }}
-                      className="text-white hover:bg-white/20 rounded-full w-10 h-10"
-                    >
-                      <Maximize className="h-5 w-5" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-              </div>
-            )}
-
-            {/* Close button for images */}
-            {selectedVideo?.type === "image" && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  closeVideoModal();
-                }}
-                className="absolute top-4 right-4 z-30 text-white bg-black/50 hover:bg-black/70 rounded-full w-10 h-10"
-              >
-                <X className="h-5 w-5" />
-              </Button>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Video Player Modal */}
+      <VideoPlayer 
+        selectedVideo={selectedVideo}
+        isOpen={!!selectedVideo}
+        onClose={closeVideoModal}
+      />
 
       <Footer />
     </div>

@@ -55,7 +55,7 @@ fi
 
 # Create directory structure
 echo "📁 Creating directory structure..."
-mkdir -p /var/www/dtvisuals/{app,uploads/{prod,dev}}
+mkdir -p /var/www/dtvisuals/app
 mkdir -p /var/log/dtvisuals
 mkdir -p /var/www/certbot
 
@@ -66,21 +66,68 @@ chown -R www-data:www-data /var/www/certbot
 
 # Setup PostgreSQL databases and user
 echo "💾 Setting up PostgreSQL..."
+
+# Generate a secure password for the database user
+DB_PASSWORD=$(openssl rand -base64 32)
+echo "📝 Generated secure database password: $DB_PASSWORD"
+echo "🔐 IMPORTANT: Save this password - you'll need it for .env files!"
+echo "$DB_PASSWORD" > /tmp/dtvisuals_db_password.txt
+chmod 600 /tmp/dtvisuals_db_password.txt
+
 sudo -u postgres psql << EOF
--- Create dtvisuals user
-CREATE USER dtvisuals WITH PASSWORD 'CHANGE_THIS_PASSWORD';
+-- Create dtvisuals user with secure password
+CREATE USER dtvisuals WITH PASSWORD '$DB_PASSWORD';
 
 -- Create databases
 CREATE DATABASE dtvisuals_prod OWNER dtvisuals;
 CREATE DATABASE dtvisuals_dev OWNER dtvisuals;
 
--- Grant privileges
+-- Grant all privileges on databases
 GRANT ALL PRIVILEGES ON DATABASE dtvisuals_prod TO dtvisuals;
 GRANT ALL PRIVILEGES ON DATABASE dtvisuals_dev TO dtvisuals;
 
--- Show databases
+-- Grant additional schema privileges
+\c dtvisuals_prod
+GRANT ALL ON SCHEMA public TO dtvisuals;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO dtvisuals;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO dtvisuals;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO dtvisuals;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO dtvisuals;
+
+\c dtvisuals_dev
+GRANT ALL ON SCHEMA public TO dtvisuals;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO dtvisuals;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO dtvisuals;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO dtvisuals;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO dtvisuals;
+
+-- Show databases to verify creation
 \l
 EOF
+
+echo ""
+echo "✅ PostgreSQL setup complete!"
+echo "📋 Database Information:"
+echo "   Username: dtvisuals"
+echo "   Password: $DB_PASSWORD"
+echo "   Production Database: dtvisuals_prod"
+echo "   Development Database: dtvisuals_dev"
+echo "   Password saved to: /tmp/dtvisuals_db_password.txt"
+echo ""
+
+# Test database connections
+echo "🔍 Testing database connections..."
+if sudo -u postgres psql -d dtvisuals_prod -c "SELECT version();" > /dev/null 2>&1; then
+    echo "✅ Production database connection: SUCCESS"
+else
+    echo "❌ Production database connection: FAILED"
+fi
+
+if sudo -u postgres psql -d dtvisuals_dev -c "SELECT version();" > /dev/null 2>&1; then
+    echo "✅ Development database connection: SUCCESS"
+else
+    echo "❌ Development database connection: FAILED"
+fi
 
 # Configure PostgreSQL
 echo "⚙️  Configuring PostgreSQL..."
@@ -268,26 +315,42 @@ echo "   - PM2 $(pm2 --version)"
 echo "   - Certbot $(certbot --version | head -1)"
 echo ""
 echo "📋 Next Steps:"
-echo "1. Update PostgreSQL password: sudo -u postgres psql -c \"ALTER USER dtvisuals PASSWORD 'your-secure-password';\""
-echo "2. Create .env files: cp .env.prod.template .env.prod && cp .env.dev.template .env.dev"
-echo "3. Update environment variables in .env files"
-echo "4. Deploy application code to /var/www/dtvisuals/app/"
-echo "5. Run: dtvisuals-deploy prod"
-echo "6. Setup SSL: certbot --nginx -d dtvisuals.com -d www.dtvisuals.com -d dev.dtvisuals.com"
-echo "7. Copy nginx.conf to /etc/nginx/sites-available/dtvisuals"
-echo "8. Enable site: ln -s /etc/nginx/sites-available/dtvisuals /etc/nginx/sites-enabled/"
-echo "9. Test nginx: nginx -t && systemctl reload nginx"
+echo "1. Clone your application:"
+echo "   cd /var/www/dtvisuals"
+echo "   sudo -u dtvisuals git clone https://github.com/your-username/your-repo.git app"
+echo "   cd app"
 echo ""
-echo "🔐 Security Notes:"
-echo "   - Change default PostgreSQL passwords"
-echo "   - Generate secure SESSION_SECRET values"
+echo "2. Create environment files using the generated password:"
+echo "   cp .env.prod.template .env.prod"
+echo "   cp .env.dev.template .env.dev"
+echo "   # Replace CHANGE_PASSWORD with: $(cat /tmp/dtvisuals_db_password.txt 2>/dev/null || echo 'Check /tmp/dtvisuals_db_password.txt')"
+echo ""
+echo "3. Deploy your application:"
+echo "   sudo ./deploy.sh prod main"
+echo ""
+echo "4. Setup SSL certificates:"
+echo "   sudo ./ssl-setup.sh yourdomain.com,www.yourdomain.com,dev.yourdomain.com admin@yourdomain.com"
+echo ""
+echo "5. Configure Nginx (if needed):"
+echo "   sudo cp nginx.conf /etc/nginx/sites-available/dtvisuals"
+echo "   sudo ln -sf /etc/nginx/sites-available/dtvisuals /etc/nginx/sites-enabled/"
+echo "   sudo rm -f /etc/nginx/sites-enabled/default"
+echo "   sudo nginx -t && sudo systemctl reload nginx"
+echo ""
+echo "🔐 Security Information:"
+echo "   Database password: $(cat /tmp/dtvisuals_db_password.txt 2>/dev/null || echo 'Check /tmp/dtvisuals_db_password.txt')"
+echo "   Password file: /tmp/dtvisuals_db_password.txt"
+echo "   Remember to:"
+echo "   - Update SESSION_SECRET in .env files with secure random strings"
 echo "   - Configure DNS records for your domain"
-echo "   - Review firewall settings"
+echo "   - Review firewall settings (UFW is enabled)"
 echo ""
-echo "📊 Monitoring:"
-echo "   - PM2: pm2 status, pm2 logs"
-echo "   - Nginx: tail -f /var/log/nginx/error.log"
-echo "   - PostgreSQL: tail -f /var/log/postgresql/postgresql-$PG_MAJOR-main.log"
+echo "📊 Troubleshooting & Monitoring:"
+echo "   - Application logs: sudo -u dtvisuals pm2 logs"
+echo "   - Nginx logs: sudo tail -f /var/log/nginx/error.log"
+echo "   - PostgreSQL logs: sudo tail -f /var/log/postgresql/postgresql-$PG_MAJOR-main.log"
+echo "   - Database connection test: sudo -u dtvisuals psql -U dtvisuals -d dtvisuals_prod -h localhost"
+echo "   - Check disk space: df -h"
 EOF
 
 chmod +x server-setup.sh

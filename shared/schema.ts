@@ -73,11 +73,14 @@ export const media = pgTable("media", {
   type: text("type").notNull(), // 'image' | 'video'
   url: text("url").notNull(),
   posterUrl: text("poster_url"), // For video poster frames
+  thumbnailUrl: text("thumbnail_url"), // For optimized thumbnails
+  thumbnailWebpUrl: text("thumbnail_webp_url"), // For WebP optimized thumbnails
+  webpUrl: text("webp_url"), // For WebP optimized backgrounds
   filename: text("filename").notNull(),
   fileSize: integer("file_size"),
   mimeType: text("mime_type"),
   isFeatured: boolean("is_featured").default(false),
-  showInPortfolio: boolean("show_in_portfolio").default(true), // Controls public visibility
+  showInPortfolio: boolean("show_in_portfolio").default(false), // Controls public visibility - changed default to false
   tags: text("tags").array(),
   projectStage: text("project_stage"), // 'concept', 'pre-production', 'production', 'post-production', 'completed', 'delivered'
   notes: text("notes"),
@@ -101,6 +104,10 @@ export const websiteSettings = pgTable("website_settings", {
   contactEmail: text("contact_email"),
   contactPhone: text("contact_phone"),
   contactAddress: text("contact_address"),
+  // Social media links
+  instagramUrl: text("instagram_url"),
+  facebookUrl: text("facebook_url"),
+  linkedinUrl: text("linkedin_url"),
   updatedBy: varchar("updated_by").notNull().references(() => users.id),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -112,6 +119,55 @@ export const brandingSettings = pgTable("branding_settings", {
   logoLightImageId: varchar("logo_light_image_id").references(() => media.id),
   logoDarkImageId: varchar("logo_dark_image_id").references(() => media.id),
   faviconImageId: varchar("favicon_image_id").references(() => media.id),
+  openGraphImageId: varchar("open_graph_image_id").references(() => media.id),
+  showTradingDetails: boolean("show_trading_details").notNull().default(false),
+  updatedBy: varchar("updated_by").notNull().references(() => users.id),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const seoSettings = pgTable("seo_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  // Basic SEO
+  metaTitle: text("meta_title").default("Video Production Company | Luxury Events, Music & Brands | DT Visuals UK"),
+  metaDescription: text("meta_description").default("DT Visuals is a UK-based video production team creating cinematic content for luxury events, artists, brands and agencies. Based in Leicestershire, working UK-wide."),
+  metaKeywords: text("meta_keywords").default("video production company UK, cinematic video production, luxury event videographer, corporate video production, music video production UK, video production Leicestershire, creative video agency, branded content production, monthly video retainer UK"),
+  canonicalUrl: text("canonical_url").default("https://dtvisuals.com/"),
+  
+  // Open Graph & Twitter
+  openGraphImageId: varchar("open_graph_image_id").references(() => media.id),
+  twitterImageId: varchar("twitter_image_id").references(() => media.id),
+  
+  // Business Info for Structured Data
+  businessName: text("business_name").default("DT Visuals"),
+  businessDescription: text("business_description").default("Professional video production company specializing in luxury events, music videos, and branded content"),
+  businessType: text("business_type").default("VideoProductionService"),
+  businessUrl: text("business_url").default("https://dtvisuals.com"),
+  
+  // Location Data
+  addressLocality: text("address_locality").default("Leicestershire"),
+  addressRegion: text("address_region").default("England"),
+  addressCountry: text("address_country").default("GB"),
+  postalCode: text("postal_code"),
+  streetAddress: text("street_address"),
+  latitude: text("latitude").default("52.6369"),
+  longitude: text("longitude").default("-1.1398"),
+  
+  // Contact for Structured Data
+  businessEmail: text("business_email").default("hello@dtvisuals.com"),
+  businessPhone: text("business_phone"),
+  
+  // Services for Structured Data (JSON array as text)
+  services: text("services").default('["Luxury Event Videography","Corporate Video Production","Music Video Production","Creative Direction","Post-Production Services"]'),
+  
+  // FAQ Data (JSON array as text)
+  faqs: text("faqs").default('[]'),
+  
+  // Other SEO Settings
+  enableStructuredData: boolean("enable_structured_data").default(true),
+  enableOpenGraph: boolean("enable_open_graph").default(true),
+  enableTwitterCards: boolean("enable_twitter_cards").default(true),
+  robotsDirective: text("robots_directive").default("index, follow"),
+  
   updatedBy: varchar("updated_by").notNull().references(() => users.id),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -268,6 +324,11 @@ export const brandingSettingsRelations = relations(brandingSettings, ({ one }) =
     fields: [brandingSettings.faviconImageId],
     references: [media.id],
   }),
+  openGraphImage: one(media, {
+    fields: [brandingSettings.openGraphImageId],
+    references: [media.id],
+    relationName: "openGraphImage",
+  }),
   updater: one(users, {
     fields: [brandingSettings.updatedBy],
     references: [users.id],
@@ -317,6 +378,15 @@ export const insertBrandingSettingsSchema = createInsertSchema(brandingSettings)
 // Types
 export type BrandingSettings = typeof brandingSettings.$inferSelect;
 export type InsertBrandingSettings = typeof insertBrandingSettingsSchema._type;
+
+export const insertSeoSettingsSchema = createInsertSchema(seoSettings).omit({
+  id: true,
+  updatedAt: true,
+});
+
+// Types  
+export type SeoSettings = typeof seoSettings.$inferSelect;
+export type InsertSeoSettings = typeof insertSeoSettingsSchema._type;
 
 export const insertWebsiteSettingsSchema = createInsertSchema(websiteSettings).omit({
   id: true,

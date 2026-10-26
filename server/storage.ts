@@ -10,6 +10,7 @@ import {
   mediaClients,
   websiteSettings,
   brandingSettings,
+  seoSettings,
   mediaFeedback,
   mediaTimelineNotes,
   type User, 
@@ -29,10 +30,12 @@ import {
   type WebsiteSettings,
   type InsertWebsiteSettings,
   type BrandingSettings,
-  type InsertBrandingSettings
+  type InsertBrandingSettings,
+  type SeoSettings,
+  type InsertSeoSettings
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, inArray } from "drizzle-orm";
+import { eq, and, inArray, sql } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -104,6 +107,8 @@ export interface IStorage {
   getMediaByUploader(uploaderId: string): Promise<Media[]>;
   createMedia(media: InsertMedia): Promise<Media>;
   updateMedia(id: string, updates: Partial<InsertMedia>): Promise<Media | undefined>;
+  updateMediaWebpUrl(id: string, webpUrl: string): Promise<Media | undefined>;
+  updateMediaThumbnailWebpUrl(id: string, thumbnailWebpUrl: string): Promise<Media | undefined>;
   deleteMedia(id: string): Promise<boolean>;
   
   // Media-Client associations
@@ -117,14 +122,19 @@ export interface IStorage {
   getWebsiteSettings(): Promise<WebsiteSettings[]>;
   getWebsiteSettingBySection(section: string): Promise<WebsiteSettings | undefined>;
   updateWebsiteSetting(section: string, setting: InsertWebsiteSettings): Promise<WebsiteSettings>;
+  getBackgroundImages(): Promise<Media[]>;
   
   // Contact information management
   getContactInfo(): Promise<WebsiteSettings | undefined>;
-  updateContactInfo(contactInfo: { contactEmail?: string; contactPhone?: string; contactAddress?: string; updatedBy: string }): Promise<WebsiteSettings>;
+  updateContactInfo(contactInfo: { contactEmail?: string; contactPhone?: string; contactAddress?: string; instagramUrl?: string; facebookUrl?: string; linkedinUrl?: string; updatedBy: string }): Promise<WebsiteSettings>;
   
   // Branding settings management
   getBrandingSettings(): Promise<BrandingSettings | undefined>;
   updateBrandingSettings(updates: Partial<InsertBrandingSettings>): Promise<BrandingSettings>;
+  
+  // SEO settings management
+  getSeoSettings(): Promise<SeoSettings | undefined>;
+  updateSeoSettings(updates: Partial<InsertSeoSettings>): Promise<SeoSettings>;
   
   // Client feedback and timeline notes (now using clientUserId)
   createMediaFeedback(feedback: { mediaId: string; clientUserId: string; feedbackText: string; rating: number }): Promise<any>;
@@ -526,6 +536,24 @@ export class DatabaseStorage implements IStorage {
     return result.rowCount !== null && result.rowCount > 0;
   }
 
+  async updateMediaWebpUrl(id: string, webpUrl: string): Promise<Media | undefined> {
+    const [updatedMedia] = await db
+      .update(media)
+      .set({ webpUrl })
+      .where(eq(media.id, id))
+      .returning();
+    return updatedMedia || undefined;
+  }
+
+  async updateMediaThumbnailWebpUrl(id: string, thumbnailWebpUrl: string): Promise<Media | undefined> {
+    const [updatedMedia] = await db
+      .update(media)
+      .set({ thumbnailWebpUrl })
+      .where(eq(media.id, id))
+      .returning();
+    return updatedMedia || undefined;
+  }
+
   // Media-Client associations
   async assignMediaToClient(mediaId: string, clientId: string): Promise<boolean> {
     try {
@@ -616,6 +644,22 @@ export class DatabaseStorage implements IStorage {
     return existingSetting;
   }
 
+  async getBackgroundImages(): Promise<Media[]> {
+    // Get all background images referenced in website settings
+    const settings = await db.select().from(websiteSettings).where(
+      // Only get settings that have a background image ID
+      sql`background_image_id IS NOT NULL`
+    );
+    
+    const imageIds = settings
+      .map(s => s.backgroundImageId)
+      .filter((id): id is string => id !== null && id !== undefined);
+    
+    if (imageIds.length === 0) return [];
+    
+    return await db.select().from(media).where(inArray(media.id, imageIds));
+  }
+
   // Client feedback and timeline notes implementation (now using clientUserId)
   async createMediaFeedback(feedback: { mediaId: string; clientUserId: string; feedbackText: string; rating: number }): Promise<any> {
     const [result] = await db
@@ -659,7 +703,7 @@ export class DatabaseStorage implements IStorage {
     return contactSetting;
   }
 
-  async updateContactInfo(contactInfo: { contactEmail?: string; contactPhone?: string; contactAddress?: string; updatedBy: string }): Promise<WebsiteSettings> {
+  async updateContactInfo(contactInfo: { contactEmail?: string; contactPhone?: string; contactAddress?: string; instagramUrl?: string; facebookUrl?: string; linkedinUrl?: string; updatedBy: string }): Promise<WebsiteSettings> {
     const section = 'contact_info';
     
     // Try to update existing setting first
@@ -669,6 +713,9 @@ export class DatabaseStorage implements IStorage {
         contactEmail: contactInfo.contactEmail,
         contactPhone: contactInfo.contactPhone,
         contactAddress: contactInfo.contactAddress,
+        instagramUrl: contactInfo.instagramUrl,
+        facebookUrl: contactInfo.facebookUrl,
+        linkedinUrl: contactInfo.linkedinUrl,
         updatedBy: contactInfo.updatedBy,
         updatedAt: new Date() 
       })
@@ -684,6 +731,9 @@ export class DatabaseStorage implements IStorage {
           contactEmail: contactInfo.contactEmail,
           contactPhone: contactInfo.contactPhone,
           contactAddress: contactInfo.contactAddress,
+          instagramUrl: contactInfo.instagramUrl,
+          facebookUrl: contactInfo.facebookUrl,
+          linkedinUrl: contactInfo.linkedinUrl,
           updatedBy: contactInfo.updatedBy
         })
         .returning();
@@ -703,10 +753,11 @@ export class DatabaseStorage implements IStorage {
     if (!settings) return undefined;
 
     // Fetch related media separately
-    const [logoLightImage, logoDarkImage, faviconImage] = await Promise.all([
+    const [logoLightImage, logoDarkImage, faviconImage, openGraphImage] = await Promise.all([
       settings.logoLightImageId ? this.getMedia(settings.logoLightImageId) : null,
       settings.logoDarkImageId ? this.getMedia(settings.logoDarkImageId) : null,
       settings.faviconImageId ? this.getMedia(settings.faviconImageId) : null,
+      settings.openGraphImageId ? this.getMedia(settings.openGraphImageId) : null,
     ]);
     
     return {
@@ -725,6 +776,11 @@ export class DatabaseStorage implements IStorage {
         id: faviconImage.id,
         url: faviconImage.url,
         title: faviconImage.title,
+      } : null,
+      openGraphImage: openGraphImage ? {
+        id: openGraphImage.id,
+        url: openGraphImage.url,
+        title: openGraphImage.title,
       } : null,
     } as BrandingSettings;
   }
@@ -746,6 +802,65 @@ export class DatabaseStorage implements IStorage {
       const [created] = await db
         .insert(brandingSettings)
         .values(updates as InsertBrandingSettings)
+        .returning();
+      return created;
+    }
+  }
+
+  // SEO settings management
+  async getSeoSettings(): Promise<SeoSettings | undefined> {
+    const [settings] = await db
+      .select()
+      .from(seoSettings)
+      .limit(1);
+    
+    if (!settings) {
+      return undefined;
+    }
+
+    // Get related media
+    const openGraphImage = settings.openGraphImageId 
+      ? await this.getMedia(settings.openGraphImageId)
+      : null;
+      
+    const twitterImage = settings.twitterImageId 
+      ? await this.getMedia(settings.twitterImageId)
+      : null;
+
+    return {
+      ...settings,
+      openGraphImage: openGraphImage ? {
+        id: openGraphImage.id,
+        url: openGraphImage.url,
+        type: openGraphImage.type,
+        title: openGraphImage.title,
+      } : null,
+      twitterImage: twitterImage ? {
+        id: twitterImage.id,
+        url: twitterImage.url,
+        type: twitterImage.type,
+        title: twitterImage.title,
+      } : null,
+    } as SeoSettings;
+  }
+
+  async updateSeoSettings(updates: Partial<InsertSeoSettings>): Promise<SeoSettings> {
+    // First try to get existing settings
+    const existing = await this.getSeoSettings();
+    
+    if (existing) {
+      // Update existing settings
+      const [updated] = await db
+        .update(seoSettings)
+        .set({ ...updates, updatedAt: new Date() })
+        .where(eq(seoSettings.id, existing.id))
+        .returning();
+      return updated;
+    } else {
+      // Create new settings if none exist
+      const [created] = await db
+        .insert(seoSettings)
+        .values(updates as InsertSeoSettings)
         .returning();
       return created;
     }

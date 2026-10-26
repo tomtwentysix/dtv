@@ -1,6 +1,74 @@
 import { db, pool } from './db.js';
 import { sql } from 'drizzle-orm';
 import { users, roles, permissions, userRoles, rolePermissions } from '../shared/schema.js';
+import crypto from 'crypto';
+import { hashPassword } from './auth.js';
+import { storage } from './storage.js';
+
+// Initialize default roles and permissions after schema is confirmed
+async function initializeRBAC() {
+  console.log('🛡️  Initializing RBAC system...');
+  
+  try {
+    // Create default permissions
+    const defaultPermissions = [
+      { name: "upload:media", description: "Can upload new media" },
+      { name: "assign:media", description: "Can assign media to clients" },
+      { name: "delete:media", description: "Can delete media" },
+      { name: "view:clients", description: "Can view client profiles" },
+      { name: "edit:clients", description: "Can create/edit clients" },
+      { name: "edit:users", description: "Can create/edit staff users" },
+      { name: "edit:roles", description: "Can create/edit roles and permissions" },
+      { name: "edit:website", description: "Can edit website settings and customization" },
+      { name: "view:analytics", description: "Can view analytics and stats" },
+      { name: "manage:system", description: "Full system management access" },
+    ];
+
+    for (const perm of defaultPermissions) {
+      const existing = await storage.getPermissionByName(perm.name);
+      if (!existing) {
+        await storage.createPermission(perm);
+      }
+    }
+
+    // Create default roles
+    const adminRole = await storage.getRoleByName("Admin");
+    if (!adminRole) {
+      const newAdminRole = await storage.createRole({
+        name: "Admin",
+        description: "Full access to all admin features",
+      });
+      
+      // Assign all permissions to admin
+      const allPermissions = await storage.getAllPermissions();
+      for (const permission of allPermissions) {
+        await storage.assignPermissionToRole(newAdminRole.id, permission.id);
+      }
+    }
+
+    const staffRole = await storage.getRoleByName("Staff");
+    if (!staffRole) {
+      const newStaffRole = await storage.createRole({
+        name: "Staff",
+        description: "Limited access based on assigned permissions",
+      });
+      
+      // Assign basic permissions to staff
+      const basicPermissions = ["upload:media", "assign:media", "view:clients", "edit:website"];
+      for (const permName of basicPermissions) {
+        const permission = await storage.getPermissionByName(permName);
+        if (permission) {
+          await storage.assignPermissionToRole(newStaffRole.id, permission.id);
+        }
+      }
+    }
+
+    console.log('✅ RBAC system initialized successfully');
+  } catch (error) {
+    console.error("❌ Error initializing RBAC:", error);
+    throw error;
+  }
+}
 
 export async function initializeDatabase() {
   console.log('🔧 Initializing database for current environment...');
@@ -8,6 +76,9 @@ export async function initializeDatabase() {
   try {
     // First, ensure the database schema exists
     await ensureDatabaseSchema();
+    
+    // Verify all required RBAC tables exist before proceeding
+    await verifyRBACTablesExist();
     
     // Check if we're in a fresh database by counting users
     const userCount = await db.select({ count: sql<number>`count(*)` }).from(users);
@@ -20,6 +91,9 @@ export async function initializeDatabase() {
       console.log(`✅ Database already has ${currentUserCount} users, checking admin access...`);
       await ensureAdminExists();
     }
+    
+    // Initialize RBAC system after ensuring database schema and essential data exist
+    await initializeRBAC();
     
     console.log('✅ Database initialization completed successfully');
     return true;
@@ -93,13 +167,99 @@ async function createEssentialData() {
   await db.insert(rolePermissions).values(rolePermissionValues).onConflictDoNothing();
   console.log('Assigned permissions to roles');
   
-  // Create admin user
+  // Create admin user (always created for both environments)
   await createAdminUser(adminRoleId);
+  
+  // Create additional test data for development environment
+  const isDevEnvironment = process.env.NODE_ENV === 'development';
+  if (isDevEnvironment) {
+    console.log('🧪 Development environment detected, creating test data...');
+    await createDevelopmentTestData(staffRoleId, clientRoleId);
+  }
+}
+
+async function createDevelopmentTestData(staffRoleId: string, clientRoleId: string) {
+  try {
+    // Import clients and clientUsers from schema
+    const { clients, clientUsers } = await import('../shared/schema.js');
+    
+    console.log('🧪 Creating development test users...');
+    
+    // Create a staff user for testing
+    const staffUserId = crypto.randomUUID();
+    const staffPassword = await hashPassword('admin123'); // Use consistent hashing
+    
+    await db.insert(users).values({
+      id: staffUserId,
+      username: 'staff',
+      email: 'staff@dtvisuals.com',
+      password: staffPassword,
+      forename: 'Staff',
+      surname: 'Member',
+      displayName: 'Staff Member',
+      isActive: true
+    }).onConflictDoNothing();
+    
+    // Assign staff role
+    await db.insert(userRoles).values({
+      userId: staffUserId,
+      roleId: staffRoleId
+    }).onConflictDoNothing();
+    
+    console.log('Created staff user: staff@dtvisuals.com / admin123');
+    
+    // Create test clients
+    const testClients = [
+      {
+        id: crypto.randomUUID(),
+        name: 'Demo Client',
+        email: 'demo@client.com',
+        company: 'Demo Company Ltd',
+        phone: '+1-234-567-8900',
+        notes: 'Demo client for testing purposes',
+        isActive: true,
+        createdBy: staffUserId
+      },
+      {
+        id: crypto.randomUUID(),
+        name: 'Test Productions',
+        email: 'test@productions.com',
+        company: 'Test Productions Inc',
+        phone: '+1-234-567-8901',
+        notes: 'Another test client for development',
+        isActive: true,
+        createdBy: staffUserId
+      }
+    ];
+    
+    await db.insert(clients).values(testClients).onConflictDoNothing();
+    console.log('Created test clients');
+    
+    // Create client users for the test clients
+    const clientUserPassword = await hashPassword('admin123'); // Use consistent hashing
+    
+    const testClientUsers = testClients.map((client, index) => ({
+      id: crypto.randomUUID(),
+      clientId: client.id,
+      username: `client${index + 1}`,
+      email: client.email,
+      password: clientUserPassword,
+      isActive: true
+    }));
+    
+    await db.insert(clientUsers).values(testClientUsers).onConflictDoNothing();
+    console.log('Created client users: client1@client.com / admin123, test@productions.com / admin123');
+    
+    console.log('✅ Development test data created successfully');
+  } catch (error) {
+    console.error('⚠️  Failed to create development test data:', error);
+    // Don't throw - continue with basic setup
+  }
 }
 
 async function createAdminUser(adminRoleId?: string) {
-  // Password is "admin123" hashed with scrypt
-  const hashedPassword = 'df10c71f317ded80d49fc8ebd89b928fdb6706e3bb45ea330da8a7caa009d98ebc3c57461844955f37b7dbb5651a00c42a0a924e7030550d4eb8bb2b1196878a.4e8dad95ff12fe8b727f303f8ac1a12f';
+  // Hash the default admin password "admin123"
+  const hashedPassword = await hashPassword('admin123');
   
   const adminUserId = crypto.randomUUID();
   
@@ -152,6 +312,39 @@ async function ensureAdminExists() {
   } else {
     console.log(`✅ Found ${adminCount} admin user(s)`);
   }
+}
+
+async function verifyRBACTablesExist() {
+  console.log('🔍 Verifying RBAC tables exist...');
+  
+  const requiredTables = ['permissions', 'roles', 'user_roles', 'role_permissions'];
+  
+  for (const tableName of requiredTables) {
+    try {
+      const result = await db.execute(sql.raw(`
+        SELECT EXISTS (
+          SELECT FROM information_schema.tables 
+          WHERE table_schema = 'public' 
+          AND table_name = '${tableName}'
+        );
+      `));
+      
+      const tableExists = result.rows[0]?.exists;
+      
+      if (!tableExists) {
+        console.log(`⚠️  Required table ${tableName} is missing, creating schema...`);
+        await createBasicSchema();
+        return; // Exit early as createBasicSchema creates all tables
+      }
+    } catch (error) {
+      console.error(`❌ Failed to check table ${tableName}:`, error);
+      console.log('🔧 Attempting to create schema...');
+      await createBasicSchema();
+      return;
+    }
+  }
+  
+  console.log('✅ All RBAC tables exist');
 }
 
 async function ensureDatabaseSchema() {
@@ -348,17 +541,4 @@ async function createBasicSchema() {
     console.error('❌ Failed to create basic schema:', error);
     throw error;
   }
-}
-
-// Environment detection
-export function getEnvironmentInfo() {
-  const isReplit = process.env.REPLIT_DB_URL || process.env.DATABASE_URL?.includes('neon');
-  const isDocker = process.env.NODE_ENV === 'production' || process.env.DATABASE_URL?.includes('postgres-');
-  
-  return {
-    isReplit,
-    isDocker,
-    environment: isReplit ? 'replit' : isDocker ? 'docker' : 'local',
-    databaseUrl: process.env.DATABASE_URL
-  };
 }

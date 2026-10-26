@@ -1,60 +1,106 @@
-# DT Visuals - Production Deployment System
+# DT Visuals
 
+> Production-ready media management system for cinematic production companies
 
-## Quick Start
+**Clean, reliable deployment with PostgreSQL database and GitHub Actions automation**
 
-### For Production Deployment
+## Features
 
-1. **Server Setup** (Ubuntu 20.04/22.04):
-   ```bash
-   wget https://raw.githubusercontent.com/tomtwentysix/dtv/main/server-setup.sh
-   sudo chmod +x server-setup.sh && sudo ./server-setup.sh
-   ```
+- **Media Management**: Upload, organize, and share media with clients
+- **Client Portal**: Secure client access with feedback capabilities  
+- **Role-Based Access**: Admin, staff, and client user management
+- **Dual Environments**: Separate production and development deployments
+- **Auto SSL**: Let's Encrypt integration with automatic renewal
+- **Database Migrations**: Automated schema updates on deployment
 
-2. **Configure Environment**:
-   ```bash
-   cp .env.prod.template .env.prod
-   cp .env.dev.template .env.dev
-   # Edit files with actual database passwords and secrets
-   ```
+## Quick Deployment
 
-3. **Setup SSL**:
-   ```bash
-   sudo ./ssl-setup.sh dtvisuals.com,www.dtvisuals.com,dev.dtvisuals.com admin@dtvisuals.com
-   ```
+### For Production (Ubuntu Server)
 
-4. **Deploy**:
-   ```bash
-   ./deploy.sh prod main
-   ```
+```bash
+# 1. Server setup (one-time)
+wget https://raw.githubusercontent.com/tomtwentysix/dtv/main/server-setup.sh
+sudo chmod +x server-setup.sh && sudo ./server-setup.sh
+# ✅ This creates PostgreSQL with secure auto-generated password
+# ✅ Creates all required directories and configuration
 
-### For GitHub Actions
+# 2. Clone and configure
+cd /var/www/dtvisuals
+sudo -u dtvisuals git clone https://github.com/tomtwentysix/dtv.git app
+cd app
 
-Add repository secrets:
-- `SERVER_HOST` - Server IP address
-- `SERVER_USER` - SSH username (typically `root`)
-- `SSH_PRIVATE_KEY` - Private SSH key
-- `SERVER_PORT` - SSH port (default `22`)
+# 3. Verify setup
+sudo ./verify-setup.sh
 
-Deploy by pushing to branches:
-- `main` branch → Production deployment
-- `dev` branch → Development deployment
+# 4. Configure environment (automated)
+sudo ./setup-env.sh
+# ✅ This uses the auto-generated database password
+# ✅ Creates secure session secrets
+# ✅ Configures upload directories properly
+
+# 5. Setup SSL
+sudo ./ssl-setup.sh yourdomain.com,www.yourdomain.com,dev.yourdomain.com admin@yourdomain.com
+
+# 6. Deploy
+sudo ./deploy.sh prod main
+# ✅ Ensures upload directories are created and persistent
+```
+
+### For GitHub Actions Automation
+
+1. **Configure Repository Secrets**:
+   - `SERVER_HOST`: Your server IP
+   - `SERVER_USER`: `dtvisuals`  
+   - `SSH_PRIVATE_KEY`: SSH private key content
+   - `SERVER_PORT`: `22`
+
+2. **Deploy**: Push to `main` for production, `dev` for development
 
 ## Architecture
 
-**Stack:** React + TypeScript + Vite + Node.js + Express + PostgreSQL + PM2 + Nginx
+**Stack**: React + TypeScript + Vite + Node.js + Express + PostgreSQL + PM2 + Nginx
 
-**Environments:**
-- **Production**: https://dtvisuals.com (port 5001 internal)
-- **Development**: https://dev.dtvisuals.com (port 5002 internal)
+**Environments**:
+- **Production**: Port 5001 → https://yourdomain.com
+- **Development**: Port 5002 → https://dev.yourdomain.com
 
-**Key Features:**
-- Automatic SSL certificates via Let's Encrypt
-- Database migrations on each deployment
-- PM2 process management with auto-restart
-- Rate limiting and security headers
-- Automatic backups and rollback procedures
-- Comprehensive monitoring and logging
+**Database**: PostgreSQL with automatic initialization:
+- **Production**: Admin user created (`admin@dtvisuals.com` / `admin123`)
+- **Development**: Admin + test users and sample data
+
+## Default Users
+
+After deployment, log in with:
+
+**Production**:
+- Admin: `admin@dtvisuals.com` / `admin123`
+
+**Development** (includes production users plus):
+- Staff: `staff@dtvisuals.com` / `admin123`
+- Client: `demo@client.com` / `admin123`
+
+⚠️ **Change default passwords immediately after first login**
+
+## Management Commands
+
+```bash
+# Application status
+sudo -u dtvisuals pm2 list
+
+# View logs
+sudo -u dtvisuals pm2 logs dtvisuals-prod
+
+# Manual deployment
+cd /var/www/dtvisuals/app
+sudo -u dtvisuals git pull origin main
+sudo -u dtvisuals npm ci --production
+sudo -u dtvisuals npm run build
+sudo -u dtvisuals npm run db:push
+sudo -u dtvisuals pm2 restart dtvisuals-prod
+
+# Health check
+curl http://localhost:5001/api/health
+```
 
 ## File Structure
 
@@ -65,25 +111,33 @@ Deploy by pushing to branches:
 ├── ecosystem.config.js         # PM2 process configuration
 ├── nginx.conf                  # Nginx reverse proxy config
 ├── server-setup.sh            # Server installation script
+├── deploy.sh                  # Manual deployment script  
 ├── ssl-setup.sh               # SSL certificate automation
-├── deploy.sh                  # Manual deployment script
+├── setup-env.sh               # Environment configuration helper
+├── verify-setup.sh            # Setup verification script
 ├── DEPLOYMENT_GUIDE.md        # Complete deployment guide
-├── ROLLBACK.md                # Emergency rollback procedures
 └── README.md                  # This file
 ```
 
-## URLs
+### Key Features Added
 
-- **Production**: https://dtvisuals.com
-- **Development**: https://dev.dtvisuals.com
-- **Repository**: https://github.com/tomtwentysix/dtv
+- **🔧 Automated PostgreSQL Setup**: Generates secure passwords automatically
+- **📁 Simplified Upload Storage**: Uploads stored within app directory, git ignored
+- **⚙️  Environment Configuration**: `setup-env.sh` automates .env file creation with secure defaults
+- **✅ Setup Verification**: `verify-setup.sh` validates your installation
+- **🔒 Security**: Proper permissions, secure passwords, and session secrets
+
+## Documentation
+
+- **[Deployment Guide](DEPLOYMENT_GUIDE.md)**: Complete setup and deployment instructions
+- **[Rollback Procedures](ROLLBACK.md)**: Emergency recovery procedures
 
 ## Support
 
-- **Setup Issues**: See `DEPLOYMENT_GUIDE.md`
-- **Problems**: See `ROLLBACK.md`
-- **Monitoring**: Use PM2 dashboard and server logs
+- **Setup Issues**: See [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)
+- **Problems**: See [ROLLBACK.md](ROLLBACK.md) 
+- **Monitoring**: Use `pm2 monit` and server logs
 
 ---
 
-**Built with simplicity and reliability in mind** ✨
+**Built for reliability and simplicity** ✨

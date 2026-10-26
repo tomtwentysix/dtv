@@ -1,4 +1,6 @@
 import * as schema from "@shared/schema";
+import { Pool } from 'pg';
+import { drizzle } from 'drizzle-orm/node-postgres';
 
 if (!process.env.DATABASE_URL) {
   throw new Error(
@@ -6,40 +8,23 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-// Check if we're in Docker environment (local PostgreSQL)
-const isDockerEnvironment = process.env.DOCKER_ENV === 'true' || 
-  process.env.DATABASE_URL?.includes('db-prod') || 
-  process.env.DATABASE_URL?.includes('db-dev');
+// Use PostgreSQL for all environments - production ready and reliable
+console.log('🐘 Using PostgreSQL database connection');
 
-// Initialize database connection based on environment
-async function initDB() {
-  if (isDockerEnvironment) {
-    // For Docker environments (dev/prod), use standard PostgreSQL
-    console.log('🐳 Using local PostgreSQL for Docker environment');
-    const { Pool } = await import('pg');
-    const { drizzle } = await import('drizzle-orm/node-postgres');
-    
-    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-    const db = drizzle({ client: pool, schema });
-    
-    return { pool, db };
-  } else {
-    // For Replit environment only, use Neon
-    console.log('☁️  Using Neon serverless for Replit environment');
-    const { Pool, neonConfig } = await import('@neondatabase/serverless');
-    const { drizzle } = await import('drizzle-orm/neon-serverless');
-    const ws = await import('ws');
-    
-    neonConfig.webSocketConstructor = ws.default;
-    
-    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-    const db = drizzle({ client: pool, schema });
-    
-    return { pool, db };
-  }
-}
+// Initialize PostgreSQL connection with proper configuration
+const pool = new Pool({ 
+  connectionString: process.env.DATABASE_URL,
+  // Add connection pool configuration for production reliability
+  max: 20, // Maximum number of connections
+  idleTimeoutMillis: 30000, // Close idle connections after 30 seconds
+  connectionTimeoutMillis: 2000, // Return error after 2 seconds if connection could not be established
+});
 
-// Initialize and export database connection
-const { pool, db } = await initDB();
+// Handle connection errors gracefully
+pool.on('error', (err) => {
+  console.error('Unexpected error on idle client', err);
+});
+
+const db = drizzle({ client: pool, schema });
 
 export { pool, db };

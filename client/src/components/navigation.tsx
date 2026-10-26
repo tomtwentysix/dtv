@@ -119,7 +119,7 @@ export function Navigation() {
                     className={`cursor-pointer transition-colors duration-200 ${
                       location === item.href
                         ? "nav-text-dynamic font-semibold"
-                        : "nav-text-dynamic hover:text-[hsl(184,65%,18%)] dark:hover:text-[hsl(184,65%,18%)]"
+                        : "nav-text-dynamic hover:text-[hsl(184,65%,18%)] dark:hover:text-[hsla(184, 66%, 43%, 1.00)]"
                     }`}
                   >
                     {item.name}

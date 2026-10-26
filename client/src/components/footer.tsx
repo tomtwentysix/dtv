@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useQuery } from "@tanstack/react-query";
 import { useBrandingSettings } from "@/hooks/use-branding-settings";
+import { Instagram, Facebook, Linkedin } from "lucide-react";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -80,10 +81,49 @@ export function Footer() {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-white">Contact</h3>
             <ul className="space-y-2 text-sm text-gray-400">
-              <li>{(contactInfo as any)?.contactEmail || 'hello@dt-visuals.com'}</li>
+              <li>{(contactInfo as any)?.contactEmail || 'hello@dtvisuals.com'}</li>
               <li>{(contactInfo as any)?.contactPhone || '+1 (555) 123-4567'}</li>
               <li>{(contactInfo as any)?.contactAddress || 'Los Angeles, CA'}</li>
             </ul>
+            
+            {/* Social Links */}
+            {((contactInfo as any)?.instagramUrl || (contactInfo as any)?.facebookUrl || (contactInfo as any)?.linkedinUrl) && (
+              <div className="pt-4">
+                <h4 className="text-sm font-medium text-white mb-3">Follow Us</h4>
+                <div className="flex space-x-3">
+                  {(contactInfo as any)?.instagramUrl && (
+                    <a
+                      href={(contactInfo as any).instagramUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-black hover:bg-accent hover:text-white transition-all duration-200"
+                    >
+                      <Instagram className="h-5 w-5" />
+                    </a>
+                  )}
+                  {(contactInfo as any)?.facebookUrl && (
+                    <a
+                      href={(contactInfo as any).facebookUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-black hover:bg-accent hover:text-white transition-all duration-200"
+                    >
+                      <Facebook className="h-5 w-5" />
+                    </a>
+                  )}
+                  {(contactInfo as any)?.linkedinUrl && (
+                    <a
+                      href={(contactInfo as any).linkedinUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-black hover:bg-accent hover:text-white transition-all duration-200"
+                    >
+                      <Linkedin className="h-5 w-5" />
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -101,6 +141,17 @@ export function Footer() {
             </Link>
           </div>
         </div>
+
+        {brandingSettings?.showTradingDetails && (
+          <>
+            <Separator className="my-6 bg-gray-800/50" />
+            <div className="text-center space-y-1 text-xs text-gray-500">
+              <p>dt. visuals is a trading name of Eleven Eighty Seven Ltd. Registered in England and Wales.</p>
+              <p>Company Number: 17039209 | Registered Office Address: 24 Mill Field Close, South Kilworth, Lutterworth, LE17 6FE</p>
+              <p>© {currentYear} Eleven Eighty Seven Limited. All rights reserved.</p>
+            </div>
+          </>
+        )}
       </div>
     </footer>
   );

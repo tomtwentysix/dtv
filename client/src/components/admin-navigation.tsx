@@ -19,6 +19,7 @@ import {
 import { useTheme } from "@/hooks/use-theme";
 import { useAuth } from "@/hooks/use-auth";
 import { usePermissions } from "@/hooks/use-permissions";
+import { useBrandingSettings } from "@/hooks/use-branding-settings";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,6 +43,7 @@ export function AdminNavigation() {
   const { user, logoutMutation } = useAuth();
   const { hasPermission } = usePermissions();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { data: brandingSettings } = useBrandingSettings();
 
   const handleLogout = () => {
     logoutMutation.mutate();
@@ -53,8 +55,34 @@ export function AdminNavigation() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/admin/dashboard">
-            <div className="text-2xl font-bold nav-text-dynamic cursor-pointer">
-              dt.visuals <span className="text-sm font-normal text-dynamic-subtle">Admin</span>
+            <div className="flex items-center cursor-pointer">
+              {/* Light mode logo */}
+              {brandingSettings?.logoLightImage && (
+                <img 
+                  src={brandingSettings.logoLightImage.url} 
+                  alt={brandingSettings.logoLightImage.title || brandingSettings.companyName || "Logo"}
+                  className="w-[50px] h-[50px] object-contain mr-3 dark:hidden"
+                />
+              )}
+              {/* Dark mode logo */}
+              {brandingSettings?.logoDarkImage && (
+                <img 
+                  src={brandingSettings.logoDarkImage.url} 
+                  alt={brandingSettings.logoDarkImage.title || brandingSettings.companyName || "Logo"}
+                  className="w-[50px] h-[50px] object-contain mr-3 hidden dark:block"
+                />
+              )}
+              {/* Fallback: show light logo in dark mode if no dark logo is set */}
+              {brandingSettings?.logoLightImage && !brandingSettings?.logoDarkImage && (
+                <img 
+                  src={brandingSettings.logoLightImage.url} 
+                  alt={brandingSettings.logoLightImage.title || brandingSettings.companyName || "Logo"}
+                  className="w-[50px] h-[50px] object-contain mr-3 hidden dark:block"
+                />
+              )}
+              <div className="text-2xl font-bold nav-text-dynamic">
+                {brandingSettings?.companyName || "dt.visuals"} <span className="text-sm font-normal text-dynamic-subtle">Admin</span>
+              </div>
             </div>
           </Link>
 

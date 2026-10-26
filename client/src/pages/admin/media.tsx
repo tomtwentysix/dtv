@@ -88,6 +88,7 @@ interface MediaEditFormData {
   projectStage: string;
   notes: string;
   clientId: string;
+  posterFile?: FileList;
 }
 
 export default function AdminMedia() {
@@ -146,7 +147,7 @@ export default function AdminMedia() {
       title: "",
       tags: "",
       isFeatured: false,
-      showInPortfolio: true,
+      showInPortfolio: false, // Changed to default false to require explicit user choice
       projectStage: "",
       notes: "",
       clientId: "",
@@ -221,18 +222,35 @@ export default function AdminMedia() {
         throw new Error("No media selected for editing");
       }
 
-      const updateData = {
-        title: data.title,
-        projectStage: data.projectStage === "none" ? null : data.projectStage || null,
-        notes: data.notes || null,
-        clientId: data.clientId === "none" ? null : data.clientId || null,
-        tags: data.tags ? data.tags.split(",").map((tag: string) => tag.trim()) : [],
-        isFeatured: data.isFeatured,
-        showInPortfolio: data.showInPortfolio,
-      };
+      // If there's a poster file, use FormData for multipart upload
+      if (data.posterFile && data.posterFile[0]) {
+        const formData = new FormData();
+        formData.append("posterFile", data.posterFile[0]);
+        formData.append("title", data.title);
+        formData.append("projectStage", data.projectStage === "none" ? "" : data.projectStage || "");
+        formData.append("notes", data.notes || "");
+        formData.append("clientId", data.clientId === "none" ? "" : data.clientId || "");
+        formData.append("tags", data.tags ? data.tags.split(",").map((tag: string) => tag.trim()).join(",") : "");
+        formData.append("isFeatured", data.isFeatured.toString());
+        formData.append("showInPortfolio", data.showInPortfolio.toString());
 
-      const res = await apiRequest("PUT", `/api/media/${selectedMediaForEdit.id}`, updateData);
-      return res.json();
+        const res = await apiRequest("PUT", `/api/media/${selectedMediaForEdit.id}`, formData);
+        return res.json();
+      } else {
+        // Regular JSON update without poster file
+        const updateData = {
+          title: data.title,
+          projectStage: data.projectStage === "none" ? null : data.projectStage || null,
+          notes: data.notes || null,
+          clientId: data.clientId === "none" ? null : data.clientId || null,
+          tags: data.tags ? data.tags.split(",").map((tag: string) => tag.trim()) : [],
+          isFeatured: data.isFeatured,
+          showInPortfolio: data.showInPortfolio,
+        };
+
+        const res = await apiRequest("PUT", `/api/media/${selectedMediaForEdit.id}`, updateData);
+        return res.json();
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/media"] });
@@ -562,8 +580,26 @@ export default function AdminMedia() {
 
   // Add mutation for updating media details in feedback modal
   const updateMediaDetailsMutation = useMutation({
-    mutationFn: async ({ mediaId, updates }: { mediaId: string; updates: any }) => {
-      return apiRequest("PUT", `/api/media/${mediaId}`, updates);
+    mutationFn: async ({ mediaId, updates, posterFile }: { mediaId: string; updates: any; posterFile?: File | null }) => {
+      if (posterFile) {
+        // Use FormData for poster file upload
+        const formData = new FormData();
+        formData.append("posterFile", posterFile);
+        
+        // Add other updates as form fields
+        Object.entries(updates).forEach(([key, value]) => {
+          if (key === 'tags' && Array.isArray(value)) {
+            formData.append(key, value.join(','));
+          } else {
+            formData.append(key, String(value));
+          }
+        });
+        
+        return apiRequest("PUT", `/api/media/${mediaId}`, formData);
+      } else {
+        // Regular JSON update
+        return apiRequest("PUT", `/api/media/${mediaId}`, updates);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/media"] });
@@ -616,6 +652,7 @@ export default function AdminMedia() {
     const titleInput = document.querySelector('#feedback-edit-title') as HTMLInputElement;
     const tagsInput = document.querySelector('#feedback-edit-tags') as HTMLInputElement;
     const notesTextarea = document.querySelector('#feedback-edit-notes') as HTMLTextAreaElement;
+    const posterInput = document.querySelector('#feedback-edit-poster') as HTMLInputElement;
 
     const updates: any = {};
     
@@ -632,10 +669,13 @@ export default function AdminMedia() {
       updates.notes = notesTextarea.value || '';
     }
 
-    if (Object.keys(updates).length > 0) {
+    const hasPosterFile = posterInput?.files && posterInput.files.length > 0;
+    
+    if (Object.keys(updates).length > 0 || hasPosterFile) {
       updateMediaDetailsMutation.mutate({
         mediaId: selectedMediaForFeedback.id,
         updates,
+        posterFile: hasPosterFile ? posterInput.files[0] : null,
       });
     } else {
       toast({
@@ -853,7 +893,7 @@ export default function AdminMedia() {
                       {...uploadForm.register("file", { required: "Please select a file" })}
                     />
                     <p className="text-sm text-gray-500">
-                      Supported formats: JPG, PNG, GIF, MP4, MOV, AVI, MKV (Max 500MB)
+                      Supported formats: JPG, PNG, GIF, MP4, MOV, AVI, MKV (Max 2500MB)
                     </p>
                   </div>
 
@@ -1050,6 +1090,19 @@ export default function AdminMedia() {
                       placeholder="Add project notes, client feedback, or production details..."
                       className="w-full min-h-[80px] px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800"
                     />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-posterFile">Update Poster Frame (Optional)</Label>
+                    <Input
+                      id="edit-posterFile"
+                      type="file"
+                      accept="image/*"
+                      {...editForm.register("posterFile")}
+                    />
+                    <p className="text-sm text-gray-500">
+                      Upload a new custom poster/thumbnail for videos
+                    </p>
                   </div>
 
                   <div className="space-y-2">
@@ -1396,18 +1449,23 @@ export default function AdminMedia() {
                     </div>
                     {item.type === "image" ? (
                       <img
-                        src={item.url}
+                        src={item.thumbnailUrl || item.url}
                         alt={item.title}
                         className="w-full h-full object-cover"
                         onError={(e) => {
-                          console.error('Image failed to load:', item.url);
-                          e.currentTarget.style.display = 'none';
+                          console.error('Image failed to load:', item.thumbnailUrl || item.url);
+                          // If thumbnail fails, try original
+                          if (item.thumbnailUrl && e.currentTarget.src !== item.url) {
+                            e.currentTarget.src = item.url;
+                          } else {
+                            e.currentTarget.style.display = 'none';
+                          }
                         }}
                       />
                     ) : (
                       <video
                         src={item.url}
-                        poster={item.posterUrl}
+                        poster={item.thumbnailUrl || item.posterUrl}
                         className="w-full h-full object-cover"
                         muted
                         onError={(e) => {
@@ -1415,7 +1473,7 @@ export default function AdminMedia() {
                         }}
                         onLoadedMetadata={(e) => {
                           // Set to 2 seconds for thumbnail if no poster
-                          if (!item.posterUrl) {
+                          if (!item.posterUrl && !item.thumbnailUrl) {
                             const video = e.target as HTMLVideoElement;
                             video.currentTime = 2;
                           }
@@ -2071,6 +2129,17 @@ export default function AdminMedia() {
                           placeholder="Additional notes..."
                           rows={3}
                         />
+                      </div>
+                      <div className="col-span-2">
+                        <label className="block text-sm font-medium mb-2">Update Poster Frame (Optional)</label>
+                        <Input
+                          id="feedback-edit-poster"
+                          type="file"
+                          accept="image/*"
+                        />
+                        <p className="text-sm text-gray-500 mt-1">
+                          Upload a new custom poster/thumbnail for videos
+                        </p>
                       </div>
                     </div>
                     <div className="flex justify-end">

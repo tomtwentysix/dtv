@@ -679,7 +679,7 @@ export default function ClientDashboard() {
 
                           {item.type === "image" ? (
                             <img
-                              src={item.url}
+                              src={item.thumbnailWebpUrl || item.thumbnailUrl || item.url}
                               alt={item.title}
                               className="w-full h-full object-cover"
                               onError={(e) => {
@@ -693,7 +693,7 @@ export default function ClientDashboard() {
                           ) : (
                             <video
                               src={item.url}
-                              poster={item.posterUrl}
+                              poster={item.thumbnailWebpUrl || item.thumbnailUrl || item.posterUrl}
                               className="w-full h-full object-cover"
                               muted
                               onError={(e) => {

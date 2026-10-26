@@ -11,79 +11,58 @@ import { users, media, mediaFeedback, mediaTimelineNotes, clientUsers, clients }
 import { requireAuth, requirePermission, requireRole, requireAnyRole } from "./middleware/rbac";
 import { requireClientAuth, loginClientUser, registerClientUser } from "./client-auth";
 import multer from "multer";
-
-// Initialize default roles and permissions
-async function initializeRBAC() {
-  try {
-    // Create default permissions
-    const defaultPermissions = [
-      { name: "upload:media", description: "Can upload new media" },
-      { name: "assign:media", description: "Can assign media to clients" },
-      { name: "delete:media", description: "Can delete media" },
-      { name: "view:clients", description: "Can view client profiles" },
-      { name: "edit:clients", description: "Can create/edit clients" },
-      { name: "edit:users", description: "Can create/edit staff users" },
-      { name: "edit:roles", description: "Can create/edit roles and permissions" },
-      { name: "edit:website", description: "Can edit website settings and customization" },
-      { name: "view:analytics", description: "Can view analytics and stats" },
-      { name: "manage:system", description: "Full system management access" },
-    ];
-
-    for (const perm of defaultPermissions) {
-      const existing = await storage.getPermissionByName(perm.name);
-      if (!existing) {
-        await storage.createPermission(perm);
-      }
-    }
-
-    // Create default roles
-    const adminRole = await storage.getRoleByName("Admin");
-    if (!adminRole) {
-      const newAdminRole = await storage.createRole({
-        name: "Admin",
-        description: "Full access to all admin features",
-      });
-      
-      // Assign all permissions to admin
-      const allPermissions = await storage.getAllPermissions();
-      for (const permission of allPermissions) {
-        await storage.assignPermissionToRole(newAdminRole.id, permission.id);
-      }
-    }
-
-    const staffRole = await storage.getRoleByName("Staff");
-    if (!staffRole) {
-      const newStaffRole = await storage.createRole({
-        name: "Staff",
-        description: "Limited access based on assigned permissions",
-      });
-      
-      // Assign basic permissions to staff
-      const basicPermissions = ["upload:media", "assign:media", "view:clients", "edit:website"];
-      for (const permName of basicPermissions) {
-        const permission = await storage.getPermissionByName(permName);
-        if (permission) {
-          await storage.assignPermissionToRole(newStaffRole.id, permission.id);
-        }
-      }
-    }
-
-    // Note: Client role removed - clients now have their own authentication system separate from users
-  } catch (error) {
-    console.error("Error initializing RBAC:", error);
-  }
-}
+import { generateThumbnail, getThumbnailPath, getThumbnailUrl, generateWebPThumbnailForMedia, getWebPThumbnailPath, getWebPThumbnailUrl } from "./media-processing";
+import { ImageOptimizationService } from "./image-optimization";
+import { SocialImageService } from "./social-image-service";
+import { emailService } from "./email";
 
 // Configure multer for file uploads
-const uploadDir = path.join(process.cwd(), "uploads");
+const uploadDir = process.env.UPLOADS_DIR || path.join(process.cwd(), "uploads");
+const thumbnailDir = path.join(uploadDir, "thumbnails");
+const thumbnailWebpDir = path.join(uploadDir, "thumbnails", "webp");
+const webpDir = path.join(uploadDir, "webp");
+console.log(`📁 Upload directory configured at: ${uploadDir}`);
+
 if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
+  console.log(`📁 Creating uploads directory: ${uploadDir}`);
+  fs.mkdirSync(uploadDir, { recursive: true, mode: 0o755 });
+} else {
+  console.log(`📁 Upload directory exists: ${uploadDir}`);
+}
+
+if (!fs.existsSync(thumbnailDir)) {
+  console.log(`📁 Creating thumbnails directory: ${thumbnailDir}`);
+  fs.mkdirSync(thumbnailDir, { recursive: true, mode: 0o755 });
+} else {
+  console.log(`📁 Thumbnails directory exists: ${thumbnailDir}`);
+}
+
+if (!fs.existsSync(thumbnailWebpDir)) {
+  console.log(`📁 Creating WebP thumbnails directory: ${thumbnailWebpDir}`);
+  fs.mkdirSync(thumbnailWebpDir, { recursive: true, mode: 0o755 });
+} else {
+  console.log(`📁 WebP thumbnails directory exists: ${thumbnailWebpDir}`);
+}
+
+if (!fs.existsSync(webpDir)) {
+  console.log(`📁 Creating WebP directory: ${webpDir}`);
+  fs.mkdirSync(webpDir, { recursive: true, mode: 0o755 });
+} else {
+  console.log(`📁 WebP directory exists: ${webpDir}`);
+}
+
+// Ensure the directory is readable and writable
+try {
+  fs.accessSync(uploadDir, fs.constants.R_OK | fs.constants.W_OK);
+  console.log(`✅ Upload directory permissions verified`);
+} catch (error) {
+  console.error(`❌ Upload directory permission error:`, error);
 }
 
 const upload = multer({
   dest: uploadDir,
   limits: {
-    fileSize: 500 * 1024 * 1024, // 500MB limit for video files
+    fileSize: 2500 * 1024 * 1024, // 2500MB limit for video files
   },
   fileFilter: (req, file, cb) => {
     const allowedMimes = [
@@ -104,25 +83,143 @@ const upload = multer({
   },
 });
 
+// Initialize services
+const imageOptimizer = new ImageOptimizationService(storage, uploadDir);
+const socialImageService = new SocialImageService(storage, uploadDir);
+
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Initialize RBAC system
-  await initializeRBAC();
-  
   // Setup authentication
   setupAuth(app);
 
   // Serve uploaded files
+  console.log(`📁 Setting up static file serving from: ${uploadDir}`);
   app.use("/uploads", express.static(uploadDir));
+
+  // Run startup comprehensive image optimization (async, don't block server startup)
+  imageOptimizer.optimizeAllPublicImages().catch(error => {
+    console.error('Startup image optimization failed:', error);
+  });
 
   // API Routes
 
   // Health check endpoint for Docker
   app.get("/api/health", (req, res) => {
+    const emailStatus = emailService.getServiceStatus();
     res.status(200).json({ 
       status: "healthy", 
       timestamp: new Date().toISOString(),
-      environment: process.env.NODE_ENV || "development"
+      environment: process.env.NODE_ENV || "development",
+      email: emailStatus
     });
+  });
+
+  // Serve sitemap.xml with proper content type for search engines
+  // This ensures the sitemap is served with application/xml instead of text/html
+  app.get("/sitemap.xml", (req, res) => {
+    const sitemapPath = path.join(process.cwd(), "dist", "public", "sitemap.xml");
+    
+    if (fs.existsSync(sitemapPath)) {
+      res.set('Content-Type', 'application/xml');
+      res.sendFile(sitemapPath);
+    } else {
+      res.status(404).send('Sitemap not found');
+    }
+  });
+
+  // Debug endpoint to check uploads directory
+  app.get("/api/uploads/debug", (req, res) => {
+    try {
+      const stats = {
+        uploadDir,
+        exists: fs.existsSync(uploadDir),
+        isDirectory: false,
+        permissions: null as any,
+        contents: [] as string[]
+      };
+
+      if (stats.exists) {
+        const dirStats = fs.statSync(uploadDir);
+        stats.isDirectory = dirStats.isDirectory();
+        stats.permissions = {
+          readable: true,
+          writable: true
+        };
+
+        try {
+          fs.accessSync(uploadDir, fs.constants.R_OK);
+        } catch {
+          stats.permissions.readable = false;
+        }
+
+        try {
+          fs.accessSync(uploadDir, fs.constants.W_OK);
+        } catch {
+          stats.permissions.writable = false;
+        }
+
+        if (stats.isDirectory) {
+          try {
+            stats.contents = fs.readdirSync(uploadDir);
+          } catch (error) {
+            stats.contents = [`Error reading directory: ${error}`];
+          }
+        }
+      }
+
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Unknown error',
+        uploadDir 
+      });
+    }
+  });
+
+  // Debug endpoint to check email service configuration
+  app.get("/api/email/debug", (req, res) => {
+    try {
+      const status = emailService.getServiceStatus();
+      const envVars = {
+        NODE_ENV: process.env.NODE_ENV,
+        SMTP_HOST: process.env.SMTP_HOST ? `${process.env.SMTP_HOST.substring(0, 20)}...` : 'NOT SET',
+        SMTP_PORT: process.env.SMTP_PORT || 'NOT SET',
+        SMTP_SECURE: process.env.SMTP_SECURE || 'NOT SET',
+        SMTP_REQUIRE_TLS: process.env.SMTP_REQUIRE_TLS || 'NOT SET',
+        SMTP_FROM: process.env.SMTP_FROM || 'NOT SET',
+        SMTP_TO: process.env.SMTP_TO || 'NOT SET',
+        SMTP_USER: process.env.SMTP_USER ? 'SET' : 'NOT SET',
+        SMTP_PASS: process.env.SMTP_PASS ? 'SET' : 'NOT SET',
+      };
+      
+      res.json({
+        status,
+        environmentVariables: envVars,
+        timestamp: new Date().toISOString(),
+        workingDirectory: process.cwd()
+      });
+    } catch (error) {
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Debug endpoint to reinitialize email service
+  app.post("/api/email/reinitialize", (req, res) => {
+    try {
+      console.log("Email service reinitialize requested");
+      emailService.reinitialize();
+      const status = emailService.getServiceStatus();
+      res.json({
+        message: "Email service reinitialized",
+        status,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
   });
 
   // Contact form endpoint
@@ -130,12 +227,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { firstName, lastName, email, projectType, message } = req.body;
       
-      // Here you would typically send an email or save to database
+      // Log the submission for debugging
       console.log("Contact form submission:", { firstName, lastName, email, projectType, message });
       
-      res.json({ message: "Message sent successfully" });
+      // Attempt to send email via SMTP
+      const emailSent = await emailService.sendContactFormEmail({
+        firstName,
+        lastName,
+        email,
+        projectType,
+        message
+      });
+      
+      if (emailSent) {
+        res.json({ message: "Message sent successfully via email" });
+      } else {
+        // Email failed but we'll still report success to avoid exposing system details
+        console.warn("Email sending failed, but responding with success");
+        res.json({ message: "Message received successfully" });
+      }
     } catch (error) {
+      console.error("Contact form error:", error);
       res.status(500).json({ message: "Failed to send message" });
+    }
+  });
+
+  // Email service test endpoint (admin only)
+  app.post("/api/admin/email/test", requireAuth, requirePermission("edit:settings"), async (req, res) => {
+    try {
+      console.log("Email service test requested by:", req.user?.username);
+      
+      const status = emailService.getServiceStatus();
+      const connectionTest = await emailService.testConnection();
+      
+      // Test with actual email send
+      const testResult = await emailService.sendContactFormEmail({
+        firstName: "Test",
+        lastName: "Admin",
+        email: req.user?.email || "admin@test.com",
+        projectType: "test",
+        message: "This is a test email from the admin panel to verify SMTP configuration."
+      });
+      
+      res.json({
+        status,
+        connectionTest,
+        emailSent: testResult,
+        message: testResult ? "Test email sent successfully" : "Test email failed to send"
+      });
+    } catch (error) {
+      console.error("Email test error:", error);
+      res.status(500).json({ 
+        message: "Email test failed", 
+        error: error.message,
+        status: emailService.getServiceStatus()
+      });
     }
   });
 
@@ -430,7 +576,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     ])(req, res, async (err) => {
       if (err) {
         if (err.code === 'LIMIT_FILE_SIZE') {
-          return res.status(413).json({ message: "File too large. Maximum size allowed is 500MB." });
+          return res.status(413).json({ message: "File too large. Maximum size allowed is 2500MB." });
         }
         if (err.message === 'Invalid file type') {
           return res.status(400).json({ message: "Invalid file type. Please upload JPG, PNG, GIF, MP4, MOV, AVI, or MKV files." });
@@ -451,11 +597,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const fileUrl = `/uploads/${mainFile.filename}`;
         const posterUrl = posterFile ? `/uploads/${posterFile.filename}` : null;
         
+        console.log(`📤 File uploaded: ${mainFile.originalname} -> ${mainFile.filename}`);
+        console.log(`📤 File URL: ${fileUrl}`);
+        
+        // Verify the file exists after upload
+        const fullFilePath = path.join(uploadDir, mainFile.filename);
+        if (fs.existsSync(fullFilePath)) {
+          console.log(`✅ File saved successfully: ${fullFilePath}`);
+        } else {
+          console.error(`❌ File NOT found on disk: ${fullFilePath}`);
+        }
+        
+        // Generate thumbnail
+        let thumbnailUrl: string | null = null;
+        try {
+          const thumbnailPath = getThumbnailPath(uploadDir, mainFile.filename);
+          await generateThumbnail(fullFilePath, thumbnailPath, mainFile.mimetype);
+          thumbnailUrl = getThumbnailUrl(thumbnailPath, uploadDir);
+          console.log(`📸 Thumbnail generated: ${thumbnailUrl}`);
+        } catch (thumbnailError) {
+          console.error(`⚠️  Failed to generate thumbnail:`, thumbnailError);
+          // Don't fail the upload if thumbnail generation fails
+        }
+        
         const media = await storage.createMedia({
           title,
           type: mainFile.mimetype.startsWith("video/") ? "video" : "image",
           url: fileUrl,
           posterUrl,
+          thumbnailUrl,
           filename: mainFile.originalname,
           fileSize: mainFile.size,
           mimeType: mainFile.mimetype,
@@ -466,6 +636,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           clientId: clientId || null,
           tags: tags ? tags.split(",").map((tag: string) => tag.trim()) : [],
           uploadedBy: req.user!.id,
+        });
+
+        // Optimize media for public display (async - don't block response)
+        imageOptimizer.optimizeMediaItem(media.id).catch(error => {
+          console.error(`⚠️  Failed to optimize media ${media.id}:`, error);
         });
 
         res.status(201).json(media);
@@ -479,10 +654,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/media/:id", requireAuth, requirePermission("upload:media"), async (req, res) => {
     try {
       console.log('Updating media:', req.params.id, req.body);
+      
+      // Get original media to check if public visibility is changing
+      const originalMedia = await storage.getMedia(req.params.id);
       const media = await storage.updateMedia(req.params.id, req.body);
       if (!media) {
         return res.status(404).json({ message: "Media not found" });
       }
+      
+      // If media is being marked as featured or for portfolio, optimize for public display
+      const isBecomingPublic = (
+        (req.body.isFeatured === true && !originalMedia?.isFeatured) ||
+        (req.body.showInPortfolio === true && !originalMedia?.showInPortfolio)
+      );
+      
+      if (isBecomingPublic) {
+        imageOptimizer.optimizeForPublicDisplay(media.id).catch(error => {
+          console.error(`⚠️  Failed to optimize media for public display ${media.id}:`, error);
+        });
+      }
+      
       res.json(media);
     } catch (error) {
       console.error('Media update error:', error);
@@ -519,14 +710,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create the client first
       const client = await storage.createClient({ ...clientData, createdBy: req.user!.id });
       
-      // Hash the password for the client user using the client auth format (salt:hash)
+      // Hash the password for the client user using the same format as auth.ts (hash.salt)
       const { scrypt, randomBytes } = await import("crypto");
       const { promisify } = await import("util");
       const scryptAsync = promisify(scrypt);
       
       const salt = randomBytes(16).toString("hex");
       const buf = (await scryptAsync(password, salt, 64)) as Buffer;
-      const hashedPassword = `${salt}:${buf.toString("hex")}`;
+      const hashedPassword = `${buf.toString("hex")}.${salt}`;
       
       // Create the client user for authentication
       await storage.createClientUser({
@@ -589,14 +780,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Client user not found" });
       }
 
-      // Hash the new password using the client auth format (salt:hash)
+      // Hash the new password using the same format as auth.ts (hash.salt)
       const { scrypt, randomBytes } = await import("crypto");
       const { promisify } = await import("util");
       const scryptAsync = promisify(scrypt);
       
       const salt = randomBytes(16).toString("hex");
       const buf = (await scryptAsync(password, salt, 64)) as Buffer;
-      const hashedPassword = `${salt}:${buf.toString("hex")}`;
+      const hashedPassword = `${buf.toString("hex")}.${salt}`;
 
       // Update the client user's password
       await storage.updateClientUser(clientUser.id, { password: hashedPassword });
@@ -971,6 +1162,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         updatedBy: req.user!.id,
       });
       
+      // Trigger WebP optimization for background images
+      if (backgroundImageId) {
+        // Run optimization in background, don't wait for it
+        imageOptimizer.optimizeBackgroundImage(backgroundImageId).catch(error => {
+          console.error(`Failed to optimize background image ${backgroundImageId}:`, error);
+        });
+      }
+      
       res.json(setting);
     } catch (error) {
       console.error('Website settings update error:', error);
@@ -982,7 +1181,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/contact-info", async (req, res) => {
     try {
       const contactInfo = await storage.getContactInfo();
-      res.json(contactInfo || { contactEmail: '', contactPhone: '', contactAddress: '' });
+      res.json(contactInfo || { 
+        contactEmail: '', 
+        contactPhone: '', 
+        contactAddress: '', 
+        instagramUrl: '', 
+        facebookUrl: '', 
+        linkedinUrl: '' 
+      });
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch contact information" });
     }
@@ -990,12 +1196,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/contact-info", requireAuth, requirePermission("edit:website"), async (req, res) => {
     try {
-      const { contactEmail, contactPhone, contactAddress } = req.body;
+      const { contactEmail, contactPhone, contactAddress, instagramUrl, facebookUrl, linkedinUrl } = req.body;
       
       const contactInfo = await storage.updateContactInfo({
         contactEmail,
         contactPhone,
         contactAddress,
+        instagramUrl,
+        facebookUrl,
+        linkedinUrl,
         updatedBy: req.user!.id,
       });
       
@@ -1012,9 +1221,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(brandingSettings || {
         companyName: "dt.visuals",
         showCompanyText: true,
+        showTradingDetails: false,
         logoLightImageId: null,
         logoDarkImageId: null,
-        faviconImageId: null
+        faviconImageId: null,
+        openGraphImageId: null
       });
     } catch (error) {
       console.error("Error fetching branding settings:", error);
@@ -1024,15 +1235,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/branding-settings", requireAuth, requirePermission("edit:website"), async (req, res) => {
     try {
-      const { companyName, showCompanyText, logoLightImageId, logoDarkImageId, faviconImageId } = req.body;
+      const { companyName, showCompanyText, showTradingDetails, logoLightImageId, logoDarkImageId, faviconImageId, openGraphImageId } = req.body;
       const userId = req.user!.id;
       
       const updatedSettings = await storage.updateBrandingSettings({
         companyName,
         showCompanyText,
+        showTradingDetails,
         logoLightImageId,
         logoDarkImageId,
         faviconImageId,
+        openGraphImageId,
         updatedBy: userId,
       });
       
@@ -1040,6 +1253,134 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating branding settings:", error);
       res.status(500).json({ message: "Failed to update branding settings" });
+    }
+  });
+
+  // SEO Settings Routes
+  app.get("/api/seo-settings", async (req, res) => {
+    try {
+      const seoSettings = await storage.getSeoSettings();
+      const socialImageUrls = socialImageService.getSocialImageUrls();
+      
+      res.json({
+        ...(seoSettings || {
+          metaTitle: "Video Production Company | Luxury Events, Music & Brands | DT Visuals UK",
+          metaDescription: "DT Visuals is a UK-based video production team creating cinematic content for luxury events, artists, brands and agencies. Based in Leicestershire, working UK-wide.",
+          metaKeywords: "video production company UK, cinematic video production, luxury event videographer, corporate video production, music video production UK, video production Leicestershire, creative video agency, branded content production, monthly video retainer UK",
+          canonicalUrl: "https://dtvisuals.com/",
+          businessName: "DT Visuals",
+          businessDescription: "Professional video production company specializing in luxury events, music videos, and branded content",
+          businessType: "VideoProductionService",
+          businessUrl: "https://dtvisuals.com",
+          addressLocality: "Leicestershire",
+          addressRegion: "England", 
+          addressCountry: "GB",
+          latitude: "52.6369",
+          longitude: "-1.1398",
+          businessEmail: "hello@dtvisuals.com",
+          services: '["Luxury Event Videography","Corporate Video Production","Music Video Production","Creative Direction","Post-Production Services"]',
+          faqs: '[]',
+          enableStructuredData: true,
+          enableOpenGraph: true,
+          enableTwitterCards: true,
+          robotsDirective: "index, follow",
+        }),
+        ...socialImageUrls
+      });
+    } catch (error) {
+      console.error("Error fetching SEO settings:", error);
+      res.status(500).json({ message: "Failed to fetch SEO settings" });
+    }
+  });
+
+  app.put("/api/seo-settings", requireAuth, requirePermission("edit:website"), async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { openGraphImageId, twitterImageId, ...otherUpdates } = req.body;
+      
+      // Update social images if image IDs are provided
+      let socialImageUrls = { openGraphImageUrl: null, twitterImageUrl: null };
+      if (openGraphImageId !== undefined || twitterImageId !== undefined) {
+        socialImageUrls = await socialImageService.updateSocialImages(
+          openGraphImageId || null,
+          twitterImageId || null
+        );
+      }
+      
+      const updates = { 
+        ...otherUpdates,
+        openGraphImageId: openGraphImageId || null,
+        twitterImageId: twitterImageId || null,
+        updatedBy: userId 
+      };
+      
+      const updatedSettings = await storage.updateSeoSettings(updates);
+      
+      // Return the updated settings with social image URLs
+      res.json({
+        ...updatedSettings,
+        ...socialImageUrls
+      });
+    } catch (error) {
+      console.error("Error updating SEO settings:", error);
+      res.status(500).json({ message: "Failed to update SEO settings" });
+    }
+  });
+
+  // Generate Sitemap
+  app.post("/api/generate-sitemap", requireAuth, requirePermission("edit:website"), async (req, res) => {
+    try {
+      const seoSettings = await storage.getSeoSettings();
+      const baseUrl = seoSettings?.businessUrl || "https://dtvisuals.com";
+      
+      // Get all media for videos in sitemap
+      const allMedia = await storage.getAllMedia();
+      const videos = allMedia.filter(m => m.type === 'video' && m.showInPortfolio);
+      
+      // Static pages
+      const staticPages = [
+        { url: '/', priority: '1.0', changefreq: 'weekly' },
+        { url: '/portfolio', priority: '0.9', changefreq: 'weekly' },
+        { url: '/about', priority: '0.8', changefreq: 'monthly' },
+        { url: '/services', priority: '0.9', changefreq: 'monthly' },
+        { url: '/contact', priority: '0.7', changefreq: 'monthly' },
+      ];
+      
+      // Generate XML sitemap
+      let sitemap = '<?xml version="1.0" encoding="UTF-8"?>\n';
+      sitemap += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">\n';
+      
+      // Add static pages
+      for (const page of staticPages) {
+        sitemap += `  <url>\n    <loc>${baseUrl}${page.url}</loc>\n    <priority>${page.priority}</priority>\n    <changefreq>${page.changefreq}</changefreq>\n  </url>\n`;
+      }
+      
+      // Add video pages
+      for (const video of videos) {
+        sitemap += `  <url>\n    <loc>${baseUrl}/portfolio</loc>\n`;
+        sitemap += `    <video:video>\n`;
+        sitemap += `      <video:thumbnail_loc>${video.posterUrl || video.url}</video:thumbnail_loc>\n`;
+        sitemap += `      <video:title>${video.title}</video:title>\n`;
+        sitemap += `      <video:description>${video.notes || video.title}</video:description>\n`;
+        sitemap += `      <video:content_loc>${video.url}</video:content_loc>\n`;
+        sitemap += `    </video:video>\n`;
+        sitemap += `  </url>\n`;
+      }
+      
+      sitemap += '</urlset>';
+      
+      // Write sitemap to public directory
+      const sitemapPath = path.join(process.cwd(), 'client', 'public', 'sitemap.xml');
+      fs.writeFileSync(sitemapPath, sitemap);
+      
+      res.json({ 
+        message: "Sitemap generated successfully", 
+        pages: staticPages.length, 
+        videos: videos.length 
+      });
+    } catch (error) {
+      console.error("Error generating sitemap:", error);
+      res.status(500).json({ message: "Failed to generate sitemap" });
     }
   });
 

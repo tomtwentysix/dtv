@@ -5,9 +5,11 @@ export interface BrandingSettings {
   id?: string;
   companyName: string;
   showCompanyText: boolean;
+  showTradingDetails: boolean;
   logoLightImageId: string | null;
   logoDarkImageId: string | null;
   faviconImageId: string | null;
+  openGraphImageId?: string | null;
   logoLightImage?: {
     id: string;
     url: string;
@@ -19,6 +21,11 @@ export interface BrandingSettings {
     title: string;
   } | null;
   faviconImage?: {
+    id: string;
+    url: string;
+    title: string;
+  } | null;
+  openGraphImage?: {
     id: string;
     url: string;
     title: string;

@@ -3,33 +3,50 @@ import { Navigation } from "@/components/navigation";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { Slider } from "@/components/ui/slider";
+import { VideoPlayer } from "@/components/video-player";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, Play, Pause, Volume2, VolumeX, Maximize, SkipBack, SkipForward, X } from "lucide-react";
+import { Loader2, Play } from "lucide-react";
 import { getBackgroundMedia, useWebsiteSettings } from "@/lib/background-utils";
+import { usePortfolioStructuredData } from "@/hooks/use-structured-data";
+import { usePortfolioSEO } from "@/hooks/use-seo-meta";
 
 const categories = ["All", "Commercial", "Documentary", "Corporate", "Music Video"];
 
 export default function Portfolio() {
+  // SEO and structured data
+  usePortfolioStructuredData();
+  usePortfolioSEO();
   const [activeCategory, setActiveCategory] = useState("All");
   const [scrollY, setScrollY] = useState(0);
+  const scrollYTarget = useRef(0);
+  const rafRef = useRef<number>();
   const [selectedVideo, setSelectedVideo] = useState<any>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [volume, setVolume] = useState(1);
-  const [isMuted, setIsMuted] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const modalVideoRef = useRef<HTMLVideoElement>(null);
 
   // Get website settings for backgrounds
   const { data: websiteSettings } = useWebsiteSettings();
 
+  // Smooth parallax scroll effect
   useEffect(() => {
-    const handleScroll = () => setScrollY(window.scrollY);
+    const lerp = (start: number, end: number, amt: number) => (1 - amt) * start + amt * end;
+    let running = true;
+    const animate = () => {
+      setScrollY(prev => {
+        const next = lerp(prev, scrollYTarget.current, 0.15);
+        return Math.abs(next - scrollYTarget.current) < 0.1 ? scrollYTarget.current : next;
+      });
+      if (running) rafRef.current = requestAnimationFrame(animate);
+    };
+    const handleScroll = () => {
+      scrollYTarget.current = window.scrollY;
+    };
     window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    rafRef.current = requestAnimationFrame(animate);
+    return () => {
+      running = false;
+      window.removeEventListener("scroll", handleScroll);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
   }, []);
 
   // Video player event handlers
@@ -49,83 +66,17 @@ export default function Portfolio() {
 
   const openVideoModal = (item: any) => {
     setSelectedVideo(item);
-    setIsPlaying(false);
-    setCurrentTime(0);
   };
 
   const closeVideoModal = () => {
     setSelectedVideo(null);
-    setIsPlaying(false);
-    if (modalVideoRef.current) {
-      modalVideoRef.current.pause();
-    }
-  };
-
-  const togglePlay = () => {
-    if (modalVideoRef.current) {
-      if (isPlaying) {
-        modalVideoRef.current.pause();
-      } else {
-        modalVideoRef.current.play();
-      }
-      setIsPlaying(!isPlaying);
-    }
-  };
-
-  const toggleMute = () => {
-    if (modalVideoRef.current) {
-      modalVideoRef.current.muted = !isMuted;
-      setIsMuted(!isMuted);
-    }
-  };
-
-  const handleVolumeChange = (value: number[]) => {
-    const newVolume = value[0];
-    setVolume(newVolume);
-    if (modalVideoRef.current) {
-      modalVideoRef.current.volume = newVolume;
-    }
-  };
-
-  const handleSeek = (value: number[]) => {
-    const newTime = value[0];
-    setCurrentTime(newTime);
-    if (modalVideoRef.current) {
-      modalVideoRef.current.currentTime = newTime;
-    }
-  };
-
-  const skipBackward = () => {
-    if (modalVideoRef.current) {
-      modalVideoRef.current.currentTime = Math.max(0, modalVideoRef.current.currentTime - 10);
-    }
-  };
-
-  const skipForward = () => {
-    if (modalVideoRef.current) {
-      modalVideoRef.current.currentTime = Math.min(duration, modalVideoRef.current.currentTime + 10);
-    }
-  };
-
-  const requestFullscreen = () => {
-    if (modalVideoRef.current) {
-      if (modalVideoRef.current.requestFullscreen) {
-        modalVideoRef.current.requestFullscreen();
-      }
-    }
-  };
-
-  const formatTime = (time: number) => {
-    const minutes = Math.floor(time / 60);
-    const seconds = Math.floor(time % 60);
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
   const { data: media, isLoading } = useQuery({
     queryKey: ["/api/media/portfolio"],
   });
 
-  const filteredMedia = (media || [])?.filter((item: any) => {
+  const filteredMedia = (media as any[] || []).filter((item: any) => {
     if (activeCategory === "All") return true;
     return item.tags?.includes(activeCategory.toLowerCase());
   });
@@ -166,32 +117,34 @@ export default function Portfolio() {
         <div className="relative z-10 text-center max-w-4xl mx-auto px-4">
           <h1 className="text-5xl md:text-6xl font-bold mb-6 hero-title">Portfolio</h1>
           <p className="text-xl max-w-3xl mx-auto hero-subtitle">
-            Explore our collection of cinematic works across various industries and creative projects.
+            Explore a selection of our standout video projects showcasing our creativity and expertise across different styles and industries.
           </p>
         </div>
       </section>
 
-      {/* Filters */}
-      <section className="py-8 bg-white dark:bg-black">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-wrap justify-center gap-4">
-            {categories.map((category) => (
-              <Button
-                key={category}
-                variant={activeCategory === category ? "default" : "outline"}
-                onClick={() => setActiveCategory(category)}
-                className={
-                  activeCategory === category
-                    ? "btn-primary"
-                    : "hover:border-primary hover:text-primary"
-                }
-              >
-                {category}
-              </Button>
-            ))}
+      {/* Filters: Only show if there are more than 12 items in the portfolio */}
+      {Array.isArray(media) && media.length > 12 && (
+        <section className="py-8 bg-white dark:bg-black">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-wrap justify-center gap-4">
+              {categories.map((category) => (
+                <Button
+                  key={category}
+                  variant={activeCategory === category ? "default" : "outline"}
+                  onClick={() => setActiveCategory(category)}
+                  className={
+                    activeCategory === category
+                      ? "btn-primary"
+                      : "hover:border-primary hover:text-primary"
+                  }
+                >
+                  {category}
+                </Button>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Portfolio Grid */}
       <section className="relative py-12 bg-white dark:bg-black overflow-hidden">
@@ -236,15 +189,13 @@ export default function Portfolio() {
                   <div className="relative">
                     {item.type === "image" ? (
                       <img 
-                        src={item.url} 
+                        src={item.thumbnailWebpUrl || item.thumbnailUrl || item.url} 
                         alt={item.title}
                         className="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110"
                       />
                     ) : (
                       <video 
-                        ref={(el) => {
-                          if (el) videoRef.current = el;
-                        }}
+                        ref={videoRef}
                         src={item.url}
                         className="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110"
                         muted
@@ -259,7 +210,7 @@ export default function Portfolio() {
                             e.currentTarget.currentTime = 2;
                           }
                         }}
-                        poster={item.posterUrl || undefined}
+                        poster={item.thumbnailWebpUrl || item.thumbnailUrl || item.posterUrl || undefined}
                       />
                     )}
 
@@ -302,213 +253,12 @@ export default function Portfolio() {
         </div>
       </section>
 
-      {/* Full-screen Video Player Modal */}
-      <Dialog open={!!selectedVideo} onOpenChange={closeVideoModal}>
-        <DialogContent className="p-0 overflow-hidden bg-black/95 border-none w-[80vw] max-w-none max-h-[95vh] h-auto" aria-describedby="video-player-description">
-          <DialogTitle className="sr-only">
-            Video Player - {selectedVideo?.title}
-          </DialogTitle>
-          <div id="video-player-description" className="sr-only">
-            Full-screen video player for {selectedVideo?.title}
-          </div>
-
-          <div className="relative group w-full h-full flex items-center justify-center">
-            {/* Media Content */}
-            {selectedVideo && (
-              selectedVideo.type === "image" ? (
-                <img
-                  src={selectedVideo.url}
-                  alt={selectedVideo.title}
-                  className="block max-w-full max-h-full w-auto h-auto bg-black"
-                  style={{
-                    filter: 'none',
-                    mixBlendMode: 'normal',
-                    opacity: 1,
-                    objectFit: 'contain'
-                  }}
-                />
-              ) : (
-                <video
-                  ref={modalVideoRef}
-                  src={selectedVideo.url}
-                  className="block max-w-full max-h-full w-auto h-auto bg-black"
-                  style={{
-                    filter: 'none',
-                    mixBlendMode: 'normal',
-                    opacity: 1,
-                    objectFit: 'contain'
-                  }}
-                  onLoadedMetadata={() => {
-                    if (modalVideoRef.current) {
-                      setDuration(modalVideoRef.current.duration);
-                      modalVideoRef.current.volume = volume;
-                      modalVideoRef.current.muted = isMuted;
-                    }
-                  }}
-                  onTimeUpdate={() => {
-                    if (modalVideoRef.current) {
-                      setCurrentTime(modalVideoRef.current.currentTime);
-                    }
-                  }}
-                  onPlay={() => setIsPlaying(true)}
-                  onPause={() => setIsPlaying(false)}
-                  onEnded={() => setIsPlaying(false)}
-                  onClick={(e) => {
-                    // Only toggle play if clicking directly on video, not on controls
-                    if (e.target === modalVideoRef.current) {
-                      togglePlay();
-                    }
-                  }}
-                />
-              )
-            )}
-
-            {/* Floating Controls - Show on hover (only for videos) */}
-            {selectedVideo?.type === "video" && (
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none group-hover:pointer-events-auto">
-
-              {/* Close button */}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  closeVideoModal();
-                }}
-                className="absolute top-4 right-4 z-30 text-white bg-black/50 hover:bg-black/70 rounded-full w-10 h-10 pointer-events-auto"
-              >
-                <X className="h-5 w-5" />
-              </Button>
-
-              {/* Video title overlay */}
-              <div className="absolute top-4 left-4 z-20 pointer-events-auto">
-                <div className="bg-black/70 rounded-lg px-4 py-2 backdrop-blur-sm">
-                  <h3 className="text-white font-semibold text-lg">{selectedVideo?.title}</h3>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {selectedVideo?.tags?.map((tag: string) => (
-                      <span key={tag} className="text-xs bg-white/20 text-white px-2 py-1 rounded">
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Center play/pause button */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-auto">
-                <Button
-                  variant="ghost"
-                  size="lg"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    togglePlay();
-                  }}
-                  className="text-white bg-black/50 hover:bg-black/70 rounded-full w-20 h-20 backdrop-blur-sm transition-all duration-200"
-                >
-                  {isPlaying ? (
-                    <Pause className="h-10 w-10" />
-                  ) : (
-                    <Play className="h-10 w-10 ml-1" />
-                  )}
-                </Button>
-              </div>
-
-              {/* Bottom controls bar */}
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent p-4 pointer-events-auto" onClick={(e) => e.stopPropagation()}>
-                <div className="space-y-3">
-                  {/* Progress bar */}
-                  <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
-                    <Slider
-                      value={[currentTime]}
-                      max={duration}
-                      step={0.1}
-                      onValueChange={handleSeek}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-sm text-gray-300">
-                      <span>{formatTime(currentTime)}</span>
-                      <span>{formatTime(duration)}</span>
-                    </div>
-                  </div>
-
-                  {/* Control buttons */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      {/* Skip backward */}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          skipBackward();
-                        }}
-                        className="text-white hover:bg-white/20 rounded-full w-10 h-10"
-                      >
-                        <SkipBack className="h-5 w-5" />
-                      </Button>
-
-                      {/* Skip forward */}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          skipForward();
-                        }}
-                        className="text-white hover:bg-white/20 rounded-full w-10 h-10"
-                      >
-                        <SkipForward className="h-5 w-5" />
-                      </Button>
-
-                      {/* Volume control */}
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleMute();
-                          }}
-                          className="text-white hover:bg-white/20 rounded-full w-10 h-10"
-                        >
-                          {isMuted ? (
-                            <VolumeX className="h-5 w-5" />
-                          ) : (
-                            <Volume2 className="h-5 w-5" />
-                          )}
-                        </Button>
-                        <div className="w-20" onClick={(e) => e.stopPropagation()}>
-                          <Slider
-                            value={[isMuted ? 0 : volume]}
-                            max={1}
-                            step={0.01}
-                            onValueChange={handleVolumeChange}
-                            disabled={isMuted}
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Fullscreen button */}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        requestFullscreen();
-                      }}
-                      className="text-white hover:bg-white/20 rounded-full w-10 h-10"
-                    >
-                      <Maximize className="h-5 w-5" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Video Player Modal */}
+      <VideoPlayer 
+        selectedVideo={selectedVideo}
+        isOpen={!!selectedVideo}
+        onClose={closeVideoModal}
+      />
 
       <Footer />
     </div>

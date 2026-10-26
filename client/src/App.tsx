@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { useDynamicFavicon } from "@/hooks/use-dynamic-favicon";
+import { useDynamicOpenGraph } from "@/hooks/use-dynamic-opengraph";
 import { ProtectedRoute } from "@/lib/protected-route";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
@@ -22,6 +23,7 @@ import AdminMedia from "@/pages/admin/media";
 import AdminWebsiteCustomization from "@/pages/admin/website-customization";
 import ClientDashboard from "@/pages/client/dashboard";
 import ClientLoginPage from "@/pages/client-login";
+import { CookieBanner } from "@/components/cookie-banner";
 
 function Router() {
   return (
@@ -60,6 +62,12 @@ function FaviconManager() {
   return null;
 }
 
+// Component to handle dynamic OpenGraph meta tag updates
+function OpenGraphManager() {
+  useDynamicOpenGraph();
+  return null;
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -67,8 +75,10 @@ function App() {
         <AuthProvider>
           <TooltipProvider>
             <FaviconManager />
+            <OpenGraphManager />
             <Toaster />
             <Router />
+            <CookieBanner />
           </TooltipProvider>
         </AuthProvider>
       </ThemeProvider>
